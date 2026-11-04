@@ -1,7 +1,9 @@
 import { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
 import { contentHash } from './hash.js';
+import { extractLinks, remapIndexPath, resolveDestination } from './links.js';
 import { SCHEMA_SQL } from './schema.js';
 import { segmentForSearch, toFtsQuery } from './segment.js';
+import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   ChunkOptions,
   ChunkRecord,
@@ -9,6 +11,7 @@ import type {
   IndexStats,
   NoteInput,
   NoteRecord,
+  Backlink,
   SearchHit,
   SearchOptions,
   SqlDriver,
@@ -69,6 +72,7 @@ export class VaultIndex {
       );
       if (existing && existing.hash === hash) {
         this.driver.run('UPDATE notes SET mtime = ? WHERE id = ?', [mtime, existing.id]);
+        this.resolveLinks();
         const count = this.driver.get<{ n: number }>(
           'SELECT COUNT(*) AS n FROM chunks WHERE note_id = ?',
           [existing.id],
@@ -101,6 +105,7 @@ export class VaultIndex {
         );
       }
       const chunkCount = this.insertChunks(noteId, title, input.content);
+      this.replaceLinks(noteId, input.content);
       return { status, noteId, chunkCount };
     });
   }
@@ -114,8 +119,97 @@ export class VaultIndex {
       if (!existing) return false;
       this.removeChunks(existing.id);
       this.driver.run('DELETE FROM notes WHERE id = ?', [existing.id]);
+      this.resolveLinks();
       return true;
     });
+  }
+
+  /** Delete a note, or every note inside a folder path. */
+  deletePath(path: string): number {
+    const normalized = normalizeNotePath(path);
+    return this.driver.transaction(() => {
+      const rows = this.driver.all<{ path: string }>('SELECT path FROM notes');
+      let removed = 0;
+      for (const row of rows) {
+        if (row.path === normalized || row.path.startsWith(`${normalized}/`)) {
+          if (this.deleteNote(row.path)) removed += 1;
+        }
+      }
+      return removed;
+    });
+  }
+
+  /** Move a note or folder prefix and retarget links that used the old path. */
+  renamePath(from: string, to: string): number {
+    const source = normalizeNotePath(from);
+    const target = normalizeNotePath(to);
+    if (source === target) return 0;
+    return this.driver.transaction(() => {
+      const notes = this.driver.all<{ id: number; path: string }>('SELECT id, path FROM notes');
+      let moved = 0;
+      for (const note of notes) {
+        const next = remapIndexPath(note.path, source, target);
+        if (next === note.path) continue;
+        this.driver.run('UPDATE notes SET path = ? WHERE id = ?', [next, note.id]);
+        moved += 1;
+      }
+      const links = this.driver.all<{
+        src_note_id: number;
+        dst_path: string;
+        kind: string;
+      }>('SELECT src_note_id, dst_path, kind FROM links');
+      for (const link of links) {
+        const next = remapIndexPath(link.dst_path, source, target);
+        if (next === link.dst_path) continue;
+        this.driver.run('DELETE FROM links WHERE src_note_id = ? AND dst_path = ? AND kind = ?', [
+          link.src_note_id,
+          link.dst_path,
+          link.kind,
+        ]);
+        this.driver.run(
+          `INSERT INTO links(src_note_id, dst_path, dst_note_id, kind) VALUES (?, ?, NULL, ?)
+           ON CONFLICT(src_note_id, dst_path, kind) DO NOTHING`,
+          [link.src_note_id, next, link.kind],
+        );
+      }
+      this.resolveLinks();
+      return moved;
+    });
+  }
+
+  backlinks(path: string): Backlink[] {
+    const normalized = normalizeNotePath(path);
+    const notes = this.driver.all<{ id: number; path: string }>('SELECT id, path FROM notes');
+    const basename = normalized.split('/').pop() ?? normalized;
+    const sameName = notes.filter(
+      (note) => note.path === basename || note.path.endsWith(`/${basename}`),
+    );
+    const noteId = notes.find((note) => note.path === normalized)?.id;
+    const rows = this.driver.all<{
+      path: string;
+      title: string;
+      kind: Backlink['kind'];
+      dstPath: string;
+      dstNoteId: number | null;
+    }>(
+      `SELECT n.path AS path, n.title AS title, l.kind AS kind,
+              l.dst_path AS dstPath, l.dst_note_id AS dstNoteId
+       FROM links l
+       JOIN notes n ON n.id = l.src_note_id
+       ORDER BY n.path, l.kind`,
+    );
+    return rows
+      .filter((row) => {
+        if (noteId !== undefined && row.dstNoteId === noteId) return true;
+        if (row.dstPath === normalized) return true;
+        return row.dstPath === basename && sameName.length === 1;
+      })
+      .map((row) => ({
+        path: row.path,
+        title: row.title,
+        kind: row.kind,
+        dstPath: row.dstPath,
+      }));
   }
 
   /**
@@ -332,6 +426,38 @@ export class VaultIndex {
     this.driver.close();
   }
 
+  private replaceLinks(noteId: number, content: string): void {
+    this.driver.run('DELETE FROM links WHERE src_note_id = ?', [noteId]);
+    for (const link of extractLinks(content)) {
+      this.driver.run(
+        `INSERT INTO links(src_note_id, dst_path, dst_note_id, kind) VALUES (?, ?, NULL, ?)
+         ON CONFLICT(src_note_id, dst_path, kind) DO NOTHING`,
+        [noteId, link.dstPath, link.kind],
+      );
+    }
+    this.resolveLinks();
+  }
+
+  private resolveLinks(): void {
+    const notes = this.driver.all<{ id: number; path: string; title: string }>(
+      'SELECT id, path, title FROM notes',
+    );
+    const links = this.driver.all<{
+      src_note_id: number;
+      dst_path: string;
+      kind: string;
+      dst_note_id: number | null;
+    }>('SELECT src_note_id, dst_path, kind, dst_note_id FROM links');
+    for (const link of links) {
+      const resolved = resolveDestination(link.dst_path, notes);
+      if ((link.dst_note_id ?? null) === resolved) continue;
+      this.driver.run(
+        'UPDATE links SET dst_note_id = ? WHERE src_note_id = ? AND dst_path = ? AND kind = ?',
+        [resolved, link.src_note_id, link.dst_path, link.kind],
+      );
+    }
+  }
+
   private insertChunks(noteId: number, title: string, content: string): number {
     const chunks = chunkMarkdown(content, this.options);
     for (const chunk of chunks) {
@@ -496,47 +622,6 @@ function parseFrontmatterJson(raw: string): Record<string, string> {
   } catch {
     return {};
   }
-}
-
-function buildSnippet(text: string, headingPath: string, title: string, query: string): string {
-  if (includesFold(text, query)) return highlight(text, query);
-  if (includesFold(headingPath, query)) return highlight(headingPath, query);
-  if (includesFold(title, query)) return highlight(title, query);
-  return highlight(text, query);
-}
-
-function highlight(text: string, query: string, radius = 32): string {
-  const index = text.toLowerCase().indexOf(query.toLowerCase());
-  if (index < 0) {
-    const cut = [...text].slice(0, radius * 2).join('');
-    return cut.length < text.length ? `${cut}…` : cut;
-  }
-  const start = Math.max(0, index - radius);
-  const end = Math.min(text.length, index + query.length + radius);
-  const prefix = start > 0 ? '…' : '';
-  const suffix = end < text.length ? '…' : '';
-  const slice = text.slice(start, end);
-  const relative = index - start;
-  return `${prefix}${slice.slice(0, relative)}<b>${slice.slice(relative, relative + query.length)}</b>${slice.slice(relative + query.length)}${suffix}`;
-}
-
-function includesFold(haystack: string, needle: string): boolean {
-  return haystack.toLowerCase().includes(needle.toLowerCase());
-}
-
-function countOccurrences(haystack: string, needle: string): number {
-  if (!needle) return 0;
-  const source = haystack.toLowerCase();
-  const target = needle.toLowerCase();
-  let count = 0;
-  let index = 0;
-  while (index <= source.length) {
-    const found = source.indexOf(target, index);
-    if (found < 0) break;
-    count += 1;
-    index = found + target.length;
-  }
-  return count;
 }
 
 function toLikePattern(query: string): string {

@@ -12,7 +12,7 @@ export async function openFolderVault(): Promise<Vault | null> {
       title: '选择笔记文件夹',
     });
     if (selected === null || Array.isArray(selected)) return null;
-    return new Vault(folderName(selected), new TauriVaultFileSystem(selected));
+    return new Vault(folderName(selected), new TauriVaultFileSystem(selected), selected);
   }
 
   const picker = (
