@@ -5,8 +5,8 @@
  * `chunk_vectors` stores a float32 blob so embeddings can be written before
  * sqlite-vec is packaged. Once the extension is loaded, create the virtual
  * table with {@link chunkVecVirtualTableSql} and backfill from this table.
- * Links, tags, memories, and conversations belong to other packages and are
- * not created here; all statements use IF NOT EXISTS so they can share one file.
+ * Tags, memories, and conversations belong to other packages and are not
+ * created here. Statements use IF NOT EXISTS so they can share one file.
  */
 export const INDEXER_SCHEMA_VERSION = 1;
 
@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS chunks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_chunks_note_id ON chunks(note_id);
+
+CREATE TABLE IF NOT EXISTS links (
+  src_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  dst_path TEXT NOT NULL,
+  dst_note_id INTEGER REFERENCES notes(id) ON DELETE SET NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('wikilink', 'markdown', 'embed', 'block')),
+  PRIMARY KEY (src_note_id, dst_path, kind)
+);
+
+CREATE INDEX IF NOT EXISTS idx_links_dst_note ON links(dst_note_id);
+CREATE INDEX IF NOT EXISTS idx_links_dst_path ON links(dst_path);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
   text,

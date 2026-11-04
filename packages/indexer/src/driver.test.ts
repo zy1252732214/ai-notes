@@ -4,7 +4,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createIndex, openNodeDatabase, openVaultIndex } from './index.js';
+import { createIndex } from './index.js';
+import { openNodeDatabase, openVaultIndex } from './node-driver.js';
 
 describe('SqlDriver', () => {
   it('rolls back a failed transaction, including nested work', () => {
