@@ -1,0 +1,16 @@
+# 可选的评审归属。仓库所有者先作为兜底，团队把手柄补上之后再按目录拆开。
+# Optional review ownership. The repo owner is the fallback until per-area handles exist.
+
+* @zy1252732214
+
+# /apps/desktop/          @frontend
+# /apps/web/              @frontend
+# /packages/core/         @frontend
+# /packages/editor/       @frontend
+# /packages/plugin-host/  @frontend
+# /packages/plugin-sdk/   @frontend
+# /packages/indexer/      @backend
+# /packages/ai/           @backend
+# /server/                @backend
+# /packages/ui/           @ui
+# /.github/               @devops

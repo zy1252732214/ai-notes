@@ -1,51 +1,48 @@
 /*
- * ai-notes 设计令牌
- *
- * 浅色定义在 :root，深色由 [data-theme="dark"] 覆盖。
+ * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
- * 数值与 src/tokens.ts 保持一致。
+ * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
  */
 
 :root {
-  color-scheme: light;
+  --an-bg-base: #ffffff;
+  --an-bg-subtle: #f6f6f7;
+  --an-bg-elevated: #ffffff;
+  --an-text-primary: #1f1f23;
+  --an-text-secondary: #5c5c66;
+  --an-text-tertiary: #8e8e99;
+  --an-border-default: #e4e4e8;
+  --an-accent: #5b5bd6;
+  --an-ai: #8e4ec6;
+  --an-ai-subtle: #f5eefc;
+  --an-success: #2f9e5b;
+  --an-warning: #c98a1a;
+  --an-danger: #d14343;
+  --an-on-accent: #ffffff;
 
-  --an-bg-base: #FFFFFF;
-  --an-bg-subtle: #F6F6F7;
-  --an-bg-elevated: #FFFFFF;
-  --an-text-primary: #1F1F23;
-  --an-text-secondary: #5C5C66;
-  --an-text-tertiary: #8E8E99;
-  --an-border-default: #E4E4E8;
-  --an-accent: #5B5BD6;
-  --an-ai: #8E4EC6;
-  --an-ai-subtle: #F5EEFC;
-  --an-success: #2F9E5B;
-  --an-warning: #C98A1A;
-  --an-danger: #D14343;
-
-  --an-font-sans: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-  --an-font-mono: "JetBrains Mono", Menlo, monospace;
+  --an-font-ui: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --an-font-code: 'JetBrains Mono', Menlo, monospace;
 
   --an-font-size-h1: 28px;
-  --an-line-height-h1: 36px;
+  --an-line-h1: 36px;
   --an-font-weight-h1: 600;
   --an-font-size-h2: 22px;
-  --an-line-height-h2: 30px;
+  --an-line-h2: 30px;
   --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
-  --an-line-height-h3: 26px;
+  --an-line-h3: 26px;
   --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
-  --an-line-height-body: 26px;
+  --an-line-body: 26px;
   --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
-  --an-line-height-ui: 20px;
+  --an-line-ui: 20px;
   --an-font-weight-ui: 400;
   --an-font-size-small: 12px;
-  --an-line-height-small: 16px;
+  --an-line-small: 16px;
   --an-font-weight-small: 400;
   --an-font-size-code: 14px;
-  --an-line-height-code: 22px;
+  --an-line-code: 22px;
   --an-font-weight-code: 400;
 
   --an-space-1: 4px;
@@ -60,6 +57,7 @@
   --an-radius-lg: 12px;
 
   --an-topbar-height: 44px;
+  --an-statusbar-height: 28px;
   --an-sidebar-width: 240px;
   --an-sidebar-min-width: 180px;
   --an-sidebar-max-width: 400px;
@@ -70,22 +68,24 @@
   --an-command-palette-width: 640px;
   --an-command-palette-top: 20%;
   --an-breakpoint-compact: 900px;
+
+  color-scheme: light;
 }
 
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --an-bg-base: #1E1E20;
+[data-theme='dark'] {
+  --an-bg-base: #1e1e20;
   --an-bg-subtle: #252528;
-  --an-bg-elevated: #2D2D31;
-  --an-text-primary: #E8E8EA;
-  --an-text-secondary: #A6A6B0;
-  --an-text-tertiary: #74747E;
-  --an-border-default: #38383D;
-  --an-accent: #7C7CF0;
-  --an-ai: #B07FE8;
-  --an-ai-subtle: #2E2338;
-  --an-success: #4CC47E;
-  --an-warning: #E5A93A;
-  --an-danger: #F06A6A;
+  --an-bg-elevated: #2d2d31;
+  --an-text-primary: #e8e8ea;
+  --an-text-secondary: #a6a6b0;
+  --an-text-tertiary: #74747e;
+  --an-border-default: #38383d;
+  --an-accent: #7c7cf0;
+  --an-ai: #b07fe8;
+  --an-ai-subtle: #2e2338;
+  --an-success: #4cc47e;
+  --an-warning: #e5a93a;
+  --an-danger: #f06a6a;
+  --an-on-accent: #ffffff;
+  color-scheme: dark;
 }

@@ -1,3 +1,6 @@
+/**
+ * 设计令牌与主题。基础组件后续再加入。
+ */
 export {
   colors,
   cssVar,
@@ -8,7 +11,7 @@ export {
   space,
   tokens,
   typeScale,
-} from "./tokens.ts";
+} from './tokens.js';
 export type {
   ColorToken,
   CssVarName,
@@ -17,7 +20,7 @@ export type {
   SpaceToken,
   ThemeName,
   TypeLevel,
-} from "./tokens.ts";
+} from './tokens.js';
 
 export {
   THEME_ATTRIBUTE,
@@ -27,5 +30,8 @@ export {
   readAppliedTheme,
   resolveTheme,
   subscribeSystemTheme,
-} from "./theme.ts";
-export type { ResolvedTheme, ThemePreference } from "./theme.ts";
+} from './theme.js';
+export type { ResolvedTheme, ThemePreference } from './theme.js';
+
+/** 工作区依赖图仍引用这个 id。 */
+export const packageId = '@ai-notes/ui' as const;

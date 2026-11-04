@@ -1,36 +1,34 @@
 /**
  * 把主题偏好写到 `data-theme`。
  * `system` 跟随操作系统，并把解析后的 `light` 或 `dark` 写到属性上。
+ * 深色变量定义在 `[data-theme='dark']`，浅色变量定义在 `:root`。
  */
 
-export const THEME_ATTRIBUTE = "data-theme";
+export const THEME_ATTRIBUTE = 'data-theme';
 
-export type ThemePreference = "system" | "light" | "dark";
-export type ResolvedTheme = "light" | "dark";
+export type ThemePreference = 'system' | 'light' | 'dark';
+export type ResolvedTheme = 'light' | 'dark';
 
-const THEME_QUERY = "(prefers-color-scheme: dark)";
+const THEME_QUERY = '(prefers-color-scheme: dark)';
 
 function defaultRoot(): HTMLElement | null {
-  if (typeof document === "undefined") return null;
+  if (typeof document === 'undefined') return null;
   return document.documentElement;
 }
 
 export function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return "light";
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
   }
-  return window.matchMedia(THEME_QUERY).matches ? "dark" : "light";
+  return window.matchMedia(THEME_QUERY).matches ? 'dark' : 'light';
 }
 
 export function resolveTheme(preference: ThemePreference): ResolvedTheme {
-  if (preference === "system") return getSystemTheme();
+  if (preference === 'system') return getSystemTheme();
   return preference;
 }
 
-/**
- * 把偏好应用到根节点。属性值始终是解析后的 `light` 或 `dark`，
- * 深色变量定义在 `[data-theme="dark"]`，浅色变量定义在 `:root`。
- */
+/** 属性值始终是解析后的 `light` 或 `dark`。 */
 export function applyTheme(
   preference: ThemePreference,
   root: HTMLElement | null = defaultRoot(),
@@ -43,22 +41,22 @@ export function applyTheme(
 export function readAppliedTheme(root: HTMLElement | null = defaultRoot()): ResolvedTheme | null {
   if (!root) return null;
   const value = root.getAttribute(THEME_ATTRIBUTE);
-  if (value === "light" || value === "dark") return value;
+  if (value === 'light' || value === 'dark') return value;
   return null;
 }
 
 /** 操作系统浅色 / 深色变化时回调。返回取消订阅函数。 */
 export function subscribeSystemTheme(onChange: (theme: ResolvedTheme) => void): () => void {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return () => {};
   }
 
   const media = window.matchMedia(THEME_QUERY);
   const listener = (event: MediaQueryListEvent) => {
-    onChange(event.matches ? "dark" : "light");
+    onChange(event.matches ? 'dark' : 'light');
   };
-  media.addEventListener("change", listener);
-  return () => media.removeEventListener("change", listener);
+  media.addEventListener('change', listener);
+  return () => media.removeEventListener('change', listener);
 }
 
 /**
@@ -70,8 +68,8 @@ export function bindTheme(
   root: HTMLElement | null = defaultRoot(),
 ): () => void {
   applyTheme(preference, root);
-  if (preference !== "system") return () => {};
+  if (preference !== 'system') return () => {};
   return subscribeSystemTheme(() => {
-    applyTheme("system", root);
+    applyTheme('system', root);
   });
 }
