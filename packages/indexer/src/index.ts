@@ -1,11 +1,31 @@
-/**
- * 本地索引占位。
- * 职责：分块、FTS5 全文索引、sqlite-vec 向量索引。索引可从 Markdown 重建。
- * 实现归后端工程师。
- */
-import { packageId as corePackageId } from '@ai-notes/core';
-
+/** Stable workspace id. Desktop and web placeholders import this. */
 export const packageId = '@ai-notes/indexer' as const;
 
-/** 脚手架用的依赖清单，不是产品 API。实现本包时可以删掉，并同步改测试。 */
-export const workspaceDependencies = [corePackageId] as const;
+export { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
+export { openNodeDatabase, openVaultIndex } from './node-driver.js';
+export { contentHash } from './hash.js';
+export { createIndex, normalizeNotePath, VaultIndex } from './indexer.js';
+export type { IndexOptions } from './indexer.js';
+export { chunkVecVirtualTableSql, INDEXER_SCHEMA_VERSION, SCHEMA_SQL } from './schema.js';
+export { segmentForSearch, toFtsQuery } from './segment.js';
+export type {
+  Chunk,
+  ChunkOptions,
+  ChunkRecord,
+  ChunkVector,
+  Frontmatter,
+  IndexStats,
+  NoteInput,
+  NoteRecord,
+  RunResult,
+  SearchHit,
+  SearchOptions,
+  SqlDriver,
+  SqlValue,
+  SyncResult,
+  UpsertResult,
+  UpsertStatus,
+  UsageFilter,
+  UsageInput,
+  UsageSummary,
+} from './types.js';

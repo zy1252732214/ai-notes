@@ -2,7 +2,7 @@
   "name": "@ai-notes/indexer",
   "version": "0.0.0",
   "private": true,
-  "description": "Chunking plus SQLite FTS5 and sqlite-vec indexing.",
+  "description": "Markdown chunking and a SQLite FTS5 index for an ai-notes vault.",
   "type": "module",
   "exports": {
     ".": {
@@ -24,6 +24,7 @@
     "@ai-notes/core": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "26.6.6",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
