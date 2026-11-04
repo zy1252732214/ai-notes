@@ -1,0 +1,38 @@
+{
+  "name": "@ai-notes/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder for the web entry. Not a Vite app yet.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --root ."
+  },
+  "dependencies": {
+    "@ai-notes/ai": "workspace:*",
+    "@ai-notes/core": "workspace:*",
+    "@ai-notes/editor": "workspace:*",
+    "@ai-notes/indexer": "workspace:*",
+    "@ai-notes/plugin-host": "workspace:*",
+    "@ai-notes/plugin-sdk": "workspace:*",
+    "@ai-notes/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}
