@@ -1,7 +1,7 @@
 /*
- * ai-notes 设计令牌（设计系统 v1）。
- * 组件只使用 --an-* 变量。UI 包后续可以直接替换这一份文件。
- * 深色主题用 [data-theme="dark"] 覆盖。
+ * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
+ * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
+ * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
  */
 
 :root {
@@ -25,18 +25,25 @@
 
   --an-font-size-h1: 28px;
   --an-line-h1: 36px;
+  --an-font-weight-h1: 600;
   --an-font-size-h2: 22px;
   --an-line-h2: 30px;
+  --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
   --an-line-h3: 26px;
+  --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
   --an-line-body: 26px;
+  --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
   --an-line-ui: 20px;
+  --an-font-weight-ui: 400;
   --an-font-size-small: 12px;
   --an-line-small: 16px;
+  --an-font-weight-small: 400;
   --an-font-size-code: 14px;
   --an-line-code: 22px;
+  --an-font-weight-code: 400;
 
   --an-space-1: 4px;
   --an-space-2: 8px;
@@ -52,8 +59,15 @@
   --an-topbar-height: 44px;
   --an-statusbar-height: 28px;
   --an-sidebar-width: 240px;
+  --an-sidebar-min-width: 180px;
+  --an-sidebar-max-width: 400px;
   --an-ai-panel-width: 360px;
+  --an-ai-panel-min-width: 300px;
+  --an-ai-panel-max-width: 560px;
   --an-editor-max-width: 720px;
+  --an-command-palette-width: 640px;
+  --an-command-palette-top: 20%;
+  --an-breakpoint-compact: 900px;
 
   color-scheme: light;
 }
