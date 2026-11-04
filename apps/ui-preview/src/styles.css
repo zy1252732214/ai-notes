@@ -1,0 +1,194 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--an-bg-base);
+  color: var(--an-text-primary);
+  font-family: var(--an-font-ui);
+  font-size: var(--an-font-size-ui);
+  line-height: var(--an-line-ui);
+  font-weight: var(--an-font-weight-ui);
+}
+
+.preview {
+  min-height: 100%;
+  background: var(--an-bg-base);
+  color: var(--an-text-primary);
+}
+
+.preview-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--an-space-4);
+  min-height: var(--an-topbar-height);
+  padding: var(--an-space-2) var(--an-space-4);
+  border-bottom: 1px solid var(--an-border-default);
+  background: var(--an-bg-subtle);
+}
+
+.preview-brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--an-space-3);
+  min-width: 0;
+}
+
+.preview-kicker,
+.preview-header h1,
+.preview-section h2,
+.preview-lead,
+.preview-section-head p,
+.preview-note {
+  margin: 0;
+}
+
+.preview-kicker,
+.preview-note,
+.preview-section-head p {
+  color: var(--an-text-tertiary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+}
+
+.preview-header h1,
+.preview-section h2 {
+  font-size: var(--an-font-size-h3);
+  line-height: var(--an-line-h3);
+  font-weight: var(--an-font-weight-h3);
+}
+
+.preview-theme {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--an-space-1);
+}
+
+.preview-shell {
+  display: grid;
+  grid-template-columns: var(--an-sidebar-width) minmax(0, 1fr);
+  align-items: start;
+}
+
+.preview-nav {
+  position: sticky;
+  top: var(--an-topbar-height);
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-1);
+  max-height: calc(100vh - var(--an-topbar-height));
+  padding: var(--an-space-4);
+  overflow: auto;
+  border-right: 1px solid var(--an-border-default);
+  background: var(--an-bg-subtle);
+}
+
+.preview-nav a {
+  padding: var(--an-space-1) var(--an-space-2);
+  border-radius: var(--an-radius-sm);
+  color: var(--an-text-secondary);
+  text-decoration: none;
+}
+
+.preview-nav a:hover {
+  background: color-mix(in srgb, var(--an-text-primary) 8%, var(--an-bg-subtle));
+  color: var(--an-text-primary);
+}
+
+.preview-nav a:focus-visible {
+  outline: 2px solid var(--an-accent);
+  outline-offset: 2px;
+}
+
+.preview-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-4);
+  padding: var(--an-space-6);
+}
+
+.preview-lead {
+  max-width: var(--an-editor-max-width);
+  color: var(--an-text-secondary);
+}
+
+.preview-lead code,
+.preview-note {
+  font-family: var(--an-font-code);
+}
+
+.preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-4);
+  max-width: var(--an-editor-max-width);
+  padding: var(--an-space-4);
+  border: 1px solid var(--an-border-default);
+  border-radius: var(--an-radius-lg);
+  background: var(--an-bg-base);
+}
+
+.preview-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-1);
+}
+
+.preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--an-space-2);
+}
+
+.preview-stack,
+.preview-list,
+.preview-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-4);
+  width: min(100%, calc(var(--an-sidebar-width) + var(--an-sidebar-min-width)));
+}
+
+.preview-list {
+  gap: var(--an-space-1);
+}
+
+.preview-panels {
+  width: min(100%, var(--an-sidebar-width));
+}
+
+.preview-settings-select {
+  width: calc(var(--an-sidebar-width) - var(--an-space-8));
+}
+
+.preview-section p {
+  margin: 0;
+}
+
+/* 与 --an-breakpoint-compact 相同。媒体查询里还不能可靠地引用自定义属性。 */
+@media (max-width: 900px) {
+  .preview-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview-nav {
+    position: static;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: 0;
+    border-bottom: 1px solid var(--an-border-default);
+  }
+}
