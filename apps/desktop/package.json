@@ -1,21 +1,13 @@
 {
   "name": "@ai-notes/desktop",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "Placeholder for the Tauri 2 desktop shell. Not a Tauri app yet.",
+  "description": "Tauri 2 desktop shell for ai-notes.",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "dev": "tauri dev",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "tauri": "tauri",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts --root ."
@@ -27,9 +19,19 @@
     "@ai-notes/indexer": "workspace:*",
     "@ai-notes/plugin-host": "workspace:*",
     "@ai-notes/plugin-sdk": "workspace:*",
-    "@ai-notes/ui": "workspace:*"
+    "@ai-notes/ui": "workspace:*",
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "lucide-react": "^0.544.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.9.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

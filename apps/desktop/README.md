@@ -1,12 +1,10 @@
 # `@ai-notes/desktop`
 
-桌面壳的占位包。这里还不是 Tauri 应用，没有 `src-tauri/`，也没有 Vite 配置。前端工程师用 **Tauri 2 + Vite + React + CodeMirror 6** 替换它。
+Tauri 2 + Vite + React 桌面壳。笔记是 Vault 文件夹里的 `.md` 文件。
 
-This package is a placeholder, not a Tauri app. There is no `src-tauri/` directory and no Vite config yet. The frontend engineer replaces it with Tauri 2, Vite, React, and CodeMirror 6.
+## 脚本
 
-## 替换之后建议保留的脚本
-
-CI 的 `build` 只构建前端资源，不要把 `turbo build` 指到 `tauri build`，否则每条 PR 都会编译 Rust。原生安装包只走 [`.github/workflows/release.yml`](../../.github/workflows/release.yml)。
+`build` 只构建前端资源，CI 不会在每条 PR 上编译 Rust。安装包由 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) 调用 `pnpm tauri build`。
 
 ```json
 {
@@ -21,15 +19,23 @@ CI 的 `build` 只构建前端资源，不要把 `turbo build` 指到 `tauri bui
 }
 ```
 
-`tauri.conf.json` 的 `beforeBuildCommand` 用 `pnpm build` 生成前端资源。发布流水线在 `apps/desktop` 里执行 `pnpm tauri build`。
+`tauri.conf.json` 的 `beforeBuildCommand` 是 `pnpm build`，`beforeDevCommand` 是 `pnpm exec vite`，避免和 `dev`（`tauri dev`）互相调用。
 
-Keep `build` as the frontend asset build. `tauri build` belongs to the release workflow, with `beforeBuildCommand` set to `pnpm build`.
+## 本地运行
 
-## 发布流水线要看到的文件
+```bash
+pnpm install
+pnpm --filter @ai-notes/desktop exec vite
+```
 
-- `apps/desktop/src-tauri/tauri.conf.json`
-- `package.json` 里的 `"tauri"` 脚本
+浏览器打开 <http://localhost:1420>。Chrome / Edge 可以用「打开文件夹」读写真实目录；「打开示例库」只在内存里。
 
-在这两个文件出现之前，打 `v*` tag 会在检查步骤失败，并且不会创建 Release。
+桌面窗口：
 
-Updater 私钥和平台签名证书放在 GitHub Actions secrets，不要提交。公钥写在 `tauri.conf.json`。
+```bash
+pnpm --filter @ai-notes/desktop dev
+```
+
+Linux 需要 WebKitGTK 4.1。`Ctrl/Cmd+S` 立即保存，停笔约 800ms 后自动保存。`Ctrl/Cmd+\` 收起文件树，`Ctrl/Cmd+J` 开关右侧面板，`Ctrl/Cmd+K` 打开命令面板。
+
+发布 tag 要和 `src-tauri/tauri.conf.json` 的 `version` 一致，当前是 `0.1.0`。签名私钥和 updater 密钥只放在 GitHub Actions secrets，不要提交。

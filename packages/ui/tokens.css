@@ -1,0 +1,77 @@
+/*
+ * ai-notes 设计令牌（设计系统 v1）。
+ * 组件只使用 --an-* 变量。UI 包后续可以直接替换这一份文件。
+ * 深色主题用 [data-theme="dark"] 覆盖。
+ */
+
+:root {
+  --an-bg-base: #ffffff;
+  --an-bg-subtle: #f6f6f7;
+  --an-bg-elevated: #ffffff;
+  --an-text-primary: #1f1f23;
+  --an-text-secondary: #5c5c66;
+  --an-text-tertiary: #8e8e99;
+  --an-border-default: #e4e4e8;
+  --an-accent: #5b5bd6;
+  --an-ai: #8e4ec6;
+  --an-ai-subtle: #f5eefc;
+  --an-success: #2f9e5b;
+  --an-warning: #c98a1a;
+  --an-danger: #d14343;
+  --an-on-accent: #ffffff;
+
+  --an-font-ui: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --an-font-code: 'JetBrains Mono', Menlo, monospace;
+
+  --an-font-size-h1: 28px;
+  --an-line-h1: 36px;
+  --an-font-size-h2: 22px;
+  --an-line-h2: 30px;
+  --an-font-size-h3: 18px;
+  --an-line-h3: 26px;
+  --an-font-size-body: 16px;
+  --an-line-body: 26px;
+  --an-font-size-ui: 14px;
+  --an-line-ui: 20px;
+  --an-font-size-small: 12px;
+  --an-line-small: 16px;
+  --an-font-size-code: 14px;
+  --an-line-code: 22px;
+
+  --an-space-1: 4px;
+  --an-space-2: 8px;
+  --an-space-3: 12px;
+  --an-space-4: 16px;
+  --an-space-6: 24px;
+  --an-space-8: 32px;
+
+  --an-radius-sm: 4px;
+  --an-radius-md: 8px;
+  --an-radius-lg: 12px;
+
+  --an-topbar-height: 44px;
+  --an-statusbar-height: 28px;
+  --an-sidebar-width: 240px;
+  --an-ai-panel-width: 360px;
+  --an-editor-max-width: 720px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --an-bg-base: #1e1e20;
+  --an-bg-subtle: #252528;
+  --an-bg-elevated: #2d2d31;
+  --an-text-primary: #e8e8ea;
+  --an-text-secondary: #a6a6b0;
+  --an-text-tertiary: #74747e;
+  --an-border-default: #38383d;
+  --an-accent: #7c7cf0;
+  --an-ai: #b07fe8;
+  --an-ai-subtle: #2e2338;
+  --an-success: #4cc47e;
+  --an-warning: #e5a93a;
+  --an-danger: #f06a6a;
+  --an-on-accent: #ffffff;
+  color-scheme: dark;
+}
