@@ -4,8 +4,11 @@ import { CommandPalette } from './components/CommandPalette';
 import { EditorPane } from './components/EditorPane';
 import { FileTree } from './components/FileTree';
 import { NameDialog } from './components/NameDialog';
+import { PluginSettings } from './components/PluginSettings';
 import { StatusBar } from './components/StatusBar';
 import { TopBar } from './components/TopBar';
+import { pluginController } from './plugins/controller';
+import { matchesHotkey } from './plugins/hotkey';
 import { useAppStore } from './store';
 import { applyTheme } from './theme';
 
@@ -36,21 +39,39 @@ export function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
-      if (!mod) return;
       const key = event.key.toLowerCase();
       const store = useAppStore.getState();
-      if (key === 's') {
+      if (mod && key === 's') {
         event.preventDefault();
         void store.saveActive();
-      } else if (key === 'k') {
+        return;
+      }
+      if (mod && key === 'k') {
         event.preventDefault();
         store.setCommandOpen(!store.commandOpen);
-      } else if (event.key === '\\') {
+        return;
+      }
+      if (mod && event.key === '\\') {
         event.preventDefault();
         store.toggleLeft();
-      } else if (key === 'j') {
+        return;
+      }
+      if (mod && key === 'j') {
         event.preventDefault();
         store.toggleRight();
+        return;
+      }
+      const target = event.target;
+      const typing =
+        target instanceof HTMLElement &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (typing && !mod) return;
+      const command = pluginController
+        .commands()
+        .find((item) => item.hotkey && matchesHotkey(event, item.hotkey));
+      if (command) {
+        event.preventDefault();
+        pluginController.invoke(command.id);
       }
     };
     const onHide = () => {
@@ -100,6 +121,7 @@ export function App() {
       <StatusBar />
       <CommandPalette />
       <NameDialog />
+      <PluginSettings />
     </div>
   );
 }

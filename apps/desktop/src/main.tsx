@@ -2,10 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@ai-notes/ui/tokens.css';
 import { App } from './App';
+import { installPluginBridge } from './plugins/controller';
 import { applyTheme } from './theme';
 import { useAppStore } from './store';
 import './styles.css';
 
+installPluginBridge();
 applyTheme(useAppStore.getState().themeMode);
 
 const root = document.getElementById('root');
