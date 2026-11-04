@@ -1,29 +1,29 @@
-import type { Disposable } from "../disposable.ts";
+import type { Disposable } from '../disposable.js';
 
 export type SettingsField =
   | {
-      type: "string";
+      type: 'string';
       key: string;
       label: string;
       description?: string;
       default?: string;
     }
   | {
-      type: "boolean";
+      type: 'boolean';
       key: string;
       label: string;
       description?: string;
       default?: boolean;
     }
   | {
-      type: "number";
+      type: 'number';
       key: string;
       label: string;
       description?: string;
       default?: number;
     }
   | {
-      type: "select";
+      type: 'select';
       key: string;
       label: string;
       description?: string;

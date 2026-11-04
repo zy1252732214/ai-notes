@@ -1,46 +1,42 @@
-import type { Disposable } from "../disposable.ts";
+import type { Disposable } from '../disposable.js';
 
 export interface NoteCreatedEvent {
-  type: "note:created";
+  type: 'note:created';
   path: string;
 }
 
 export interface NoteModifiedEvent {
-  type: "note:modified";
+  type: 'note:modified';
   path: string;
 }
 
 export interface NoteOpenedEvent {
-  type: "note:opened";
+  type: 'note:opened';
   path: string;
 }
 
 export interface NoteRenamedEvent {
-  type: "note:renamed";
+  type: 'note:renamed';
   from: string;
   to: string;
 }
 
 export interface NoteDeletedEvent {
-  type: "note:deleted";
+  type: 'note:deleted';
   path: string;
 }
 
 export type NoteEvent =
-  | NoteCreatedEvent
-  | NoteModifiedEvent
-  | NoteOpenedEvent
-  | NoteRenamedEvent
-  | NoteDeletedEvent;
+  NoteCreatedEvent | NoteModifiedEvent | NoteOpenedEvent | NoteRenamedEvent | NoteDeletedEvent;
 
-export type NoteEventType = NoteEvent["type"];
+export type NoteEventType = NoteEvent['type'];
 
 export const NOTE_EVENT_TYPES = [
-  "note:created",
-  "note:modified",
-  "note:opened",
-  "note:renamed",
-  "note:deleted",
+  'note:created',
+  'note:modified',
+  'note:opened',
+  'note:renamed',
+  'note:deleted',
 ] as const satisfies readonly NoteEventType[];
 
 /**

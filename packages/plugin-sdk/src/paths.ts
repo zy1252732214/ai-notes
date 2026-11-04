@@ -1,4 +1,4 @@
-import { PluginApiError } from "./errors.ts";
+import { PluginApiError } from './errors.js';
 
 const RELATIVE_PATH = /^(?!.*(?:^|\/)\.\.(?:\/|$))(?!\/)[^\\:*?"<>|]+(?:\/[^\\:*?"<>|]+)*$/;
 
@@ -7,9 +7,9 @@ const RELATIVE_PATH = /^(?!.*(?:^|\/)\.\.(?:\/|$))(?!\/)[^\\:*?"<>|]+(?:\/[^\\:*
  * 拒绝绝对路径、空段和 `..`。
  */
 export function normalizeVaultPath(path: string): string {
-  const trimmed = path.trim().replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
+  const trimmed = path.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
   if (trimmed.length === 0 || !RELATIVE_PATH.test(trimmed)) {
-    throw new PluginApiError("invalid_params", `Invalid vault path: ${path}`);
+    throw new PluginApiError('invalid_params', `Invalid vault path: ${path}`);
   }
   return trimmed;
 }

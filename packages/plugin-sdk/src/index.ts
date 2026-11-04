@@ -1,15 +1,15 @@
-export { PLUGIN_API_STABILITY, PLUGIN_API_VERSION, RPC_PROTOCOL } from "./version.ts";
-export type { PluginApiVersion } from "./version.ts";
+export { packageId, PLUGIN_API_STABILITY, PLUGIN_API_VERSION, RPC_PROTOCOL } from './version.js';
+export type { PluginApiVersion } from './version.js';
 
-export { DisposableStore, disposable } from "./disposable.ts";
-export type { Disposable } from "./disposable.ts";
+export { DisposableStore, disposable } from './disposable.js';
+export type { Disposable } from './disposable.js';
 
-export { PluginApiError } from "./errors.ts";
-export type { PluginErrorCode } from "./errors.ts";
+export { PluginApiError } from './errors.js';
+export type { PluginErrorCode } from './errors.js';
 
-export { isPathWithinFolders, normalizeVaultPath } from "./paths.ts";
+export { isPathWithinFolders, normalizeVaultPath } from './paths.js';
 
-export { PERMISSION_IDS, findPermission, hasPermission } from "./permissions.ts";
+export { PERMISSION_IDS, findPermission, hasPermission } from './permissions.js';
 export type {
   AiInvokePermission,
   ClipboardPermission,
@@ -19,9 +19,14 @@ export type {
   UiPanelPermission,
   VaultReadPermission,
   VaultWritePermission,
-} from "./permissions.ts";
+} from './permissions.js';
 
-export type { JsonSchema, JsonSchemaArray, JsonSchemaObject, JsonSchemaScalar } from "./json-schema.ts";
+export type {
+  JsonSchema,
+  JsonSchemaArray,
+  JsonSchemaObject,
+  JsonSchemaScalar,
+} from './json-schema.js';
 
 export type {
   AiToolContribution,
@@ -36,16 +41,30 @@ export type {
   PluginManifest,
   ViewContribution,
   ViewContributionType,
-} from "./manifest.ts";
+} from './manifest.js';
 
-export type { AppApi } from "./api/app.ts";
+export type { AppApi } from './api/app.js';
 
-export type { NoteMetadata, VaultEntry, VaultEntryKind, VaultListOptions, VaultWriteOptions, VaultApi } from "./api/vault.ts";
+export type {
+  NoteMetadata,
+  VaultEntry,
+  VaultEntryKind,
+  VaultListOptions,
+  VaultWriteOptions,
+  VaultApi,
+} from './api/vault.js';
 
-export { formatHotkey, isHotkeyModifier, parseHotkey, HOTKEY_MODIFIERS } from "./api/commands.ts";
-export type { Command, CommandsApi, Hotkey, HotkeyModifier } from "./api/commands.ts";
+export { formatHotkey, isHotkeyModifier, parseHotkey, HOTKEY_MODIFIERS } from './api/commands.js';
+export type { Command, CommandsApi, Hotkey, HotkeyModifier } from './api/commands.js';
 
-export type { SettingsField, SettingsTab, SidebarPanel, StatusBarItem, TabView, ViewsApi } from "./api/views.ts";
+export type {
+  SettingsField,
+  SettingsTab,
+  SidebarPanel,
+  StatusBarItem,
+  TabView,
+  ViewsApi,
+} from './api/views.js';
 
 export type {
   CodeBlockContext,
@@ -55,7 +74,7 @@ export type {
   EditorApi,
   EditorExtensionRegistration,
   EditorHandle,
-} from "./api/editor.ts";
+} from './api/editor.js';
 
 export type {
   AiApi,
@@ -68,9 +87,9 @@ export type {
   Citation,
   CompleteRequest,
   CompleteResult,
-} from "./api/ai.ts";
+} from './api/ai.js';
 
-export { NOTE_EVENT_TYPES } from "./api/events.ts";
+export { NOTE_EVENT_TYPES } from './api/events.js';
 export type {
   EventsApi,
   NoteCreatedEvent,
@@ -80,13 +99,18 @@ export type {
   NoteModifiedEvent,
   NoteOpenedEvent,
   NoteRenamedEvent,
-} from "./api/events.ts";
+} from './api/events.js';
 
-export type { ClipboardApi } from "./api/clipboard.ts";
-export type { NetworkApi, NetworkMethod, NetworkRequest, NetworkResponse } from "./api/network.ts";
+export type { ClipboardApi } from './api/clipboard.js';
+export type { NetworkApi, NetworkMethod, NetworkRequest, NetworkResponse } from './api/network.js';
 
-export { definePlugin, isPluginConstructor, Plugin } from "./plugin.ts";
-export type { PluginConstructor, PluginContext, PluginDefinition, PluginModuleExport } from "./plugin.ts";
+export { definePlugin, isPluginConstructor, Plugin } from './plugin.js';
+export type {
+  PluginConstructor,
+  PluginContext,
+  PluginDefinition,
+  PluginModuleExport,
+} from './plugin.js';
 
 export {
   METHOD_PERMISSION,
@@ -97,7 +121,7 @@ export {
   createRpcResponse,
   isPluginRpcRequest,
   isRpcEnvelope,
-} from "./rpc.ts";
+} from './rpc.js';
 export type {
   HostRpcRequest,
   HostToPluginMethod,
@@ -113,4 +137,4 @@ export type {
   RpcEventParams,
   RpcFailure,
   RpcResponse,
-} from "./rpc.ts";
+} from './rpc.js';

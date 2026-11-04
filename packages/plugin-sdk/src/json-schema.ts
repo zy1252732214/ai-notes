@@ -5,7 +5,7 @@
 export type JsonSchema = JsonSchemaObject | JsonSchemaScalar | JsonSchemaArray;
 
 export interface JsonSchemaObject {
-  type: "object";
+  type: 'object';
   properties?: Readonly<Record<string, JsonSchema>>;
   required?: readonly string[];
   additionalProperties?: boolean;
@@ -13,13 +13,13 @@ export interface JsonSchemaObject {
 }
 
 export interface JsonSchemaScalar {
-  type: "string" | "number" | "integer" | "boolean" | "null";
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'null';
   description?: string;
   enum?: readonly (string | number | boolean | null)[];
 }
 
 export interface JsonSchemaArray {
-  type: "array";
+  type: 'array';
   items?: JsonSchema;
   description?: string;
 }

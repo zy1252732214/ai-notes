@@ -1,11 +1,11 @@
-import type { AiApi } from "./ai.ts";
-import type { ClipboardApi } from "./clipboard.ts";
-import type { CommandsApi } from "./commands.ts";
-import type { EditorApi } from "./editor.ts";
-import type { EventsApi } from "./events.ts";
-import type { NetworkApi } from "./network.ts";
-import type { VaultApi } from "./vault.ts";
-import type { ViewsApi } from "./views.ts";
+import type { AiApi } from './ai.js';
+import type { ClipboardApi } from './clipboard.js';
+import type { CommandsApi } from './commands.js';
+import type { EditorApi } from './editor.js';
+import type { EventsApi } from './events.js';
+import type { NetworkApi } from './network.js';
+import type { VaultApi } from './vault.js';
+import type { ViewsApi } from './views.js';
 
 /** 插件可见的宿主表面。分组之外没有别的入口。 */
 export interface AppApi {

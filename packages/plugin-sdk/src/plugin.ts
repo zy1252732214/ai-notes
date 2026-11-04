@@ -1,8 +1,8 @@
-import type { AppApi } from "./api/app.ts";
-import type { DisposableStore } from "./disposable.ts";
-import type { PluginManifest } from "./manifest.ts";
-import type { Permission } from "./permissions.ts";
-import type { PluginApiVersion } from "./version.ts";
+import type { AppApi } from './api/app.js';
+import type { DisposableStore } from './disposable.js';
+import type { PluginManifest } from './manifest.js';
+import type { Permission } from './permissions.js';
+import type { PluginApiVersion } from './version.js';
 
 /**
  * 传给 onload / onunload 的上下文。
@@ -35,7 +35,9 @@ export abstract class Plugin {
 
   abstract onload(): void | Promise<void>;
 
-  onunload(): void | Promise<void> {}
+  onunload(): void | Promise<void> {
+    // 默认什么都不做。宿主在此之后释放 ctx.subscriptions。
+  }
 }
 
 /** 函数式插件。适合没有内部状态、只在 onload 里注册扩展点的插件。 */
@@ -54,5 +56,5 @@ export type PluginConstructor = new (ctx: PluginContext) => Plugin;
 export type PluginModuleExport = PluginConstructor | PluginDefinition;
 
 export function isPluginConstructor(value: PluginModuleExport): value is PluginConstructor {
-  return typeof value === "function";
+  return typeof value === 'function';
 }

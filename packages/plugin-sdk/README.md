@@ -15,14 +15,14 @@ hello-notes/
 
 清单字段：`id`、`name`、`version`、`minAppVersion`、`author`、`description`、`main`、`permissions`、`contributes`。Schema 在 [`schema/manifest.schema.json`](schema/manifest.schema.json)。
 
-| 权限 | 作用 |
-| --- | --- |
-| `vault:read` | 读笔记。`folders` 可限制到若干文件夹 |
+| 权限          | 作用                                            |
+| ------------- | ----------------------------------------------- |
+| `vault:read`  | 读笔记。`folders` 可限制到若干文件夹            |
 | `vault:write` | 创建、修改、删除、重命名。preview v1 覆盖整个库 |
-| `ai:invoke` | `chat` / `complete`，计入额度 |
-| `network` | 只能访问声明过的域名，由宿主代发 |
-| `ui:panel` | 侧栏、标签页、状态栏、设置页 |
-| `clipboard` | 读写剪贴板文本 |
+| `ai:invoke`   | `chat` / `complete`，计入额度                   |
+| `network`     | 只能访问声明过的域名，由宿主代发                |
+| `ui:panel`    | 侧栏、标签页、状态栏、设置页                    |
+| `clipboard`   | 读写剪贴板文本                                  |
 
 ## 最小插件
 
@@ -54,25 +54,25 @@ hello-notes/
 `main.ts`：
 
 ```ts
-import { definePlugin } from "@ai-notes/plugin-sdk";
+import { definePlugin } from '@ai-notes/plugin-sdk';
 
 export default definePlugin({
   async onload(ctx) {
     ctx.subscriptions.add(
       ctx.app.commands.register({
-        id: "hello-notes.say-hello",
-        name: "统计笔记数量",
-        hotkey: { modifiers: ["Mod", "Shift"], key: "H" },
+        id: 'hello-notes.say-hello',
+        name: '统计笔记数量',
+        hotkey: { modifiers: ['Mod', 'Shift'], key: 'H' },
         callback: async () => {
           const entries = await ctx.app.vault.list();
-          const count = entries.filter((entry) => entry.kind === "note").length;
+          const count = entries.filter((entry) => entry.kind === 'note').length;
           console.log(`Vault 里有 ${count} 篇笔记`);
         },
       }),
     );
 
     ctx.subscriptions.add(
-      ctx.app.events.subscribe("note:created", (event) => {
+      ctx.app.events.subscribe('note:created', (event) => {
         console.log(`新笔记：${event.path}`);
       }),
     );
@@ -83,7 +83,7 @@ export default definePlugin({
 也可以默认导出一个类。宿主如果发现默认导出是函数，就 `new Plugin(ctx)`：
 
 ```ts
-import { Plugin, type PluginContext } from "@ai-notes/plugin-sdk";
+import { Plugin, type PluginContext } from '@ai-notes/plugin-sdk';
 
 export default class HelloNotesPlugin extends Plugin {
   constructor(ctx: PluginContext) {
@@ -92,7 +92,7 @@ export default class HelloNotesPlugin extends Plugin {
 
   override async onload(): Promise<void> {
     this.ctx.subscriptions.add(
-      this.ctx.app.events.subscribe("note:opened", (event) => {
+      this.ctx.app.events.subscribe('note:opened', (event) => {
         console.log(event.path);
       }),
     );
@@ -102,15 +102,15 @@ export default class HelloNotesPlugin extends Plugin {
 
 ## API 分组
 
-| 分组 | 能力 |
-| --- | --- |
-| `app.vault` | `read`、`list`、`create`、`modify`、`delete`、`rename`、`getMetadata` |
-| `app.commands` | `register`，快捷键用 `Hotkey` 或 `Mod+Shift+H` |
-| `app.views` | 侧栏、标签页、状态栏、设置页 |
-| `app.editor` | CodeMirror 扩展、代码块渲染器、当前编辑器 |
-| `app.ai` | `chat`、`complete`（带 `citations`）、`registerTool` |
-| `app.events` | 订阅或取消 `note:created` / `modified` / `opened` / `renamed` / `deleted` |
-| `app.clipboard` / `app.network` | 对应权限的剪贴板和代发请求 |
+| 分组                            | 能力                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `app.vault`                     | `read`、`list`、`create`、`modify`、`delete`、`rename`、`getMetadata`     |
+| `app.commands`                  | `register`，快捷键用 `Hotkey` 或 `Mod+Shift+H`                            |
+| `app.views`                     | 侧栏、标签页、状态栏、设置页                                              |
+| `app.editor`                    | CodeMirror 扩展、代码块渲染器、当前编辑器                                 |
+| `app.ai`                        | `chat`、`complete`（带 `citations`）、`registerTool`                      |
+| `app.events`                    | 订阅或取消 `note:created` / `modified` / `opened` / `renamed` / `deleted` |
+| `app.clipboard` / `app.network` | 对应权限的剪贴板和代发请求                                                |
 
 生命周期是 `onload` 和 `onunload`。`onload` 里拿到的注册项放进 `ctx.subscriptions`，宿主会在 `onunload` 之后释放。
 
@@ -120,11 +120,11 @@ export default class HelloNotesPlugin extends Plugin {
 
 ```ts
 interface RpcRequest {
-  protocol: "ai-notes.plugin-rpc";
-  version: "preview-v1";
+  protocol: 'ai-notes.plugin-rpc';
+  version: 'preview-v1';
   pluginId: string;
   id: string;
-  kind: "request" | "response" | "event" | "error";
+  kind: 'request' | 'response' | 'event' | 'error';
   method?: string;
   params?: unknown;
   result?: unknown;
@@ -140,11 +140,12 @@ interface RpcRequest {
 
 ## 类型检查
 
-在 monorepo 里由 workspace 安装依赖。这个目录也可以单独检查：
+这个包在 pnpm workspace 里，名字是 `@ai-notes/plugin-sdk`。在仓库根目录：
 
 ```bash
-npm install
-npm run typecheck
+pnpm install
+pnpm --filter @ai-notes/plugin-sdk typecheck
+pnpm turbo run lint typecheck test build
 ```
 
-`typecheck` 会用严格模式编译 `src` 和 `examples`，示例插件和一份宿主分发函数都包含在内。
+`typecheck` 用仓库统一的严格 TypeScript 配置，覆盖 `src` 和 `examples`。构建产物在 `dist/`，其他包通过 workspace 引用它。

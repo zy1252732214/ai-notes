@@ -1,4 +1,4 @@
-export type NetworkMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type NetworkMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export interface NetworkRequest {
   url: string;

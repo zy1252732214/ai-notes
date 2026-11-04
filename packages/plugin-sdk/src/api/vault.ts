@@ -15,7 +15,7 @@ export interface NoteMetadata {
   links: readonly string[];
 }
 
-export type VaultEntryKind = "note" | "folder" | "attachment";
+export type VaultEntryKind = 'note' | 'folder' | 'attachment';
 
 export interface VaultEntry {
   path: string;

@@ -1,7 +1,7 @@
-import type { Disposable } from "../disposable.ts";
-import type { JsonSchemaObject } from "../json-schema.ts";
+import type { Disposable } from '../disposable.js';
+import type { JsonSchemaObject } from '../json-schema.js';
 
-export type ChatRole = "system" | "user" | "assistant";
+export type ChatRole = 'system' | 'user' | 'assistant';
 
 export interface ChatMessage {
   role: ChatRole;

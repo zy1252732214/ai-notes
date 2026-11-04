@@ -1,6 +1,6 @@
-import type { Permission } from "./permissions.ts";
-import type { NoteEventType } from "./api/events.ts";
-import type { PluginApiVersion } from "./version.ts";
+import type { Permission } from './permissions.js';
+import type { NoteEventType } from './api/events.js';
+import type { PluginApiVersion } from './version.js';
 
 export interface PluginAuthor {
   name: string;
@@ -16,7 +16,7 @@ export interface CommandContribution {
   hotkey?: string;
 }
 
-export type ViewContributionType = "sidebar" | "tab" | "status-bar" | "settings";
+export type ViewContributionType = 'sidebar' | 'tab' | 'status-bar' | 'settings';
 
 export interface ViewContribution {
   id: string;
@@ -25,7 +25,7 @@ export interface ViewContribution {
   icon?: string;
 }
 
-export type EditorContributionKind = "highlight" | "completion" | "keymap" | "decoration" | "other";
+export type EditorContributionKind = 'highlight' | 'completion' | 'keymap' | 'decoration' | 'other';
 
 /** 声明编辑器扩展的意图。CodeMirror Extension 对象本身不能放进 manifest。 */
 export interface EditorContribution {

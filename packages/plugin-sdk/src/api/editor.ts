@@ -1,4 +1,4 @@
-import type { Disposable } from "../disposable.ts";
+import type { Disposable } from '../disposable.js';
 
 /**
  * CodeMirror 6 的 Extension。

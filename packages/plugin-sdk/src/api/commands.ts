@@ -1,7 +1,7 @@
-import type { Disposable } from "../disposable.ts";
-import type { EditorHandle } from "./editor.ts";
+import type { Disposable } from '../disposable.js';
+import type { EditorHandle } from './editor.js';
 
-export const HOTKEY_MODIFIERS = ["Mod", "Ctrl", "Alt", "Shift", "Meta"] as const;
+export const HOTKEY_MODIFIERS = ['Mod', 'Ctrl', 'Alt', 'Shift', 'Meta'] as const;
 
 export type HotkeyModifier = (typeof HOTKEY_MODIFIERS)[number];
 
@@ -32,7 +32,7 @@ export function isHotkeyModifier(value: string): value is HotkeyModifier {
 
 /** 把 `Mod+Shift+H` 解析成结构化快捷键。 */
 export function parseHotkey(source: string): Hotkey {
-  const parts = source.split("+").filter((part) => part.length > 0);
+  const parts = source.split('+').filter((part) => part.length > 0);
   const key = parts[parts.length - 1];
   if (!key || parts.length < 2) {
     throw new Error(`Invalid hotkey: ${source}`);
@@ -48,5 +48,5 @@ export function parseHotkey(source: string): Hotkey {
 }
 
 export function formatHotkey(hotkey: Hotkey): string {
-  return [...hotkey.modifiers, hotkey.key].join("+");
+  return [...hotkey.modifiers, hotkey.key].join('+');
 }
