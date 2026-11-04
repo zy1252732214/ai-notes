@@ -2,16 +2,18 @@
   "name": "@ai-notes/plugin-sdk",
   "version": "0.0.0",
   "private": true,
-  "description": "Public plugin SDK and type definitions.",
+  "description": "ai-notes 插件 API（preview v1）：类型定义、manifest JSON Schema 与沙箱 RPC 信封。",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./schema": "./schema/manifest.schema.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "schema"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
