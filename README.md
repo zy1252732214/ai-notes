@@ -18,7 +18,7 @@ Local-first, AI-native personal notes with a plugin system. Markdown on disk is 
 | `packages/ai`          | 可编译的空包                        | 后端               | 检索增强、记忆卡片、模型路由               |
 | `packages/plugin-host` | 可编译的空包                        | 前端               | 沙箱、权限、RPC                            |
 | `packages/plugin-sdk`  | 可编译的空包                        | 架构师 + 前端      | 对外插件 SDK 与类型                        |
-| `packages/ui`          | 设计令牌 `tokens.css`，组件仍待补   | UI                 | 设计系统组件                               |
+| `packages/ui`          | 设计令牌与主题辅助                  | UI                 | 设计系统；基础组件后续再加入               |
 | `plugins/*`            | 只有说明，还没有包                  | 前端               | 官方插件（每日笔记、剪藏、模板、AI 摘要）  |
 | `server`               | TypeScript 占位                     | 后端实现，运维部署 | P2 账号与端到端加密同步                    |
 
