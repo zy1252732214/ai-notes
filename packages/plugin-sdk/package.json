@@ -1,0 +1,30 @@
+{
+  "name": "@ai-notes/plugin-sdk",
+  "version": "0.1.0",
+  "description": "ai-notes 插件 API（preview v1）：类型定义、manifest JSON Schema 与沙箱 RPC 信封。",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./schema": "./schema/manifest.schema.json"
+  },
+  "types": "./src/index.ts",
+  "files": [
+    "src",
+    "schema",
+    "examples",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

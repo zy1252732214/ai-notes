@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zy1252732214/ai-notes/blob/main/packages/plugin-sdk/schema/manifest.schema.json",
+  "title": "ai-notes plugin manifest",
+  "description": "preview v1 插件清单。每个插件目录一份 manifest.json，加上 main 入口，可选 styles.css。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifestVersion", "apiVersion", "id", "name", "version", "minAppVersion", "main"],
+  "properties": {
+    "manifestVersion": {
+      "const": 1,
+      "description": "清单格式版本。与 apiVersion 独立：API 还在 preview，清单结构先固定为 1。"
+    },
+    "apiVersion": {
+      "const": "preview-v1",
+      "description": "插件所依赖的 Plugin API 版本。"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+      "description": "稳定 id，只允许小写、数字、点和短横线。安装后不可更改。"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "$ref": "#/$defs/semver"
+    },
+    "minAppVersion": {
+      "$ref": "#/$defs/semver",
+      "description": "能加载此插件的最低应用版本。"
+    },
+    "author": {
+      "oneOf": [
+        { "type": "string", "minLength": 1, "maxLength": 120 },
+        { "$ref": "#/$defs/author" }
+      ]
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "main": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.m?js$",
+      "description": "相对插件目录的入口脚本，例如 main.js。不能包含 . 或 .. 路径段。"
+    },
+    "styles": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.css$",
+      "description": "相对插件目录的样式表。不能包含 . 或 .. 路径段。"
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/permission" },
+      "description": "安装时向用户展示的权限。运行时只能使用被授予的子集。"
+    },
+    "contributes": { "$ref": "#/$defs/contributes" }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 200 }
+      }
+    },
+    "vaultPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^(?!.*(?:^|/)\\.\\.(?:/|$))(?!/)[^\\\\:*?\"<>|]+(?:/[^\\\\:*?\"<>|]+)*$",
+      "description": "Vault 相对路径，用 / 分隔，不能以 / 开头，不能包含 ..。"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^(?:\\*\\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
+      "description": "主机名，或 *.example.com 这种一级通配。不含协议、端口和路径。"
+    },
+    "hotkey": {
+      "type": "string",
+      "pattern": "^(?:(?:Mod|Ctrl|Alt|Shift|Meta)\\+)+(?:[A-Za-z0-9]+|F(?:[1-9]|1[0-9]|2[0-4]))$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+    },
+    "permission": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": {
+            "id": { "const": "vault:read" },
+            "folders": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/vaultPath" },
+              "description": "省略或留空表示整个 Vault。只限制读取。"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": { "id": { "const": "vault:write" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": { "id": { "const": "ai:invoke" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "domains"],
+          "properties": {
+            "id": { "const": "network" },
+            "domains": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/domain" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": { "id": { "const": "ui:panel" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": { "id": { "const": "clipboard" } }
+        }
+      ]
+    },
+    "contributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "扩展点的静态声明。宿主可以在执行 main 之前展示它们；真正生效仍要在 onload 里 register。",
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name"],
+            "properties": {
+              "id": { "$ref": "#/$defs/identifier" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "hotkey": { "$ref": "#/$defs/hotkey" }
+            }
+          }
+        },
+        "views": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "type"],
+            "properties": {
+              "id": { "$ref": "#/$defs/identifier" },
+              "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "type": { "enum": ["sidebar", "tab", "status-bar", "settings"] },
+              "icon": { "type": "string", "minLength": 1, "maxLength": 80 }
+            }
+          }
+        },
+        "editor": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind"],
+            "properties": {
+              "id": { "$ref": "#/$defs/identifier" },
+              "kind": { "enum": ["highlight", "completion", "keymap", "decoration", "other"] }
+            }
+          }
+        },
+        "codeBlockRenderers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["language"],
+            "properties": {
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "pattern": "^[A-Za-z0-9_+-]+$"
+              }
+            }
+          }
+        },
+        "aiTools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "description"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+              },
+              "description": { "type": "string", "minLength": 1, "maxLength": 300 }
+            }
+          }
+        },
+        "importers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "exporters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["note:created", "note:modified", "note:opened", "note:renamed", "note:deleted"]
+          }
+        }
+      }
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "extensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "pattern": "^[a-z0-9]+$"
+          }
+        }
+      }
+    }
+  }
+}

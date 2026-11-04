@@ -1,0 +1,22 @@
+{
+  "manifestVersion": 1,
+  "apiVersion": "preview-v1",
+  "id": "hello-notes",
+  "name": "Hello Notes",
+  "version": "0.1.0",
+  "minAppVersion": "0.1.0",
+  "author": "ai-notes",
+  "description": "统计笔记数量，并在新建笔记时打一条日志。",
+  "main": "main.js",
+  "permissions": [{ "id": "vault:read" }],
+  "contributes": {
+    "commands": [
+      {
+        "id": "hello-notes.say-hello",
+        "name": "统计笔记数量",
+        "hotkey": "Mod+Shift+H"
+      }
+    ],
+    "events": ["note:created"]
+  }
+}
