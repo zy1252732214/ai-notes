@@ -498,6 +498,81 @@ button:disabled {
   margin-top: var(--an-space-4);
 }
 
+.plugin-settings {
+  width: min(560px, 100%);
+}
+
+.plugin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-3);
+}
+
+.plugin-list label {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--an-space-3);
+  color: var(--an-text-primary);
+}
+
+.plugin-list p {
+  margin: var(--an-space-1) 0 0;
+}
+
+.plugin-error {
+  color: var(--an-danger);
+}
+
+.ai-tabs {
+  gap: var(--an-space-2);
+  overflow: auto;
+}
+
+.ai-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--an-space-2);
+  border-radius: var(--an-radius-sm);
+  padding: 4px 8px;
+  color: var(--an-text-secondary);
+}
+
+.ai-tab.active {
+  color: var(--an-ai);
+  background: color-mix(in srgb, var(--an-ai) 12%, transparent);
+}
+
+.plugin-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.plugin-stage.parked {
+  flex: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.plugin-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--an-bg-base);
+}
+
+.plugin-frame.is-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .palette-backdrop {
   align-items: flex-start;
   padding-top: 16vh;
