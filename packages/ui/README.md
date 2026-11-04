@@ -1,8 +1,8 @@
 # @ai-notes/ui
 
-ai-notes 的设计令牌。本包目前提供颜色、字体、间距、圆角、布局尺寸，以及深浅色切换。按钮等基础组件后续再加入。
+ai-notes 的设计令牌和基础组件。令牌覆盖颜色、字体、间距、圆角、布局尺寸，以及深浅色切换。组件是一组 React 控件，颜色和尺寸只引用这些 `--an-*` 变量。
 
-`tokens.css` 是唯一来源，桌面端通过 `@ai-notes/ui/tokens.css` 引用。`src/tokens.ts` 是同一套数值的类型化镜像，改令牌时两处一起改。
+`tokens.css` 是令牌的唯一来源，桌面端通过 `@ai-notes/ui/tokens.css` 引用。`src/tokens.ts` 是同一套数值的类型化镜像，改令牌时两处一起改。组件样式在 `components.css`，文件开头会引入令牌。
 
 ```css
 @import '@ai-notes/ui/tokens.css';
@@ -16,6 +16,48 @@ document.body.style.color = cssVar(cssVarNames.color.textPrimary);
 ```
 
 浅色变量写在 `:root`。深色变量写在 `[data-theme='dark']`。`bindTheme` 会把解析结果写到 `<html data-theme="light|dark">`：传 `'system'` 时跟随操作系统并在系统切换后更新；传 `'light'` 或 `'dark'` 时固定为手动主题。改偏好前先调用上一次返回的取消函数。
+
+## 组件
+
+```css
+@import '@ai-notes/ui/components.css';
+```
+
+```tsx
+import { Button, Dialog, ToastProvider, useToast } from '@ai-notes/ui';
+```
+
+只引用令牌的页面可以继续单独引入 `tokens.css`。用到组件时引入 `components.css` 即可，不必再引一次令牌。悬停和遮罩用 `color-mix` 从已有变量派生，不新增颜色。1px 边框是分隔线，不是间距令牌。
+
+图标由调用方传入。沿用 Lucide，线宽 1.5，尺寸 16 或 20。`IconButton` 的 `label` 会写成 `aria-label`。
+
+| 组件               | 做什么                                                                 |
+| ------------------ | ---------------------------------------------------------------------- |
+| `Button`           | `primary` / `secondary` / `ghost` / `danger`，尺寸 `md` / `sm`         |
+| `IconButton`       | 图标按钮。`pressed` 为布尔值时带 `aria-pressed`                        |
+| `Input`            | 单行输入。`label` 必填，`hint` 和 `error` 接到描述                     |
+| `Textarea`         | 多行输入，关联方式和 `Input` 相同                                      |
+| `Select`           | 按钮打开列表。方向键移动，Enter / Space 选中，Esc 关闭                 |
+| `Switch`           | `role="switch"`。点按钮或文字都会切换                                  |
+| `Tabs`             | 方向键、Home、End 移动，并跳过禁用项                                   |
+| `Tooltip`          | 悬停或聚焦显示，Esc 关闭。子节点要能聚焦                               |
+| `Dialog`           | 模态对话框。Esc、关闭按钮和点击遮罩都会关闭，Tab 在内部循环            |
+| `Toast`            | `ToastProvider` + `useToast().push()`。错误是 `alert`，其余是 `status` |
+| `CommandPalette`   | 顶部命令面板。输入过滤，上下选择，回车执行                             |
+| `SearchResultItem` | 一条搜索结果。`active` 时设置 `aria-current`                           |
+| `Panel`            | 可收起分区。标题按钮带 `aria-expanded`                                 |
+| `ChatMessage`      | `user` / `assistant` 气泡，或 `citation` 引用卡片                      |
+| `SettingsRow`      | 设置表单一行。`htmlFor` 把标签连到右侧控件                             |
+
+`Input`、`Textarea`、`Select`、`Switch` 都可以把 `labelHidden` 设上，让标签只留给读屏。设置行自己有可见标签时用这个。
+
+键盘和读屏：原生按钮保留 Enter / Space。对话框和命令面板打开时锁住背景滚动，关闭后把焦点还回去。危险通知使用 `role="alert"`，其他通知使用 `role="status"`。
+
+预览页在 `apps/ui-preview`，同一页列出每个组件的默认、禁用、错误等状态，顶栏切换浅色、深色或跟随系统：
+
+```bash
+pnpm --filter @ai-notes/ui-preview dev
+```
 
 ## 插件约定
 
