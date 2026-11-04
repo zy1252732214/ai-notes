@@ -1,5 +1,4 @@
-const CJK =
-  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
+const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
 
 /**
  * Isolate CJK characters so the unicode61 tokenizer indexes them one by one.
@@ -10,7 +9,7 @@ const CJK =
 export function segmentForSearch(text: string): string {
   return text
     .replace(CJK, (char) => ` ${char} `)
-    .replace(/\s+/g, " ")
+    .replace(/\s+/g, ' ')
     .trim();
 }
 

@@ -1,9 +1,9 @@
-import { HttpError, isAbortError } from "./errors.js";
-import type { FetchLike } from "./types.js";
+import { HttpError, isAbortError } from './errors.js';
+import type { FetchLike } from './types.js';
 
 export function joinUrl(baseUrl: string, path: string): string {
-  const base = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  const relative = path.startsWith("/") ? path.slice(1) : path;
+  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const relative = path.startsWith('/') ? path.slice(1) : path;
   return new URL(relative, base).toString();
 }
 
@@ -14,8 +14,8 @@ export function assertHttpBaseUrl(baseUrl: string): string {
   } catch {
     throw new Error(`Invalid baseUrl: ${baseUrl}`);
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("baseUrl must use http or https");
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('baseUrl must use http or https');
   }
   return baseUrl;
 }
@@ -29,21 +29,23 @@ export function parseJson(text: string, url: string): unknown {
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 }
 
-export async function* iterateLines(body: ReadableStream<Uint8Array> | null): AsyncGenerator<string> {
+export async function* iterateLines(
+  body: ReadableStream<Uint8Array> | null,
+): AsyncGenerator<string> {
   if (!body) return;
   const reader = body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
+  let buffer = '';
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split(/\r?\n/);
-      buffer = lines.pop() ?? "";
+      buffer = lines.pop() ?? '';
       for (const line of lines) yield line;
     }
     buffer += decoder.decode();
@@ -53,10 +55,12 @@ export async function* iterateLines(body: ReadableStream<Uint8Array> | null): As
   }
 }
 
-export async function* iterateSseData(body: ReadableStream<Uint8Array> | null): AsyncGenerator<string> {
+export async function* iterateSseData(
+  body: ReadableStream<Uint8Array> | null,
+): AsyncGenerator<string> {
   for await (const line of iterateLines(body)) {
     const trimmed = line.trim();
-    if (!trimmed.startsWith("data:")) continue;
+    if (!trimmed.startsWith('data:')) continue;
     const data = trimmed.slice(5).trimStart();
     if (data.length > 0) yield data;
   }
@@ -72,7 +76,7 @@ export async function postJson(
   let response: Response;
   try {
     response = await fetchImpl(url, {
-      method: "POST",
+      method: 'POST',
       headers,
       body: JSON.stringify(body),
       signal,

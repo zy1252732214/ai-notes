@@ -14,25 +14,30 @@
 ## 用法
 
 ```ts
-import { MemoryUsageStore, ModelRouter, OllamaProvider, OpenAICompatibleProvider } from "@ai-notes/ai";
+import {
+  MemoryUsageStore,
+  ModelRouter,
+  OllamaProvider,
+  OpenAICompatibleProvider,
+} from '@ai-notes/ai';
 
 const usage = new MemoryUsageStore();
 const router = new ModelRouter({
   providers: [
     new OpenAICompatibleProvider({
-      id: "deepseek",
-      baseUrl: "https://api.deepseek.com/v1",
+      id: 'deepseek',
+      baseUrl: 'https://api.deepseek.com/v1',
       apiKey: process.env.DEEPSEEK_API_KEY,
-      defaultModel: "deepseek-chat",
+      defaultModel: 'deepseek-chat',
     }),
-    new OllamaProvider({ defaultModel: "llama3.2" }),
+    new OllamaProvider({ defaultModel: 'llama3.2' }),
   ],
   usageStore: usage,
 });
 
 for await (const event of router.stream(
-  { messages: [{ role: "user", content: "用一句话总结这段笔记" }], feature: "chat" },
-  { models: { deepseek: "deepseek-chat", ollama: "llama3.2" } },
+  { messages: [{ role: 'user', content: '用一句话总结这段笔记' }], feature: 'chat' },
+  { models: { deepseek: 'deepseek-chat', ollama: 'llama3.2' } },
 )) {
   process.stdout.write(event.delta);
   if (event.done) console.log(event.usage);
@@ -45,11 +50,11 @@ for await (const event of router.stream(
 
 ## 脚本
 
+测试、lint 和构建走仓库根上的共享配置：
+
 ```bash
-pnpm install
 pnpm --filter @ai-notes/ai test
 pnpm --filter @ai-notes/ai typecheck
+pnpm --filter @ai-notes/ai lint
 pnpm --filter @ai-notes/ai build
 ```
-
-monorepo 骨架尚未合入时，在本目录执行 `pnpm install && pnpm test` 即可。

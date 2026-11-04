@@ -1,4 +1,11 @@
-import { assertHttpBaseUrl, isRecord, iterateSseData, joinUrl, parseJson, postJson } from "./http.js";
+import {
+  assertHttpBaseUrl,
+  isRecord,
+  iterateSseData,
+  joinUrl,
+  parseJson,
+  postJson,
+} from './http.js';
 import type {
   ChatRequest,
   ChatResult,
@@ -8,9 +15,9 @@ import type {
   FetchLike,
   ModelProvider,
   TokenUsage,
-} from "./types.js";
-import { estimatePromptTokens, estimateTokens, usageFromCounts } from "./usage.js";
-import { assertChatRequest, assertEmbedRequest } from "./validate.js";
+} from './types.js';
+import { estimatePromptTokens, estimateTokens, usageFromCounts } from './usage.js';
+import { assertChatRequest, assertEmbedRequest } from './validate.js';
 
 export interface OpenAICompatibleOptions {
   /** Defaults to `openai`. */
@@ -23,7 +30,7 @@ export interface OpenAICompatibleOptions {
   fetch?: FetchLike;
 }
 
-const DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 
 /**
  * Chat completions and embeddings over the OpenAI HTTP protocol.
@@ -38,7 +45,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
   private readonly fetchImpl: FetchLike;
 
   constructor(options: OpenAICompatibleOptions = {}) {
-    this.id = options.id ?? "openai";
+    this.id = options.id ?? 'openai';
     this.defaultModel = options.defaultModel;
     this.baseUrl = assertHttpBaseUrl(options.baseUrl ?? DEFAULT_BASE_URL);
     this.apiKey = options.apiKey;
@@ -49,8 +56,14 @@ export class OpenAICompatibleProvider implements ModelProvider {
   async chat(request: ChatRequest, signal?: AbortSignal): Promise<ChatResult> {
     const model = requiredModel(request.model, this.defaultModel);
     assertChatRequest(request, model);
-    const url = joinUrl(this.baseUrl, "chat/completions");
-    const response = await postJson(this.fetchImpl, url, this.headers(), chatBody(request, model, false), signal);
+    const url = joinUrl(this.baseUrl, 'chat/completions');
+    const response = await postJson(
+      this.fetchImpl,
+      url,
+      this.headers(),
+      chatBody(request, model, false),
+      signal,
+    );
     const json = parseJson(await response.text(), url);
     return readChatResult(json, this.id, model, request);
   }
@@ -58,36 +71,42 @@ export class OpenAICompatibleProvider implements ModelProvider {
   async *stream(request: ChatRequest, signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
     const model = requiredModel(request.model, this.defaultModel);
     assertChatRequest(request, model);
-    const url = joinUrl(this.baseUrl, "chat/completions");
-    const response = await postJson(this.fetchImpl, url, this.headers(), chatBody(request, model, true), signal);
-    const contentType = response.headers.get("content-type") ?? "";
-    if (contentType.includes("application/json")) {
+    const url = joinUrl(this.baseUrl, 'chat/completions');
+    const response = await postJson(
+      this.fetchImpl,
+      url,
+      this.headers(),
+      chatBody(request, model, true),
+      signal,
+    );
+    const contentType = response.headers.get('content-type') ?? '';
+    if (contentType.includes('application/json')) {
       const json = parseJson(await response.text(), url);
       yield* eventsFromCompleteChat(json, this.id, model, request);
       return;
     }
 
     let resolvedModel = model;
-    let accumulated = "";
+    let accumulated = '';
     let finishReason: string | null = null;
     let usage: TokenUsage | undefined;
     for await (const data of iterateSseData(response.body)) {
-      if (data === "[DONE]") break;
+      if (data === '[DONE]') break;
       const json = parseJson(data, url);
       if (!isRecord(json)) continue;
-      if (typeof json.model === "string" && json.model) resolvedModel = json.model;
+      if (typeof json.model === 'string' && json.model) resolvedModel = json.model;
       const choice = firstChoice(json);
-      const delta = choice ? messageText(choice.delta) : "";
+      const delta = choice ? messageText(choice.delta) : '';
       if (delta) {
         accumulated += delta;
         yield { delta, model: resolvedModel, done: false };
       }
-      if (choice && typeof choice.finish_reason === "string") finishReason = choice.finish_reason;
+      if (choice && typeof choice.finish_reason === 'string') finishReason = choice.finish_reason;
       const parsedUsage = readUsage(json.usage, this.id, resolvedModel, request, accumulated);
       if (parsedUsage) usage = parsedUsage;
     }
     yield {
-      delta: "",
+      delta: '',
       model: resolvedModel,
       done: true,
       finishReason,
@@ -107,7 +126,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
   async embed(request: EmbedRequest, signal?: AbortSignal): Promise<EmbedResult> {
     const model = requiredModel(request.model, this.defaultModel);
     const input = assertEmbedRequest(request, model);
-    const url = joinUrl(this.baseUrl, "embeddings");
+    const url = joinUrl(this.baseUrl, 'embeddings');
     const response = await postJson(
       this.fetchImpl,
       url,
@@ -119,10 +138,16 @@ export class OpenAICompatibleProvider implements ModelProvider {
     if (!isRecord(json) || !Array.isArray(json.data)) {
       throw new Error(`Embedding response from ${url} is missing data`);
     }
-    const ordered: Array<number[] | undefined> = Array.from({ length: input.length }, () => undefined);
+    const ordered: Array<number[] | undefined> = Array.from(
+      { length: input.length },
+      () => undefined,
+    );
     for (const item of json.data) {
       if (!isRecord(item) || !Array.isArray(item.embedding)) continue;
-      const index = typeof item.index === "number" ? item.index : ordered.findIndex((slot) => slot === undefined);
+      const index =
+        typeof item.index === 'number'
+          ? item.index
+          : ordered.findIndex((slot) => slot === undefined);
       if (index < 0 || index >= ordered.length) continue;
       ordered[index] = item.embedding.map((value) => Number(value));
     }
@@ -130,19 +155,24 @@ export class OpenAICompatibleProvider implements ModelProvider {
       throw new Error(`Embedding response from ${url} did not include every input`);
     }
     const usage =
-      readUsage(json.usage, this.id, typeof json.model === "string" ? json.model : model, request, "") ??
-      usageFromCounts(this.id, model, undefined, 0, estimateTokens(input.join("\n")), 0);
+      readUsage(
+        json.usage,
+        this.id,
+        typeof json.model === 'string' ? json.model : model,
+        request,
+        '',
+      ) ?? usageFromCounts(this.id, model, undefined, 0, estimateTokens(input.join('\n')), 0);
     return {
       embeddings: ordered as number[][],
-      model: typeof json.model === "string" ? json.model : model,
+      model: typeof json.model === 'string' ? json.model : model,
       usage: { ...usage, tokensOut: usage.tokensOut },
     };
   }
 
   private headers(): Record<string, string> {
     return {
-      "content-type": "application/json",
-      accept: "application/json, text/event-stream",
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
       ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
       ...this.extraHeaders,
     };
@@ -151,7 +181,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
 
 function requiredModel(requestModel: string | undefined, fallback: string | undefined): string {
   const model = requestModel ?? fallback;
-  if (!model) throw new Error("model is required");
+  if (!model) throw new Error('model is required');
   return model;
 }
 
@@ -166,15 +196,28 @@ function chatBody(request: ChatRequest, model: string, stream: boolean): Record<
   };
 }
 
-function readChatResult(json: unknown, provider: string, model: string, request: ChatRequest): ChatResult {
-  if (!isRecord(json)) throw new Error("Chat response was not an object");
+function readChatResult(
+  json: unknown,
+  provider: string,
+  model: string,
+  request: ChatRequest,
+): ChatResult {
+  if (!isRecord(json)) throw new Error('Chat response was not an object');
   const choice = firstChoice(json);
-  const content = choice ? messageText(choice.message) : "";
-  const resolvedModel = typeof json.model === "string" && json.model ? json.model : model;
-  const finishReason = choice && typeof choice.finish_reason === "string" ? choice.finish_reason : null;
+  const content = choice ? messageText(choice.message) : '';
+  const resolvedModel = typeof json.model === 'string' && json.model ? json.model : model;
+  const finishReason =
+    choice && typeof choice.finish_reason === 'string' ? choice.finish_reason : null;
   const usage =
     readUsage(json.usage, provider, resolvedModel, request, content) ??
-    usageFromCounts(provider, resolvedModel, undefined, undefined, estimatePromptTokens(request.messages), estimateTokens(content));
+    usageFromCounts(
+      provider,
+      resolvedModel,
+      undefined,
+      undefined,
+      estimatePromptTokens(request.messages),
+      estimateTokens(content),
+    );
   return { content, model: resolvedModel, finishReason, usage };
 }
 
@@ -187,7 +230,7 @@ function* eventsFromCompleteChat(
   const result = readChatResult(json, provider, model, request);
   if (result.content) yield { delta: result.content, model: result.model, done: false };
   yield {
-    delta: "",
+    delta: '',
     model: result.model,
     done: true,
     finishReason: result.finishReason,
@@ -202,37 +245,46 @@ function firstChoice(json: Record<string, unknown>): Record<string, unknown> | u
 }
 
 function messageText(message: unknown): string {
-  if (!isRecord(message)) return "";
+  if (!isRecord(message)) return '';
   const { content } = message;
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
   return content
     .map((part) => {
-      if (typeof part === "string") return part;
-      if (isRecord(part) && typeof part.text === "string") return part.text;
-      return "";
+      if (typeof part === 'string') return part;
+      if (isRecord(part) && typeof part.text === 'string') return part.text;
+      return '';
     })
-    .join("");
+    .join('');
 }
 
 function readUsage(
   raw: unknown,
   provider: string,
   model: string,
-  request: { messages?: ChatRequest["messages"]; input?: EmbedRequest["input"] },
+  request: { messages?: ChatRequest['messages']; input?: EmbedRequest['input'] },
   output: string,
 ): TokenUsage | undefined {
   if (!isRecord(raw)) return undefined;
-  const prompt = numberField(raw, "prompt_tokens");
-  const completion = numberField(raw, "completion_tokens");
+  const prompt = numberField(raw, 'prompt_tokens');
+  const completion = numberField(raw, 'completion_tokens');
   if (prompt === undefined && completion === undefined) return undefined;
   const fallbackIn = request.messages
     ? estimatePromptTokens(request.messages)
-    : estimateTokens(typeof request.input === "string" ? request.input : (request.input ?? []).join("\n"));
-  return usageFromCounts(provider, model, prompt, completion ?? 0, fallbackIn, estimateTokens(output));
+    : estimateTokens(
+        typeof request.input === 'string' ? request.input : (request.input ?? []).join('\n'),
+      );
+  return usageFromCounts(
+    provider,
+    model,
+    prompt,
+    completion ?? 0,
+    fallbackIn,
+    estimateTokens(output),
+  );
 }
 
 function numberField(record: Record<string, unknown>, key: string): number | undefined {
   const value = record[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }

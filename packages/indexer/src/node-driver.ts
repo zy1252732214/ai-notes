@@ -1,9 +1,9 @@
-import { mkdirSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
-import { join } from "node:path";
+import { mkdirSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
+import { join } from 'node:path';
 
-import type { RunResult, SqlDriver, SqlValue } from "./types.js";
-import { createIndex, type IndexOptions, type VaultIndex } from "./indexer.js";
+import type { RunResult, SqlDriver, SqlValue } from './types.js';
+import { createIndex, type IndexOptions, type VaultIndex } from './indexer.js';
 
 interface Statement {
   run(...params: SqlValue[]): { changes: number | bigint; lastInsertRowid: number | bigint };
@@ -12,15 +12,15 @@ interface Statement {
 }
 
 /**
- * Node driver backed by `node:sqlite` (SQLite with FTS5, Node 22.5+).
+ * Node driver backed by `node:sqlite` (SQLite with FTS5). The repo runs on Node 26.
  * The class stays behind {@link SqlDriver} so Tauri can substitute its own.
  */
-export function openNodeDatabase(filename: string = ":memory:"): SqlDriver {
+export function openNodeDatabase(filename: string = ':memory:'): SqlDriver {
   const db = new DatabaseSync(filename);
-  db.exec("PRAGMA foreign_keys = ON;");
-  db.exec("PRAGMA busy_timeout = 5000;");
-  if (filename !== ":memory:") {
-    db.exec("PRAGMA journal_mode = WAL;");
+  db.exec('PRAGMA foreign_keys = ON;');
+  db.exec('PRAGMA busy_timeout = 5000;');
+  if (filename !== ':memory:') {
+    db.exec('PRAGMA journal_mode = WAL;');
   }
   return new NodeSqliteDriver(db);
 }
@@ -30,9 +30,9 @@ export function openNodeDatabase(filename: string = ":memory:"): SqlDriver {
  * Deleting that file drops the index; notes on disk stay the source of truth.
  */
 export function openVaultIndex(vaultPath: string, options?: IndexOptions): VaultIndex {
-  const directory = join(vaultPath, ".ainotes");
+  const directory = join(vaultPath, '.ainotes');
   mkdirSync(directory, { recursive: true });
-  return createIndex(openNodeDatabase(join(directory, "index.db")), options);
+  return createIndex(openNodeDatabase(join(directory, 'index.db')), options);
 }
 
 class NodeSqliteDriver implements SqlDriver {
@@ -74,14 +74,14 @@ class NodeSqliteDriver implements SqlDriver {
       }
     }
     this.depth = 1;
-    this.db.exec("BEGIN IMMEDIATE;");
+    this.db.exec('BEGIN IMMEDIATE;');
     try {
       const value = fn();
-      this.db.exec("COMMIT;");
+      this.db.exec('COMMIT;');
       return value;
     } catch (error) {
       try {
-        this.db.exec("ROLLBACK;");
+        this.db.exec('ROLLBACK;');
       } catch {
         // The transaction may already be closed.
       }

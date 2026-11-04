@@ -1,4 +1,4 @@
-import { isAbortError, isFallbackError, ProviderFallbackError } from "./errors.js";
+import { isAbortError, isFallbackError, ProviderFallbackError } from './errors.js';
 import type {
   ChatRequest,
   ChatResult,
@@ -9,8 +9,8 @@ import type {
   ModelRouterOptions,
   RouteOptions,
   TokenUsage,
-} from "./types.js";
-import { toUsageRecord } from "./usage.js";
+} from './types.js';
+import { toUsageRecord } from './usage.js';
 
 /**
  * Tries providers in order. A later provider runs when the earlier one fails
@@ -23,7 +23,7 @@ export class ModelRouter {
 
   constructor(private readonly options: ModelRouterOptions) {
     if (options.providers.length === 0) {
-      throw new Error("At least one model provider is required");
+      throw new Error('At least one model provider is required');
     }
     const seen = new Set<string>();
     for (const provider of options.providers) {
@@ -38,13 +38,13 @@ export class ModelRouter {
   }
 
   chat(request: ChatRequest, route?: RouteOptions, signal?: AbortSignal): Promise<ChatResult> {
-    return this.run(request, route, signal, "chat", (provider, model) =>
+    return this.run(request, route, signal, 'chat', (provider, model) =>
       provider.chat({ ...request, model }, signal),
     );
   }
 
   embed(request: EmbedRequest, route?: RouteOptions, signal?: AbortSignal): Promise<EmbedResult> {
-    return this.run(request, route, signal, "embed", (provider, model) =>
+    return this.run(request, route, signal, 'embed', (provider, model) =>
       provider.embed({ ...request, model }, signal),
     );
   }
@@ -66,7 +66,7 @@ export class ModelRouter {
       try {
         for await (const event of provider.stream({ ...request, model }, signal)) {
           started = true;
-          if (event.usage) this.report(event.usage, request.feature, "chat");
+          if (event.usage) this.report(event.usage, request.feature, 'chat');
           yield event;
         }
         return;
@@ -134,7 +134,7 @@ export class ModelRouter {
 }
 
 function abortError(): Error {
-  const error = new Error("The operation was aborted");
-  error.name = "AbortError";
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
   return error;
 }

@@ -1,5 +1,5 @@
 export class HttpError extends Error {
-  readonly name = "HttpError";
+  override readonly name = 'HttpError';
 
   constructor(
     readonly status: number,
@@ -11,15 +11,15 @@ export class HttpError extends Error {
 }
 
 export class ProviderFallbackError extends Error {
-  readonly name = "ProviderFallbackError";
+  override readonly name = 'ProviderFallbackError';
 
   constructor(readonly errors: readonly unknown[]) {
-    super(errors.map(errorMessage).join("; ") || "All model providers failed");
+    super(errors.map(errorMessage).join('; ') || 'All model providers failed');
   }
 }
 
 export function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 /**
@@ -29,7 +29,9 @@ export function isAbortError(error: unknown): boolean {
 export function isFallbackError(error: unknown): boolean {
   if (isAbortError(error)) return false;
   if (error instanceof HttpError) {
-    return error.status === 404 || error.status === 408 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 404 || error.status === 408 || error.status === 429 || error.status >= 500
+    );
   }
   return error instanceof TypeError;
 }
@@ -40,9 +42,10 @@ function summarize(body: string): string {
       error?: { message?: string } | string;
       message?: string;
     };
-    if (typeof json.error === "string" && json.error) return json.error;
-    if (json.error && typeof json.error === "object" && json.error.message) return json.error.message;
-    if (typeof json.message === "string" && json.message) return json.message;
+    if (typeof json.error === 'string' && json.error) return json.error;
+    if (json.error && typeof json.error === 'object' && json.error.message)
+      return json.error.message;
+    if (typeof json.message === 'string' && json.message) return json.message;
   } catch {
     // Keep the raw body.
   }

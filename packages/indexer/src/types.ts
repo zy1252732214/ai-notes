@@ -77,7 +77,7 @@ export interface ChunkRecord {
   ordinal: number;
 }
 
-export type UpsertStatus = "created" | "updated" | "unchanged";
+export type UpsertStatus = 'created' | 'updated' | 'unchanged';
 
 export interface UpsertResult {
   status: UpsertStatus;

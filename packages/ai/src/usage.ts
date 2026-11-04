@@ -1,4 +1,4 @@
-import type { ChatMessage, TokenUsage, UsageRecord, UsageStore } from "./types.js";
+import type { ChatMessage, TokenUsage, UsageRecord, UsageStore } from './types.js';
 
 export function estimateTokens(text: string): number {
   if (!text) return 0;
@@ -11,7 +11,7 @@ export function estimateTokens(text: string): number {
 }
 
 export function estimatePromptTokens(messages: readonly ChatMessage[]): number {
-  return estimateTokens(messages.map((message) => message.content).join("\n"));
+  return estimateTokens(messages.map((message) => message.content).join('\n'));
 }
 
 export function usageFromCounts(
@@ -22,8 +22,8 @@ export function usageFromCounts(
   fallbackIn: number,
   fallbackOut: number,
 ): TokenUsage {
-  const hasIn = typeof tokensIn === "number" && Number.isFinite(tokensIn);
-  const hasOut = typeof tokensOut === "number" && Number.isFinite(tokensOut);
+  const hasIn = typeof tokensIn === 'number' && Number.isFinite(tokensIn);
+  const hasOut = typeof tokensOut === 'number' && Number.isFinite(tokensOut);
   const resolvedIn = hasIn ? Math.max(0, Math.trunc(tokensIn)) : fallbackIn;
   const resolvedOut = hasOut ? Math.max(0, Math.trunc(tokensOut)) : fallbackOut;
   return {

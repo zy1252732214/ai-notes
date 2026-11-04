@@ -1,31 +1,33 @@
 {
   "name": "@ai-notes/indexer",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
+  "description": "Markdown chunking and a SQLite FTS5 index for an ai-notes vault.",
   "type": "module",
-  "description": "Markdown chunking and a SQLite FTS5 index for an ai-notes vault",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.test.json --noEmit",
-    "test": "NODE_OPTIONS='--disable-warning=ExperimentalWarning' vitest run"
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --root ."
   },
-  "engines": {
-    "node": ">=22.5.0"
+  "dependencies": {
+    "@ai-notes/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.19.0",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "@types/node": "26.6.6",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

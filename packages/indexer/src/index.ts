@@ -1,10 +1,13 @@
-export { chunkMarkdown, extractTitle, parseFrontmatter } from "./chunk.js";
-export { openNodeDatabase, openVaultIndex } from "./node-driver.js";
-export { contentHash } from "./hash.js";
-export { createIndex, normalizeNotePath, VaultIndex } from "./indexer.js";
-export type { IndexOptions } from "./indexer.js";
-export { chunkVecVirtualTableSql, INDEXER_SCHEMA_VERSION, SCHEMA_SQL } from "./schema.js";
-export { segmentForSearch, toFtsQuery } from "./segment.js";
+/** Stable workspace id. Desktop and web placeholders import this. */
+export const packageId = '@ai-notes/indexer' as const;
+
+export { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
+export { openNodeDatabase, openVaultIndex } from './node-driver.js';
+export { contentHash } from './hash.js';
+export { createIndex, normalizeNotePath, VaultIndex } from './indexer.js';
+export type { IndexOptions } from './indexer.js';
+export { chunkVecVirtualTableSql, INDEXER_SCHEMA_VERSION, SCHEMA_SQL } from './schema.js';
+export { segmentForSearch, toFtsQuery } from './segment.js';
 export type {
   Chunk,
   ChunkOptions,
@@ -25,4 +28,4 @@ export type {
   UsageFilter,
   UsageInput,
   UsageSummary,
-} from "./types.js";
+} from './types.js';

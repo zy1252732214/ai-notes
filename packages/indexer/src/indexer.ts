@@ -1,7 +1,7 @@
-import { chunkMarkdown, extractTitle, parseFrontmatter } from "./chunk.js";
-import { contentHash } from "./hash.js";
-import { SCHEMA_SQL } from "./schema.js";
-import { segmentForSearch, toFtsQuery } from "./segment.js";
+import { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
+import { contentHash } from './hash.js';
+import { SCHEMA_SQL } from './schema.js';
+import { segmentForSearch, toFtsQuery } from './segment.js';
 import type {
   ChunkOptions,
   ChunkRecord,
@@ -18,10 +18,10 @@ import type {
   UsageFilter,
   UsageInput,
   UsageSummary,
-} from "./types.js";
-import { decodeFloat32, encodeFloat32 } from "./vector.js";
+} from './types.js';
+import { decodeFloat32, encodeFloat32 } from './vector.js';
 
-export interface IndexOptions extends ChunkOptions {}
+export type IndexOptions = ChunkOptions;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -54,33 +54,33 @@ export class VaultIndex {
 
   upsertNote(input: NoteInput): UpsertResult {
     const path = normalizeNotePath(input.path);
-    if (typeof input.content !== "string") {
-      throw new Error("content must be a string");
+    if (typeof input.content !== 'string') {
+      throw new Error('content must be a string');
     }
     if (!Number.isFinite(input.mtime)) {
-      throw new Error("mtime must be a finite number");
+      throw new Error('mtime must be a finite number');
     }
     const mtime = Math.trunc(input.mtime);
     return this.driver.transaction(() => {
       const hash = contentHash(input.content);
       const existing = this.driver.get<{ id: number; hash: string }>(
-        "SELECT id, hash FROM notes WHERE path = ?",
+        'SELECT id, hash FROM notes WHERE path = ?',
         [path],
       );
       if (existing && existing.hash === hash) {
-        this.driver.run("UPDATE notes SET mtime = ? WHERE id = ?", [mtime, existing.id]);
+        this.driver.run('UPDATE notes SET mtime = ? WHERE id = ?', [mtime, existing.id]);
         const count = this.driver.get<{ n: number }>(
-          "SELECT COUNT(*) AS n FROM chunks WHERE note_id = ?",
+          'SELECT COUNT(*) AS n FROM chunks WHERE note_id = ?',
           [existing.id],
         );
-        return { status: "unchanged", noteId: existing.id, chunkCount: Number(count?.n ?? 0) };
+        return { status: 'unchanged', noteId: existing.id, chunkCount: Number(count?.n ?? 0) };
       }
 
       const now = Date.now();
       const title = extractTitle(path, input.content);
       const frontmatter = JSON.stringify(parseFrontmatter(input.content)?.data ?? {});
       let noteId: number;
-      let status: UpsertResult["status"];
+      let status: UpsertResult['status'];
       if (!existing) {
         const inserted = this.driver.run(
           `INSERT INTO notes(path, title, hash, mtime, created_at, updated_at, frontmatter)
@@ -88,10 +88,10 @@ export class VaultIndex {
           [path, title, hash, mtime, now, now, frontmatter],
         );
         noteId = inserted.lastInsertRowid;
-        status = "created";
+        status = 'created';
       } else {
         noteId = existing.id;
-        status = "updated";
+        status = 'updated';
         this.removeChunks(noteId);
         this.driver.run(
           `UPDATE notes
@@ -108,12 +108,12 @@ export class VaultIndex {
   deleteNote(path: string): boolean {
     const normalized = normalizeNotePath(path);
     return this.driver.transaction(() => {
-      const existing = this.driver.get<{ id: number }>("SELECT id FROM notes WHERE path = ?", [
+      const existing = this.driver.get<{ id: number }>('SELECT id FROM notes WHERE path = ?', [
         normalized,
       ]);
       if (!existing) return false;
       this.removeChunks(existing.id);
-      this.driver.run("DELETE FROM notes WHERE id = ?", [existing.id]);
+      this.driver.run('DELETE FROM notes WHERE id = ?', [existing.id]);
       return true;
     });
   }
@@ -134,7 +134,7 @@ export class VaultIndex {
         const upserted = this.upsertNote(note);
         result[upserted.status] += 1;
       }
-      const existing = this.driver.all<{ path: string }>("SELECT path FROM notes");
+      const existing = this.driver.all<{ path: string }>('SELECT path FROM notes');
       for (const row of existing) {
         if (!byPath.has(row.path)) {
           this.deleteNote(row.path);
@@ -150,7 +150,7 @@ export class VaultIndex {
     if (!trimmed) return [];
     const limit = options.limit ?? 20;
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-      throw new Error("limit must be an integer from 1 to 100");
+      throw new Error('limit must be an integer from 1 to 100');
     }
     const ftsQuery = toFtsQuery(trimmed);
     if (ftsQuery) {
@@ -198,8 +198,8 @@ export class VaultIndex {
   }
 
   stats(): IndexStats {
-    const notes = this.driver.get<{ n: number }>("SELECT COUNT(*) AS n FROM notes");
-    const chunks = this.driver.get<{ n: number }>("SELECT COUNT(*) AS n FROM chunks");
+    const notes = this.driver.get<{ n: number }>('SELECT COUNT(*) AS n FROM notes');
+    const chunks = this.driver.get<{ n: number }>('SELECT COUNT(*) AS n FROM chunks');
     return { notes: Number(notes?.n ?? 0), chunks: Number(chunks?.n ?? 0) };
   }
 
@@ -214,7 +214,7 @@ export class VaultIndex {
       `SELECT c.id AS id, c.text AS text, c.heading_path AS headingPath, n.title AS title
        FROM chunks c JOIN notes n ON n.id = c.note_id ORDER BY c.id`,
     );
-    this.driver.exec("DROP TABLE IF EXISTS chunks_fts;");
+    this.driver.exec('DROP TABLE IF EXISTS chunks_fts;');
     this.driver.exec(`
       CREATE VIRTUAL TABLE chunks_fts USING fts5(
         text,
@@ -229,10 +229,11 @@ export class VaultIndex {
   }
 
   setChunkVector(chunkId: number, model: string, embedding: ArrayLike<number>): void {
-    if (!Number.isInteger(chunkId) || chunkId <= 0) throw new Error("chunkId must be a positive integer");
-    if (!model.trim()) throw new Error("model is required");
-    if (embedding.length === 0) throw new Error("embedding must not be empty");
-    const chunk = this.driver.get<{ id: number }>("SELECT id FROM chunks WHERE id = ?", [chunkId]);
+    if (!Number.isInteger(chunkId) || chunkId <= 0)
+      throw new Error('chunkId must be a positive integer');
+    if (!model.trim()) throw new Error('model is required');
+    if (embedding.length === 0) throw new Error('embedding must not be empty');
+    const chunk = this.driver.get<{ id: number }>('SELECT id FROM chunks WHERE id = ?', [chunkId]);
     if (!chunk) throw new Error(`Unknown chunk ${chunkId}`);
     const blob = encodeFloat32(embedding);
     this.driver.run(
@@ -248,10 +249,11 @@ export class VaultIndex {
   }
 
   getChunkVector(chunkId: number): ChunkVector | undefined {
-    const row = this.driver.get<{ model: string; dim: number | null; embedding: Uint8Array | null }>(
-      "SELECT model, dim, embedding FROM chunk_vectors WHERE chunk_id = ?",
-      [chunkId],
-    );
+    const row = this.driver.get<{
+      model: string;
+      dim: number | null;
+      embedding: Uint8Array | null;
+    }>('SELECT model, dim, embedding FROM chunk_vectors WHERE chunk_id = ?', [chunkId]);
     if (!row || !row.embedding) return undefined;
     const embedding = decodeFloat32(row.embedding);
     return { chunkId, model: row.model, dim: row.dim ?? embedding.length, embedding };
@@ -259,17 +261,25 @@ export class VaultIndex {
 
   recordUsage(entry: UsageInput): void {
     const date = entry.date ?? new Date().toISOString().slice(0, 10);
-    if (!DATE_RE.test(date)) throw new Error("date must be YYYY-MM-DD");
+    if (!DATE_RE.test(date)) throw new Error('date must be YYYY-MM-DD');
     if (!entry.provider.trim() || !entry.model.trim() || !entry.feature.trim()) {
-      throw new Error("provider, model, and feature are required");
+      throw new Error('provider, model, and feature are required');
     }
     if (!isCount(entry.tokensIn) || !isCount(entry.tokensOut)) {
-      throw new Error("token counts must be non-negative integers");
+      throw new Error('token counts must be non-negative integers');
     }
     this.driver.run(
       `INSERT INTO usage(date, provider, model, feature, tokens_in, tokens_out, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [date, entry.provider, entry.model, entry.feature, entry.tokensIn, entry.tokensOut, Date.now()],
+      [
+        date,
+        entry.provider,
+        entry.model,
+        entry.feature,
+        entry.tokensIn,
+        entry.tokensOut,
+        Date.now(),
+      ],
     );
   }
 
@@ -277,19 +287,19 @@ export class VaultIndex {
     const where: string[] = [];
     const params: SqlValue[] = [];
     if (filter.from) {
-      where.push("date >= ?");
+      where.push('date >= ?');
       params.push(filter.from);
     }
     if (filter.to) {
-      where.push("date <= ?");
+      where.push('date <= ?');
       params.push(filter.to);
     }
     if (filter.provider) {
-      where.push("provider = ?");
+      where.push('provider = ?');
       params.push(filter.provider);
     }
     if (filter.feature) {
-      where.push("feature = ?");
+      where.push('feature = ?');
       params.push(filter.feature);
     }
     const rows = this.driver.all<{
@@ -303,7 +313,7 @@ export class VaultIndex {
       `SELECT date, provider, model, feature,
               SUM(tokens_in) AS tokensIn, SUM(tokens_out) AS tokensOut
        FROM usage
-       ${where.length > 0 ? `WHERE ${where.join(" AND ")}` : ""}
+       ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
        GROUP BY date, provider, model, feature
        ORDER BY date, provider, model, feature`,
       params,
@@ -337,17 +347,19 @@ export class VaultIndex {
 
   private insertFts(rowid: number, text: string, headingPath: string, title: string): void {
     this.driver.run(
-      "INSERT INTO chunks_fts(rowid, text, heading_path, title) VALUES (?, ?, ?, ?)",
+      'INSERT INTO chunks_fts(rowid, text, heading_path, title) VALUES (?, ?, ?, ?)',
       [rowid, segmentForSearch(text), segmentForSearch(headingPath), segmentForSearch(title)],
     );
   }
 
   private removeChunks(noteId: number): void {
-    const rows = this.driver.all<{ id: number }>("SELECT id FROM chunks WHERE note_id = ?", [noteId]);
+    const rows = this.driver.all<{ id: number }>('SELECT id FROM chunks WHERE note_id = ?', [
+      noteId,
+    ]);
     for (const row of rows) {
-      this.driver.run("DELETE FROM chunks_fts WHERE rowid = ?", [row.id]);
+      this.driver.run('DELETE FROM chunks_fts WHERE rowid = ?', [row.id]);
     }
-    this.driver.run("DELETE FROM chunks WHERE note_id = ?", [noteId]);
+    this.driver.run('DELETE FROM chunks WHERE note_id = ?', [noteId]);
   }
 
   private searchFts(ftsQuery: string, rawQuery: string, limit: number): SearchHit[] {
@@ -429,22 +441,22 @@ interface FtsHitRow {
 }
 
 export function createIndex(driver: SqlDriver, options?: IndexOptions): VaultIndex {
-  driver.exec("PRAGMA foreign_keys = ON;");
+  driver.exec('PRAGMA foreign_keys = ON;');
   driver.exec(SCHEMA_SQL);
   return new VaultIndex(driver, options);
 }
 
 export function normalizeNotePath(input: string): string {
-  if (typeof input !== "string") throw new Error("path must be a string");
+  if (typeof input !== 'string') throw new Error('path must be a string');
   const parts = input
-    .replaceAll("\\", "/")
+    .replaceAll('\\', '/')
     .trim()
-    .split("/")
-    .filter((part) => part.length > 0 && part !== ".");
-  if (parts.length === 0 || parts.some((part) => part === "..")) {
+    .split('/')
+    .filter((part) => part.length > 0 && part !== '.');
+  if (parts.length === 0 || parts.some((part) => part === '..')) {
     throw new Error(`Invalid note path: ${input}`);
   }
-  return parts.join("/");
+  return parts.join('/');
 }
 
 function mapNote(row: NoteRow): NoteRecord {
@@ -475,10 +487,10 @@ function mapChunk(row: ChunkRow): ChunkRecord {
 function parseFrontmatterJson(raw: string): Record<string, string> {
   try {
     const value = JSON.parse(raw) as unknown;
-    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
     const data: Record<string, string> = {};
     for (const [key, item] of Object.entries(value)) {
-      if (typeof item === "string") data[key] = item;
+      if (typeof item === 'string') data[key] = item;
     }
     return data;
   } catch {
@@ -496,13 +508,13 @@ function buildSnippet(text: string, headingPath: string, title: string, query: s
 function highlight(text: string, query: string, radius = 32): string {
   const index = text.toLowerCase().indexOf(query.toLowerCase());
   if (index < 0) {
-    const cut = [...text].slice(0, radius * 2).join("");
+    const cut = [...text].slice(0, radius * 2).join('');
     return cut.length < text.length ? `${cut}…` : cut;
   }
   const start = Math.max(0, index - radius);
   const end = Math.min(text.length, index + query.length + radius);
-  const prefix = start > 0 ? "…" : "";
-  const suffix = end < text.length ? "…" : "";
+  const prefix = start > 0 ? '…' : '';
+  const suffix = end < text.length ? '…' : '';
   const slice = text.slice(start, end);
   const relative = index - start;
   return `${prefix}${slice.slice(0, relative)}<b>${slice.slice(relative, relative + query.length)}</b>${slice.slice(relative + query.length)}${suffix}`;
@@ -528,7 +540,7 @@ function countOccurrences(haystack: string, needle: string): number {
 }
 
 function toLikePattern(query: string): string {
-  const escaped = query.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
+  const escaped = query.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
   return `%${escaped}%`;
 }
 

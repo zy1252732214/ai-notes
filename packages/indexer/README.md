@@ -20,23 +20,23 @@
 ## 用法
 
 ```ts
-import { openVaultIndex } from "@ai-notes/indexer";
+import { openVaultIndex } from '@ai-notes/indexer';
 
-const index = openVaultIndex("/path/to/vault");
+const index = openVaultIndex('/path/to/vault');
 
 index.upsertNote({
-  path: "notes/plan.md",
-  content: "# 计划\n\n全文检索与向量索引。\n",
+  path: 'notes/plan.md',
+  content: '# 计划\n\n全文检索与向量索引。\n',
   mtime: Date.now(),
 });
 
-const hits = index.search("全文检索", { limit: 8 });
+const hits = index.search('全文检索', { limit: 8 });
 // hits[0].path, hits[0].snippet, hits[0].start
 
 index.recordUsage({
-  provider: "ollama",
-  model: "llama3.2",
-  feature: "chat",
+  provider: 'ollama',
+  model: 'llama3.2',
+  feature: 'chat',
   tokensIn: 120,
   tokensOut: 40,
 });
@@ -45,22 +45,20 @@ index.recordUsage({
 不打开文件夹时，可以自己提供驱动：
 
 ```ts
-import { createIndex, openNodeDatabase } from "@ai-notes/indexer";
+import { createIndex, openNodeDatabase } from '@ai-notes/indexer';
 
-const index = createIndex(openNodeDatabase(":memory:"), { maxChars: 500, overlap: 50 });
+const index = createIndex(openNodeDatabase(':memory:'), { maxChars: 500, overlap: 50 });
 ```
 
 Tauri 侧只需要实现 `SqlDriver` 的 `exec` / `run` / `get` / `all` / `transaction` / `close`，再传给 `createIndex`。索引逻辑不依赖 Node 的数据库模块。
 
 ## 脚本
 
-需要 Node.js 22.5 或更新版本（内置 `node:sqlite`，编译选项含 FTS5）。
+仓库使用 Node.js 26（见根目录 `.nvmrc`）。`node:sqlite` 自带 FTS5。测试、lint 和构建走仓库根上的共享配置：
 
 ```bash
-pnpm install
 pnpm --filter @ai-notes/indexer test
 pnpm --filter @ai-notes/indexer typecheck
+pnpm --filter @ai-notes/indexer lint
 pnpm --filter @ai-notes/indexer build
 ```
-
-monorepo 骨架（issue #1）尚未合入时，也可以在本目录单独执行 `pnpm install && pnpm test`。

@@ -79,7 +79,7 @@ ON CONFLICT(key) DO NOTHING;
  */
 export function chunkVecVirtualTableSql(dimensions: number): string {
   if (!Number.isInteger(dimensions) || dimensions <= 0 || dimensions > 8192) {
-    throw new Error("dimensions must be a positive integer up to 8192");
+    throw new Error('dimensions must be a positive integer up to 8192');
   }
   return `CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
   chunk_id INTEGER PRIMARY KEY,

@@ -1,4 +1,4 @@
-import { assertHttpBaseUrl, isRecord, iterateLines, joinUrl, parseJson, postJson } from "./http.js";
+import { assertHttpBaseUrl, isRecord, iterateLines, joinUrl, parseJson, postJson } from './http.js';
 import type {
   ChatRequest,
   ChatResult,
@@ -7,9 +7,9 @@ import type {
   EmbedResult,
   FetchLike,
   ModelProvider,
-} from "./types.js";
-import { estimatePromptTokens, estimateTokens, usageFromCounts } from "./usage.js";
-import { assertChatRequest, assertEmbedRequest } from "./validate.js";
+} from './types.js';
+import { estimatePromptTokens, estimateTokens, usageFromCounts } from './usage.js';
+import { assertChatRequest, assertEmbedRequest } from './validate.js';
 
 export interface OllamaOptions {
   /** Defaults to `ollama`. */
@@ -22,7 +22,7 @@ export interface OllamaOptions {
   fetch?: FetchLike;
 }
 
-const DEFAULT_BASE_URL = "http://127.0.0.1:11434";
+const DEFAULT_BASE_URL = 'http://127.0.0.1:11434';
 
 /** Local Ollama chat (`/api/chat`) and embeddings (`/api/embed`). */
 export class OllamaProvider implements ModelProvider {
@@ -34,7 +34,7 @@ export class OllamaProvider implements ModelProvider {
   private readonly fetchImpl: FetchLike;
 
   constructor(options: OllamaOptions = {}) {
-    this.id = options.id ?? "ollama";
+    this.id = options.id ?? 'ollama';
     this.defaultModel = options.defaultModel;
     this.baseUrl = assertHttpBaseUrl(options.baseUrl ?? DEFAULT_BASE_URL);
     this.apiKey = options.apiKey;
@@ -45,16 +45,22 @@ export class OllamaProvider implements ModelProvider {
   async chat(request: ChatRequest, signal?: AbortSignal): Promise<ChatResult> {
     const model = requiredModel(request.model, this.defaultModel);
     assertChatRequest(request, model);
-    const url = joinUrl(this.baseUrl, "api/chat");
-    const response = await postJson(this.fetchImpl, url, this.headers(), chatBody(request, model, false), signal);
+    const url = joinUrl(this.baseUrl, 'api/chat');
+    const response = await postJson(
+      this.fetchImpl,
+      url,
+      this.headers(),
+      chatBody(request, model, false),
+      signal,
+    );
     const json = parseJson(await response.text(), url);
     if (!isRecord(json)) throw new Error(`Chat response from ${url} was not an object`);
     const content = messageContent(json.message);
-    const resolved = typeof json.model === "string" && json.model ? json.model : model;
+    const resolved = typeof json.model === 'string' && json.model ? json.model : model;
     return {
       content,
       model: resolved,
-      finishReason: json.done === true ? "stop" : null,
+      finishReason: json.done === true ? 'stop' : null,
       usage: ollamaUsage(json, this.id, resolved, request, content),
     };
   }
@@ -62,10 +68,16 @@ export class OllamaProvider implements ModelProvider {
   async *stream(request: ChatRequest, signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
     const model = requiredModel(request.model, this.defaultModel);
     assertChatRequest(request, model);
-    const url = joinUrl(this.baseUrl, "api/chat");
-    const response = await postJson(this.fetchImpl, url, this.headers(), chatBody(request, model, true), signal);
+    const url = joinUrl(this.baseUrl, 'api/chat');
+    const response = await postJson(
+      this.fetchImpl,
+      url,
+      this.headers(),
+      chatBody(request, model, true),
+      signal,
+    );
     let resolvedModel = model;
-    let accumulated = "";
+    let accumulated = '';
     let last: Record<string, unknown> | undefined;
     for await (const line of iterateLines(response.body)) {
       const trimmed = line.trim();
@@ -73,7 +85,7 @@ export class OllamaProvider implements ModelProvider {
       const json = parseJson(trimmed, url);
       if (!isRecord(json)) continue;
       last = json;
-      if (typeof json.model === "string" && json.model) resolvedModel = json.model;
+      if (typeof json.model === 'string' && json.model) resolvedModel = json.model;
       const delta = messageContent(json.message);
       if (delta) {
         accumulated += delta;
@@ -81,17 +93,17 @@ export class OllamaProvider implements ModelProvider {
       }
       if (json.done === true) {
         yield {
-          delta: "",
+          delta: '',
           model: resolvedModel,
           done: true,
-          finishReason: "stop",
+          finishReason: 'stop',
           usage: ollamaUsage(json, this.id, resolvedModel, request, accumulated),
         };
         return;
       }
     }
     yield {
-      delta: "",
+      delta: '',
       model: resolvedModel,
       done: true,
       finishReason: null,
@@ -102,7 +114,7 @@ export class OllamaProvider implements ModelProvider {
   async embed(request: EmbedRequest, signal?: AbortSignal): Promise<EmbedResult> {
     const model = requiredModel(request.model, this.defaultModel);
     const input = assertEmbedRequest(request, model);
-    const url = joinUrl(this.baseUrl, "api/embed");
+    const url = joinUrl(this.baseUrl, 'api/embed');
     const response = await postJson(
       this.fetchImpl,
       url,
@@ -113,8 +125,8 @@ export class OllamaProvider implements ModelProvider {
     const json = parseJson(await response.text(), url);
     if (!isRecord(json)) throw new Error(`Embedding response from ${url} was not an object`);
     const embeddings = readEmbeddings(json, input.length, url);
-    const resolved = typeof json.model === "string" && json.model ? json.model : model;
-    const promptTokens = numberField(json, "prompt_eval_count");
+    const resolved = typeof json.model === 'string' && json.model ? json.model : model;
+    const promptTokens = numberField(json, 'prompt_eval_count');
     return {
       embeddings,
       model: resolved,
@@ -123,7 +135,7 @@ export class OllamaProvider implements ModelProvider {
         resolved,
         promptTokens,
         0,
-        estimateTokens(input.join("\n")),
+        estimateTokens(input.join('\n')),
         0,
       ),
     };
@@ -131,8 +143,8 @@ export class OllamaProvider implements ModelProvider {
 
   private headers(): Record<string, string> {
     return {
-      "content-type": "application/json",
-      accept: "application/json, application/x-ndjson",
+      'content-type': 'application/json',
+      accept: 'application/json, application/x-ndjson',
       ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
       ...this.extraHeaders,
     };
@@ -141,7 +153,7 @@ export class OllamaProvider implements ModelProvider {
 
 function requiredModel(requestModel: string | undefined, fallback: string | undefined): string {
   const model = requestModel ?? fallback;
-  if (!model) throw new Error("model is required");
+  if (!model) throw new Error('model is required');
   return model;
 }
 
@@ -158,8 +170,8 @@ function chatBody(request: ChatRequest, model: string, stream: boolean): Record<
 }
 
 function messageContent(message: unknown): string {
-  if (!isRecord(message)) return "";
-  return typeof message.content === "string" ? message.content : "";
+  if (!isRecord(message)) return '';
+  return typeof message.content === 'string' ? message.content : '';
 }
 
 function ollamaUsage(
@@ -172,8 +184,8 @@ function ollamaUsage(
   return usageFromCounts(
     provider,
     model,
-    numberField(json, "prompt_eval_count"),
-    numberField(json, "eval_count"),
+    numberField(json, 'prompt_eval_count'),
+    numberField(json, 'eval_count'),
     estimatePromptTokens(request.messages),
     estimateTokens(output),
   );
@@ -197,11 +209,11 @@ function readEmbeddings(json: Record<string, unknown>, expected: number, url: st
 
 function asVector(value: unknown): number[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
-  if (!value.every((item) => typeof item === "number" && Number.isFinite(item))) return null;
+  if (!value.every((item) => typeof item === 'number' && Number.isFinite(item))) return null;
   return value;
 }
 
 function numberField(record: Record<string, unknown>, key: string): number | undefined {
   const value = record[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
