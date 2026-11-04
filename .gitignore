@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# tauri / rust
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# env and secrets — never commit updater keys or signing material
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

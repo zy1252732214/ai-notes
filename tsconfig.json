@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "incremental": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "files": [],
+  "references": [
+    { "path": "apps/desktop/tsconfig.build.json" },
+    { "path": "apps/web/tsconfig.build.json" },
+    { "path": "packages/ai/tsconfig.build.json" },
+    { "path": "packages/core/tsconfig.build.json" },
+    { "path": "packages/editor/tsconfig.build.json" },
+    { "path": "packages/indexer/tsconfig.build.json" },
+    { "path": "packages/plugin-host/tsconfig.build.json" },
+    { "path": "packages/plugin-sdk/tsconfig.build.json" },
+    { "path": "packages/ui/tsconfig.build.json" },
+    { "path": "server/tsconfig.build.json" }
+  ]
+}
