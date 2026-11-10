@@ -55,7 +55,7 @@ button:disabled {
   align-items: center;
   gap: var(--an-space-3);
   padding: 0 var(--an-space-2) 0 var(--an-space-3);
-  border-bottom: 1px solid var(--an-border-default);
+  border-bottom: 1px solid var(--an-border-subtle);
 }
 
 .topbar-side,
@@ -176,7 +176,7 @@ button:disabled {
   gap: var(--an-space-2);
   height: 28px;
   padding: 0 var(--an-space-2);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-base);
   color: var(--an-text-tertiary);
@@ -193,7 +193,7 @@ button:disabled {
 
 .command-button kbd {
   padding: 0 var(--an-space-1);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-sm);
   background: var(--an-bg-subtle);
   font-family: var(--an-font-ui);
@@ -270,14 +270,14 @@ button:disabled {
   flex-direction: column;
   gap: var(--an-space-2);
   padding: var(--an-space-3) var(--an-space-2) var(--an-space-3) var(--an-space-3);
-  border-right: 1px solid var(--an-border-default);
+  border-right: 1px solid var(--an-border-subtle);
   overflow: hidden;
 }
 
 .ai-panel {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--an-border-default);
+  border-left: 1px solid var(--an-border-subtle);
   overflow: hidden;
 }
 
@@ -292,7 +292,7 @@ button:disabled {
   justify-content: flex-start;
   padding: var(--an-space-2) var(--an-space-3);
   color: var(--an-text-primary);
-  border-bottom: 1px solid var(--an-border-default);
+  border-bottom: 1px solid var(--an-border-subtle);
 }
 
 .ai-body {
@@ -333,7 +333,7 @@ button:disabled {
   align-items: stretch;
   flex-direction: column;
   padding: var(--an-space-3);
-  border-top: 1px solid var(--an-border-default);
+  border-top: 1px solid var(--an-border-subtle);
 }
 
 .ai-composer textarea,
@@ -341,7 +341,7 @@ button:disabled {
 .modal input,
 .palette input {
   width: 100%;
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-base);
   padding: var(--an-space-2) var(--an-space-3);
@@ -352,11 +352,12 @@ button:disabled {
   min-height: 72px;
 }
 
-.search-field input:focus,
-.modal input:focus,
-.palette input:focus,
-.ai-composer textarea:focus {
-  outline: 2px solid color-mix(in srgb, var(--an-accent) 40%, transparent);
+.search-field input:focus-visible,
+.modal input:focus-visible,
+.palette input:focus-visible,
+.ai-composer textarea:focus-visible {
+  outline: 2px solid var(--an-accent);
+  outline-offset: 2px;
   border-color: var(--an-accent);
 }
 
@@ -452,6 +453,11 @@ button:disabled {
 .ai-citation:hover .an-chat--citation,
 .ai-citation:focus-visible .an-chat--citation {
   background: color-mix(in srgb, var(--an-ai) 18%, var(--an-ai-subtle));
+}
+
+.ai-citation:hover .an-chat__source,
+.ai-citation:focus-visible .an-chat__source {
+  color: var(--an-text-secondary);
 }
 
 .wiki-jump {
@@ -644,7 +650,7 @@ button:disabled {
 .welcome-badge {
   padding: var(--an-space-1) var(--an-space-2);
   border-radius: var(--an-radius-sm);
-  background: color-mix(in srgb, var(--an-accent) 14%, var(--an-bg-subtle));
+  background: var(--an-bg-subtle);
   color: var(--an-accent);
   font-size: var(--an-font-size-small);
   line-height: var(--an-line-small);
@@ -663,7 +669,7 @@ button:disabled {
   margin: var(--an-space-4) 0 0;
   max-width: 40rem;
   padding: var(--an-space-3);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-subtle);
   color: var(--an-text-secondary);
@@ -674,7 +680,7 @@ button:disabled {
 .button {
   height: 32px;
   padding: 0 var(--an-space-3);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-elevated);
 }
@@ -701,7 +707,7 @@ button:disabled {
   align-items: center;
   gap: var(--an-space-3);
   padding: 0 var(--an-space-3);
-  border-top: 1px solid var(--an-border-default);
+  border-top: 1px solid var(--an-border-subtle);
   color: var(--an-text-tertiary);
   font-size: var(--an-font-size-small);
   line-height: var(--an-line-small);
@@ -760,7 +766,7 @@ button:disabled {
 .palette {
   width: min(440px, 100%);
   background: var(--an-bg-elevated);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-xl);
   padding: var(--an-space-4);
   box-shadow: var(--an-shadow-lg);
@@ -800,9 +806,18 @@ button:disabled {
 
 .plugin-list li {
   padding: var(--an-space-3);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-base);
+}
+
+.plugin-list input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--an-accent);
+  border: 1px solid var(--an-border-control);
+  border-radius: var(--an-radius-sm);
 }
 
 .plugin-list label {
@@ -995,7 +1010,7 @@ button:disabled {
   gap: 6px;
   height: 28px;
   padding: 0 8px 0 10px;
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-base);
   color: var(--an-text-primary);
@@ -1074,7 +1089,7 @@ button:disabled {
 .review-card,
 .review-done,
 .card-draft {
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-lg);
   background: var(--an-bg-elevated);
 }

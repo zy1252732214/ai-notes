@@ -67,7 +67,7 @@ body {
 }
 .kicker { margin: 0; color: #3c6e62; font-size: 12px; letter-spacing: 0.04em; }
 h1 { margin: 8px 0 0; font-size: 18px; line-height: 1.35; }
-.path { margin: 4px 0 0; color: #8a847c; font-size: 12px; word-break: break-all; }
+.path { margin: 4px 0 0; color: #736d61; font-size: 12px; word-break: break-all; }
 .figure {
   margin: 16px 0 0;
   font-size: 42px;

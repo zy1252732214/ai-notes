@@ -34,7 +34,7 @@ body {
   gap: var(--an-space-4);
   min-height: var(--an-topbar-height);
   padding: var(--an-space-2) var(--an-space-4);
-  border-bottom: 1px solid var(--an-border-default);
+  border-bottom: 1px solid var(--an-border-subtle);
   background: var(--an-bg-subtle);
 }
 
@@ -90,7 +90,7 @@ body {
   max-height: calc(100vh - var(--an-topbar-height));
   padding: var(--an-space-4);
   overflow: auto;
-  border-right: 1px solid var(--an-border-default);
+  border-right: 1px solid var(--an-border-subtle);
   background: var(--an-bg-subtle);
 }
 
@@ -134,7 +134,7 @@ body {
   gap: var(--an-space-4);
   max-width: var(--an-editor-max-width);
   padding: var(--an-space-4);
-  border: 1px solid var(--an-border-default);
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-lg);
   background: var(--an-bg-base);
 }
@@ -189,6 +189,6 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     border-right: 0;
-    border-bottom: 1px solid var(--an-border-default);
+    border-bottom: 1px solid var(--an-border-subtle);
   }
 }

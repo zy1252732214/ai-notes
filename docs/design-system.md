@@ -26,17 +26,31 @@ ai-notes 的界面按本地笔记工具来做：安静、留白充足、字优�
 | `--an-bg-elevated`    | 弹窗、浮层、命令面板         | `#fffcf9` | `#2c2b28` |
 | `--an-text-primary`   | 正文、标题                   | `#1c1917` | `#f4f1ea` |
 | `--an-text-secondary` | 次要说明                     | `#57534e` | `#c4bfb4` |
-| `--an-text-tertiary`  | 占位符、时间戳、元信息       | `#8a847c` | `#8d877c` |
-| `--an-border-default` | 分割线、输入框               | `#e6e1d8` | `#3a3834` |
+| `--an-text-tertiary`  | 占位符、时间戳、元信息       | `#736d61` | `#9b917f` |
+| `--an-border-subtle`  | 纯分隔线和卡片轮廓           | `#e6e1d8` | `#3a3834` |
+| `--an-border-control` | 输入框、开关、复选框         | `#948a7f` | `#7d7368` |
 | `--an-accent`         | 主按钮、链接、焦点环、当前项 | `#3c6e62` | `#9dc7b8` |
 | `--an-on-accent`      | 主按钮上的文字               | `#fbfaf8` | `#14201c` |
 | `--an-ai`             | 与强调色相同                 | `#3c6e62` | `#9dc7b8` |
 | `--an-ai-subtle`      | 很淡的回答底色               | `#eef3f1` | `#24302c` |
-| `--an-success`        | 保存成功                     | `#2f7d4a` | `#7dcea0` |
-| `--an-warning`        | 未保存、需要注意             | `#a16207` | `#e0b15a` |
+| `--an-success`        | 保存成功                     | `#2c7c4a` | `#7dcea0` |
+| `--an-warning`        | 未保存、需要注意             | `#9c6005` | `#e0b15a` |
 | `--an-danger`         | 删除、错误                   | `#b42318` | `#f0a097` |
+| `--an-selection`      | 编辑器选区底色               | `#75988f` | `#5c7168` |
 
-悬停和选中用 `color-mix` 从已有变量派生，不新增色板。1px 边框是分隔线，不是间距。
+悬停用 `color-mix` 从已有变量派生。分隔线用 `--an-border-subtle`，控件边界用 `--an-border-control`。1px 边框不是间距。
+
+## 对比度
+
+按 WCAG 2.1 AA。`packages/ui/src/contrast.test.ts` 解析 `tokens.css`，两种主题都要过。
+
+- 正文、次要文字、三级文字，放在 `--an-bg-base`、`--an-bg-subtle`、`--an-bg-elevated` 上，至少 4.5:1。
+- 作为文字使用的强调色、成功色、警告色、危险色，相对编辑区背景至少 4.5:1。主按钮上的文字相对强调色也是 4.5:1。
+- 输入框、开关轨道、复选框用 `--an-border-control`，相对所在背景至少 3:1。
+- 纯分隔线、面板和对话框轮廓用 `--an-border-subtle`。它故意浅于控件边框，不拿来画输入框，避免整页变重。
+- 选区是预先混合好的实色：浅色大约 70% 强调色叠在纸上，深色大约 50% 叠在炭色上。正文色落在选区上至少 4.5:1。
+- 焦点环是 `outline: 2px solid var(--an-accent)`，`outline-offset: 2px`。不用半透明强调色。
+- 提问气泡上的「提问」，以及悬停或聚焦的引用路径，用 `--an-text-secondary`。那两处底色比纸更深，三级文字不够 4.5:1。引导上的「推荐」放在 `--an-bg-subtle` 上，不用更深的强调色混色。
 
 ## 字体
 

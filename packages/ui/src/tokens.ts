@@ -10,7 +10,8 @@ type ColorScale = {
   readonly textPrimary: string;
   readonly textSecondary: string;
   readonly textTertiary: string;
-  readonly borderDefault: string;
+  readonly borderSubtle: string;
+  readonly borderControl: string;
   readonly accent: string;
   readonly ai: string;
   readonly aiSubtle: string;
@@ -18,6 +19,7 @@ type ColorScale = {
   readonly warning: string;
   readonly danger: string;
   readonly onAccent: string;
+  readonly selection: string;
 };
 
 type TypeStyle = {
@@ -33,15 +35,17 @@ export const colors = {
     bgElevated: '#fffcf9',
     textPrimary: '#1c1917',
     textSecondary: '#57534e',
-    textTertiary: '#8a847c',
-    borderDefault: '#e6e1d8',
+    textTertiary: '#736d61',
+    borderSubtle: '#e6e1d8',
+    borderControl: '#948a7f',
     accent: '#3c6e62',
     ai: '#3c6e62',
     aiSubtle: '#eef3f1',
-    success: '#2f7d4a',
-    warning: '#a16207',
+    success: '#2c7c4a',
+    warning: '#9c6005',
     danger: '#b42318',
     onAccent: '#fbfaf8',
+    selection: '#75988f',
   },
   dark: {
     bgBase: '#1c1b19',
@@ -49,8 +53,9 @@ export const colors = {
     bgElevated: '#2c2b28',
     textPrimary: '#f4f1ea',
     textSecondary: '#c4bfb4',
-    textTertiary: '#8d877c',
-    borderDefault: '#3a3834',
+    textTertiary: '#9b917f',
+    borderSubtle: '#3a3834',
+    borderControl: '#7d7368',
     accent: '#9dc7b8',
     ai: '#9dc7b8',
     aiSubtle: '#24302c',
@@ -58,6 +63,7 @@ export const colors = {
     warning: '#e0b15a',
     danger: '#f0a097',
     onAccent: '#14201c',
+    selection: '#5c7168',
   },
 } as const satisfies Record<'light' | 'dark', ColorScale>;
 
@@ -131,7 +137,8 @@ export const cssVarNames = {
     textPrimary: '--an-text-primary',
     textSecondary: '--an-text-secondary',
     textTertiary: '--an-text-tertiary',
-    borderDefault: '--an-border-default',
+    borderSubtle: '--an-border-subtle',
+    borderControl: '--an-border-control',
     accent: '--an-accent',
     ai: '--an-ai',
     aiSubtle: '--an-ai-subtle',
@@ -139,6 +146,7 @@ export const cssVarNames = {
     warning: '--an-warning',
     danger: '--an-danger',
     onAccent: '--an-on-accent',
+    selection: '--an-selection',
   },
   fontFamily: {
     ui: '--an-font-ui',
