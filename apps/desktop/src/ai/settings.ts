@@ -87,6 +87,44 @@ export function loadAiSettings(store: KeyValueStore = localStorage): AiSettings 
   return overlay(readStore(store));
 }
 
+/**
+ * 本地是否已经有一份模型设置。
+ * 读失败或内容损坏时视为已保存，避免用检测结果覆盖用户的数据。
+ */
+export function hasSavedAiSettings(store: KeyValueStore = localStorage): boolean {
+  let raw: string | null;
+  try {
+    raw = store.getItem(AI_SETTINGS_KEY);
+  } catch {
+    return true;
+  }
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return typeof parsed === 'object' && parsed !== null;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * 只在还没有模型设置时写入。
+ * 空的 API Key 不会拿去删系统钥匙串里已有的密钥。
+ */
+export function prefillAiSettings(
+  settings: AiSettings,
+  store: KeyValueStore = localStorage,
+): Promise<boolean> {
+  if (hasSavedAiSettings(store)) return Promise.resolve(false);
+  const next = normalizeAiSettings(settings);
+  let applied = false;
+  return enqueue(async () => {
+    if (hasSavedAiSettings(store)) return;
+    writeStore(store, keychain && cache ? stripKeys(next) : next);
+    applied = true;
+  }).then(() => applied);
+}
+
 export function saveAiSettings(
   settings: AiSettings,
   store: KeyValueStore = localStorage,

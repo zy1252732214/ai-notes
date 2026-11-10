@@ -621,6 +621,56 @@ button:disabled {
   color: var(--an-text-secondary);
 }
 
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--an-space-3);
+  margin: var(--an-space-6) 0 var(--an-space-3);
+}
+
+.welcome-primary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--an-space-2);
+}
+
+.button.welcome-primary {
+  height: 40px;
+  padding: 0 var(--an-space-4);
+  font-weight: 600;
+}
+
+.welcome-badge {
+  padding: var(--an-space-1) var(--an-space-2);
+  border-radius: var(--an-radius-sm);
+  background: color-mix(in srgb, var(--an-accent) 14%, var(--an-bg-subtle));
+  color: var(--an-accent);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+  font-weight: 600;
+}
+
+.empty-state .welcome-kicker {
+  margin: 0 0 var(--an-space-2);
+  color: var(--an-accent);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+  font-weight: 600;
+}
+
+.empty-state .welcome-note {
+  margin: var(--an-space-4) 0 0;
+  max-width: 40rem;
+  padding: var(--an-space-3);
+  border: 1px solid var(--an-border-default);
+  border-radius: var(--an-radius-md);
+  background: var(--an-bg-subtle);
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-ui);
+}
+
 .button {
   height: 32px;
   padding: 0 var(--an-space-3);

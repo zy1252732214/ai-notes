@@ -75,7 +75,7 @@ pnpm install
 pnpm --filter @ai-notes/desktop exec vite
 ```
 
-打开 <http://localhost:1420>，点 **打开示例库**。这个库只在内存里。**打开文件夹** 会写真实文件；在浏览器里需要 File System Access API（Chromium）。
+打开 <http://localhost:1420>。第一次进入、还没打开笔记库、也还没保存模型设置时，引导界面会把 **打开示例库** 放在最前面。这个库只在内存里，不注册、不填 API Key 也能试编辑、搜索和问答。**打开本地文件夹** 仍然保留，用来打开真实目录；在浏览器里需要 File System Access API（Chromium）。打开过笔记库，或已经保存过模型设置之后，再次启动会回到原来的选库界面（**打开文件夹** / **打开示例库**），不会把已经打开的库拉回引导。
 
 桌面窗口（Linux 需要 WebKitGTK 4.1）：
 
@@ -105,7 +105,9 @@ OLLAMA_ORIGINS=http://localhost:1420,http://tauri.localhost ollama serve
 ollama pull llama3.2
 ```
 
-在应用里打开 **模型设置**：
+如果这次是第一次使用，并且本机 Ollama 已经在 `http://127.0.0.1:11434` 上、能列出本地模型（`GET /api/tags`），引导会替你填好 **模型设置**：提供方 Ollama、上面的地址、空的 API Key，以及一个已经安装的聊天模型。优先选常见的小模型，例如 `llama3.2`、`llama3.1` 或 Qwen，不会把嵌入模型当成聊天模型。装了 `nomic-embed-text` 时，界面会建议用它做嵌入，但这个字段仍留空，搜索继续只用全文，直到你自己打开。引导不会执行 `ollama pull`，也不会联网下载模型。连不上 Ollama 时，示例库和编辑器照常打开，只提示先运行 `ollama serve`；浏览器预览还要设置 `OLLAMA_ORIGINS`。已经保存过的模型设置不会被覆盖，也不会再去探测。
+
+也可以自己打开 **模型设置**：
 
 | 字段     | 值                                                                           |
 | -------- | ---------------------------------------------------------------------------- |

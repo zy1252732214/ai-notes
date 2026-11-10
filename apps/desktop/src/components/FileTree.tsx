@@ -85,7 +85,7 @@ export function FileTree() {
           <p className="sidebar-empty">{filter.trim() ? '没有匹配的笔记' : '这个库里还没有笔记'}</p>
         )
       ) : (
-        <p className="sidebar-empty">打开一个文件夹后，这里会列出其中的 Markdown 笔记。</p>
+        <p className="sidebar-empty">打开示例库或本地文件夹后，这里会列出 Markdown 笔记。</p>
       )}
     </aside>
   );
