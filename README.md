@@ -12,13 +12,14 @@ Local-first, AI-native personal notes with a plugin system. Markdown on disk is 
 | ---------------------- | ----------------------------------- | ------------------ | ------------------------------------------ |
 | `apps/desktop`         | Tauri 2 + Vite + React 壳           | 前端               | 文件树、编辑器、保存；SQLite 仍待索引模块  |
 | `apps/web`             | TypeScript 占位，**不是** Vite 应用 | 前端               | Web 入口，复用 `packages/`                 |
+| `apps/ui-preview`      | Vite 组件预览页                     | UI                 | 每个基础组件的状态，以及浅色 / 深色切换    |
 | `packages/core`        | Vault 与可替换的文件系统            | 前端，架构师定接口 | 文件树、增删改名；文档模型与命令系统后续补 |
 | `packages/editor`      | CodeMirror 6 Markdown 编辑器        | 前端               | 原文高亮、`[[双链]]`、Ctrl/Cmd+S           |
 | `packages/indexer`     | 可编译的空包                        | 后端               | 分块、FTS5、sqlite-vec                     |
 | `packages/ai`          | 可编译的空包                        | 后端               | 检索增强、记忆卡片、模型路由               |
 | `packages/plugin-host` | 可编译的空包                        | 前端               | 沙箱、权限、RPC                            |
 | `packages/plugin-sdk`  | 可编译的空包                        | 架构师 + 前端      | 对外插件 SDK 与类型                        |
-| `packages/ui`          | 设计令牌与主题辅助                  | UI                 | 设计系统；基础组件后续再加入               |
+| `packages/ui`          | 设计令牌、主题与基础组件            | UI                 | Button、表单、对话框、命令面板、聊天消息   |
 | `plugins/*`            | 只有说明，还没有包                  | 前端               | 官方插件（每日笔记、剪藏、模板、AI 摘要）  |
 | `server`               | TypeScript 占位                     | 后端实现，运维部署 | P2 账号与端到端加密同步                    |
 
@@ -170,7 +171,7 @@ Linux 依赖按 Tauri 2 的 Debian 要求装在 `ubuntu-24.04` 上（WebKitGTK 4
 
 ### Layout
 
-`apps/desktop` is the Tauri 2 + Vite + React shell: open a folder, edit Markdown, and save it. `packages/core` is the vault filesystem port, and `packages/editor` is the CodeMirror 6 editor. `apps/web`, indexer, AI, and plugins are still placeholders.
+`apps/desktop` is the Tauri 2 + Vite + React shell: open a folder, edit Markdown, and save it. `packages/core` is the vault filesystem port, and `packages/editor` is the CodeMirror 6 editor. `packages/ui` holds the design tokens and the base components; `apps/ui-preview` renders them. `apps/web`, indexer, AI, and plugins are still placeholders.
 
 ### Commands
 
