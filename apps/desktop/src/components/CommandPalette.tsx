@@ -2,6 +2,13 @@ import { VaultError, type VaultNode } from '@ai-notes/core';
 import type { PluginItemSnapshot } from '@ai-notes/plugin-host';
 import { CommandPalette as Palette, type CommandItem } from '@ai-notes/ui';
 import { useMemo, useSyncExternalStore } from 'react';
+import {
+  collectHandwrittenCards,
+  openGenerateFromNote,
+  openGenerateFromSelection,
+  openManualCard,
+  openReview,
+} from '../cards/actions';
 import { openFolderVault } from '../fs/openVault';
 import { pluginController } from '../plugins/controller';
 import { listNoteFiles } from '../search/files';
@@ -12,13 +19,14 @@ export function CommandPalette() {
   const setCommandOpen = useAppStore((state) => state.setCommandOpen);
   const tree = useAppStore((state) => state.tree);
   const vault = useAppStore((state) => state.vault);
+  const dueCount = useAppStore((state) => state.dueCount);
   const pluginSnapshot = useSyncExternalStore(
     pluginController.subscribe,
     pluginController.getSnapshot,
   );
   const items = useMemo(
-    () => buildItems(tree, Boolean(vault), pluginSnapshot.items),
-    [tree, vault, pluginSnapshot],
+    () => buildItems(tree, Boolean(vault), pluginSnapshot.items, dueCount),
+    [tree, vault, pluginSnapshot, dueCount],
   );
 
   return (
@@ -38,6 +46,7 @@ function buildItems(
   tree: readonly VaultNode[],
   hasVault: boolean,
   plugins: readonly PluginItemSnapshot[],
+  dueCount: number,
 ): CommandItem[] {
   const commands: CommandItem[] = [
     { id: 'open-folder', title: '打开文件夹' },
@@ -63,6 +72,24 @@ function buildItems(
     { id: 'new-note', title: '新建笔记' },
     { id: 'new-folder', title: '新建文件夹' },
     { id: 'save', title: '保存', hint: 'Ctrl S' },
+    {
+      id: 'review',
+      title: '开始复习',
+      hint: `今日 ${dueCount}`,
+      keywords: 'flashcard memory 记忆 卡片 复习',
+    },
+    {
+      id: 'cards-note',
+      title: '从当前笔记生成卡片',
+      keywords: 'generate flashcard 记忆 卡片',
+    },
+    {
+      id: 'cards-selection',
+      title: '从选中文本生成卡片',
+      keywords: 'selection flashcard 记忆 卡片',
+    },
+    { id: 'cards-manual', title: '新建记忆卡片', keywords: '记忆 卡片' },
+    { id: 'cards-collect', title: '收集手写卡片', keywords: '记忆 卡片' },
     { id: 'left', title: '显示或收起文件树', hint: 'Ctrl \\' },
     { id: 'right', title: '显示或收起 AI 面板', hint: 'Ctrl J' },
     ...pluginCommands,
@@ -114,6 +141,28 @@ function runCommand(id: string) {
   }
   if (id === 'save') {
     void store.saveActive();
+    return;
+  }
+  if (id === 'review') {
+    openReview();
+    return;
+  }
+  if (id === 'cards-note') {
+    void openGenerateFromNote();
+    return;
+  }
+  if (id === 'cards-selection') {
+    void openGenerateFromSelection();
+    return;
+  }
+  if (id === 'cards-manual') {
+    openManualCard();
+    return;
+  }
+  if (id === 'cards-collect') {
+    void collectHandwrittenCards().catch((error: unknown) => {
+      useAppStore.getState().setBanner(error instanceof Error ? error.message : '收集失败');
+    });
     return;
   }
   if (id === 'theme-system') {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AiPanel } from './components/AiPanel';
+import { CardDraftDialog } from './components/CardDraftDialog';
 import { CommandPalette } from './components/CommandPalette';
 import { EditorPane } from './components/EditorPane';
 import { FileTree } from './components/FileTree';
@@ -138,6 +139,7 @@ export function App() {
       <SearchPanel />
       <QuickSwitcher />
       <SettingsDialog />
+      <CardDraftDialog />
       <NameDialog />
       <PluginSettings />
     </div>

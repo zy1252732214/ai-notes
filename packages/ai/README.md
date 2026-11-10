@@ -48,6 +48,10 @@ for await (const event of router.stream(
 
 传输用全局 `fetch`，测试可以传入自定义 `fetch`，不需要真的访问网络。
 
+## 记忆卡片
+
+卡片的解析、手写语法、SM-2 排期和模型输出都在这个包里，不碰磁盘。桌面端把结果写成库内的 `记忆/*.md`。约定见仓库的 [docs/cards.md](../../docs/cards.md)。
+
 ## 脚本
 
 测试、lint 和构建走仓库根上的共享配置：

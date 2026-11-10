@@ -37,6 +37,8 @@ export interface MarkdownEditorProps {
   /** Scroll the match into view. `nonce` changes on every jump, even to the same offset. */
   reveal?: EditorReveal | null;
   onOpenLink?: (target: string) => void;
+  /** Reports the current selection, including a caret where `from === to`. */
+  onSelectionChange?: (selection: { from: number; to: number }) => void;
 }
 
 const highlightStyle = HighlightStyle.define([
@@ -155,6 +157,7 @@ export function MarkdownEditor({
   onCursorChange,
   reveal = null,
   onOpenLink,
+  onSelectionChange,
 }: MarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -163,10 +166,12 @@ export function MarkdownEditor({
   const onSaveRef = useRef(onSave);
   const onCursorRef = useRef(onCursorChange);
   const onOpenLinkRef = useRef(onOpenLink);
+  const onSelectionRef = useRef(onSelectionChange);
   onChangeRef.current = onChange;
   onSaveRef.current = onSave;
   onCursorRef.current = onCursorChange;
   onOpenLinkRef.current = onOpenLink;
+  onSelectionRef.current = onSelectionChange;
 
   useEffect(() => {
     const parent = hostRef.current;
@@ -218,6 +223,8 @@ export function MarkdownEditor({
             }
             if (update.docChanged || update.selectionSet) {
               onCursorRef.current?.(cursorFrom(update.state));
+              const range = update.state.selection.main;
+              onSelectionRef.current?.({ from: range.from, to: range.to });
             }
           }),
         ],
@@ -226,6 +233,8 @@ export function MarkdownEditor({
     viewRef.current = view;
     const unbindHint = bindWikilinkHint(view, platform);
     onCursorRef.current?.(cursorFrom(view.state));
+    const initial = view.state.selection.main;
+    onSelectionRef.current?.({ from: initial.from, to: initial.to });
     view.focus();
 
     return () => {
