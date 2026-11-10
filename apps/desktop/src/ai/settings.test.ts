@@ -4,8 +4,10 @@ import {
   API_KEY_ACCOUNTS,
   defaultAiSettings,
   enableKeychain,
+  hasSavedAiSettings,
   loadAiSettings,
   normalizeAiSettings,
+  prefillAiSettings,
   resetAiSecretStore,
   saveAiSettings,
   secretsInKeychain,
@@ -266,5 +268,63 @@ describe('keychain migration', () => {
     expect(vault.values.get(API_KEY_ACCOUNTS.openai)).toBe('sk-during-migrate');
     expect(store.raw()).not.toContain('sk-live-secret');
     expect(store.raw()).not.toContain('sk-during-migrate');
+  });
+});
+
+describe('first-run prefill', () => {
+  afterEach(() => {
+    resetAiSecretStore();
+  });
+
+  it('treats a missing key as unsaved and a broken value as saved', () => {
+    expect(hasSavedAiSettings(memoryStore())).toBe(false);
+    expect(hasSavedAiSettings(memoryStore('not-json'))).toBe(true);
+    expect(hasSavedAiSettings(memoryStore('null'))).toBe(false);
+  });
+
+  it('writes a provider once and will not replace a model the user saved later', async () => {
+    const store = memoryStore();
+    const draft: AiSettings = {
+      ...defaultAiSettings,
+      provider: 'ollama',
+      ollama: { baseUrl: 'http://127.0.0.1:11434', model: 'llama3.2', apiKey: '' },
+    };
+    expect(await prefillAiSettings(draft, store)).toBe(true);
+    expect(loadAiSettings(store).ollama.model).toBe('llama3.2');
+    expect(loadAiSettings(store).ollama.apiKey).toBe('');
+    saveAiSettings(
+      {
+        ...loadAiSettings(store),
+        ollama: { ...loadAiSettings(store).ollama, model: 'qwen2.5' },
+      },
+      store,
+    );
+    expect(
+      await prefillAiSettings({ ...draft, ollama: { ...draft.ollama, model: 'llama3.1' } }, store),
+    ).toBe(false);
+    expect(loadAiSettings(store).ollama.model).toBe('qwen2.5');
+  });
+
+  it('does not delete a key already stored in the keychain', async () => {
+    const store = memoryStore();
+    const vault = secretVault({ [API_KEY_ACCOUNTS.ollama]: 'keep-me' });
+    await enableKeychain(vault, store);
+    expect(hasSavedAiSettings(store)).toBe(false);
+
+    const applied = await prefillAiSettings(
+      {
+        ...defaultAiSettings,
+        provider: 'ollama',
+        ollama: { baseUrl: 'http://127.0.0.1:11434', model: 'llama3.2', apiKey: '' },
+      },
+      store,
+    );
+
+    expect(applied).toBe(true);
+    expect(vault.values.get(API_KEY_ACCOUNTS.ollama)).toBe('keep-me');
+    expect(store.raw()).not.toContain('keep-me');
+    expect(loadAiSettings(store).provider).toBe('ollama');
+    expect(loadAiSettings(store).ollama.model).toBe('llama3.2');
+    expect(loadAiSettings(store).ollama.apiKey).toBe('keep-me');
   });
 });

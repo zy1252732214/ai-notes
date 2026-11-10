@@ -73,7 +73,7 @@ pnpm install
 pnpm --filter @ai-notes/desktop exec vite
 ```
 
-Open <http://localhost:1420> and choose **打开示例库**. That vault lives in memory. **打开文件夹** writes real files; in a browser that needs the File System Access API (Chromium).
+Open <http://localhost:1420>. The first time — no vault open yet, and no model settings saved — the welcome screen recommends **打开示例库**. That vault lives in memory, so you can try the editor, search, and answers with no account and no API key. **打开本地文件夹** is still there for a real folder; in a browser that needs the File System Access API (Chromium). After you open a vault, or if model settings were already saved, later launches show the usual library picker (**打开文件夹** / **打开示例库**) instead of the welcome. An open vault is not closed to show the welcome again.
 
 Desktop window (Linux needs WebKitGTK 4.1):
 
@@ -103,7 +103,9 @@ OLLAMA_ORIGINS=http://localhost:1420,http://tauri.localhost ollama serve
 ollama pull llama3.2
 ```
 
-In the app, open **模型设置** and set:
+On that first launch, if Ollama is already reachable at `http://127.0.0.1:11434` and can list local models (`GET /api/tags`), the welcome fills **模型设置** for you: provider Ollama, that address, an empty API key, and one installed chat model. It prefers smaller common models such as `llama3.2`, `llama3.1`, or Qwen, and it will not pick an embedding model as the chat model. If `nomic-embed-text` is installed, the screen suggests it for embeddings but leaves that field empty, so search stays keyword-only until you opt in. Nothing is downloaded — the app never runs `ollama pull`. If Ollama is not reachable, the sample vault and the editor still open; the screen only says to run `ollama serve`, and that the browser preview needs `OLLAMA_ORIGINS`. Settings you have already saved are left untouched, and the probe is skipped.
+
+You can also open **模型设置** yourself:
 
 | Field    | Value                                                                                |
 | -------- | ------------------------------------------------------------------------------------ |

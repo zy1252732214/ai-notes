@@ -24,6 +24,7 @@ import {
   syncHandwritten,
 } from './cards/library';
 import { cursorFromOffset } from './editor/position';
+import { rememberVaultOpened } from './onboarding/guide';
 import { pluginController } from './plugins/controller';
 import { ensureHelloNotes } from './plugins/example';
 import { createVaultPluginServices } from './plugins/services';
@@ -437,6 +438,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeDialog: () => set({ dialog: null }),
 
   openVault: async (vault, plugins) => {
+    rememberVaultOpened();
     stopWatch?.();
     stopWatch = null;
     disposeSavers();
