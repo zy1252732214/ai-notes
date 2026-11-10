@@ -6,6 +6,8 @@ export class Vault {
   constructor(
     readonly name: string,
     readonly fs: VaultFileSystem,
+    /** Absolute folder when the vault is a real directory. Browser and sample vaults omit it. */
+    readonly root?: string,
   ) {}
 
   async listTree(): Promise<VaultNode[]> {

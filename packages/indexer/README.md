@@ -2,7 +2,7 @@
 
 本地 Vault 的 Markdown 分块与 SQLite 全文索引。正文仍以文件为准，这个包只保存可重建的检索数据。
 
-架构文档里的相关表是 `notes`、`chunks`、`chunks_fts`、`chunk_vectors`、`usage`。链接、标签、记忆和对话由其他包以后加到同一个库文件，建表语句都带 `IF NOT EXISTS`。
+相关表是 `notes`、`chunks`、`chunks_fts`、`links`、`chunk_vectors`、`usage`。标签、记忆和对话以后再加到同一个库文件，建表语句都带 `IF NOT EXISTS`。
 
 ## 能力
 
@@ -12,6 +12,8 @@
 - FTS5（`unicode61`）做排序检索。中日韩字符会先拆成单字再入库，因此两个字的词也能按短语命中。
 - 哈希不变则跳过切块；内容变化只重写该笔记的块；`sync` 会删掉快照里已经不存在的笔记。
 - 搜索返回分数（越大越相关）、`<b>` 包裹的摘要，以及块在原文中的偏移。
+- 解析 `[[双链]]`、嵌入和块引用，写入 `links`。`backlinks(path)` 返回指向这篇笔记的来源。文件名唯一时，`[[周报]]` 能对上 `日常/周报.md`。
+- `MemoryIndex` 提供同一套增量更新、搜索和反链，给浏览器开发模式用，不依赖 SQLite。
 - `chunk_vectors` 用 float32 BLOB 先存嵌入。sqlite-vec 装上之后，用 `chunkVecVirtualTableSql(dimensions)` 建虚表再回填。
 - SQLite 调用都走 `SqlDriver`。Node 用 `node:sqlite`；Tauri 可以实现同一接口，把 SQL 交给 Rust。
 
@@ -20,7 +22,7 @@
 ## 用法
 
 ```ts
-import { openVaultIndex } from '@ai-notes/indexer';
+import { openVaultIndex } from '@ai-notes/indexer/node';
 
 const index = openVaultIndex('/path/to/vault');
 
@@ -45,7 +47,8 @@ index.recordUsage({
 不打开文件夹时，可以自己提供驱动：
 
 ```ts
-import { createIndex, openNodeDatabase } from '@ai-notes/indexer';
+import { createIndex } from '@ai-notes/indexer';
+import { openNodeDatabase } from '@ai-notes/indexer/node';
 
 const index = createIndex(openNodeDatabase(':memory:'), { maxChars: 500, overlap: 50 });
 ```

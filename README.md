@@ -12,13 +12,14 @@ Local-first, AI-native personal notes with a plugin system. Markdown on disk is 
 | ---------------------- | ----------------------------------- | ------------------ | ------------------------------------------ |
 | `apps/desktop`         | Tauri 2 + Vite + React 壳           | 前端               | 文件树、编辑器、保存；SQLite 仍待索引模块  |
 | `apps/web`             | TypeScript 占位，**不是** Vite 应用 | 前端               | Web 入口，复用 `packages/`                 |
+| `apps/ui-preview`      | Vite 组件预览页                     | UI                 | 每个基础组件的状态，以及浅色 / 深色切换    |
 | `packages/core`        | Vault 与可替换的文件系统            | 前端，架构师定接口 | 文件树、增删改名；文档模型与命令系统后续补 |
 | `packages/editor`      | CodeMirror 6 Markdown 编辑器        | 前端               | 原文高亮、`[[双链]]`、Ctrl/Cmd+S           |
 | `packages/indexer`     | 可编译的空包                        | 后端               | 分块、FTS5、sqlite-vec                     |
 | `packages/ai`          | 可编译的空包                        | 后端               | 检索增强、记忆卡片、模型路由               |
 | `packages/plugin-host` | 可编译的空包                        | 前端               | 沙箱、权限、RPC                            |
 | `packages/plugin-sdk`  | 可编译的空包                        | 架构师 + 前端      | 对外插件 SDK 与类型                        |
-| `packages/ui`          | 设计令牌与主题辅助                  | UI                 | 设计系统；基础组件后续再加入               |
+| `packages/ui`          | 设计令牌、主题与基础组件            | UI                 | Button、表单、对话框、命令面板、聊天消息   |
 | `plugins/*`            | 只有说明，还没有包                  | 前端               | 官方插件（每日笔记、剪藏、模板、AI 摘要）  |
 | `server`               | TypeScript 占位                     | 后端实现，运维部署 | P2 账号与端到端加密同步                    |
 
@@ -107,37 +108,60 @@ Vite 出现在 devDependencies 里，是因为 Vitest 5 把它列为 peer。桌�
 3. `pnpm turbo run lint typecheck test build`
 4. `pnpm format:check`
 
-## 桌面端发布
+## 怎么发一个桌面版本
 
-[`.github/workflows/release.yml`](.github/workflows/release.yml) 在两种情况下触发：
+安装包只在打 tag 时构建。[`.github/workflows/release.yml`](.github/workflows/release.yml) **不会**在 PR 上运行，所以 PR CI 仍然只做 lint、typecheck、test 和前端 `build`。
 
-- 推送符合 `v*` 的 tag，例如 `v0.1.0` 或 `v0.1.0-rc.1`
-- Actions 页面里手动运行，并填写同样格式的 tag
+当前应用版本在 `apps/desktop/src-tauri/tauri.conf.json`，是 `0.1.0`。发版时以这个字段为准。
 
-矩阵会打四个包：macOS Apple Silicon、macOS Intel、Linux x64、Windows x64。`tauri-apps/tauri-action` 把产物上传到一个 **draft** GitHub Release，不会直接发布。
+1. 把要发的版本写进这三处，保持同一个号，例如 `0.2.0`：
+   - `apps/desktop/src-tauri/tauri.conf.json` 的 `version`
+   - `apps/desktop/package.json` 的 `version`
+   - `apps/desktop/src-tauri/Cargo.toml` 的 `version`
+2. 把改动合并进 `main`。
+3. 在 `main` 上打 tag 并推送。tag 必须是 `v` 加上 `tauri.conf.json` 里的版本；预发布可以再加后缀。
 
-`apps/desktop/src-tauri/tauri.conf.json` 已经在仓库里，版本是 `0.1.0`。tag 要和这个版本对齐（`v0.1.0` 对应 `0.1.0`）。签名密钥仍然只放在 GitHub secrets 里；没配密钥时流水线打的是未签名包。
+```bash
+git checkout main
+git pull
+git tag v0.2.0
+git push origin v0.2.0
+```
 
-仓库需要把 Actions 的 workflow permissions 设成读写，`GITHUB_TOKEN` 才能创建 Release。
+`v0.2.0-rc.1` 这种预发布 tag 也可以，只要前面的 `0.2.0` 和配置文件一致。版本对不上时，流水线会在打包前失败。
 
-签名和自动更新只通过 GitHub Actions secrets 注入，仓库里没有密钥，也不要补一份假的：
+推送 tag 之后，Actions 里的 Release 工作流用 `tauri-apps/tauri-action` 打三个平台的包，并上传到一个 **draft** GitHub Release（不会自动公开）：
 
-| Secret                               | 用途                                        |
-| ------------------------------------ | ------------------------------------------- |
-| `TAURI_SIGNING_PRIVATE_KEY`          | Tauri updater 的 minisign 私钥              |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 上面那把私钥的密码                          |
-| `APPLE_CERTIFICATE`                  | macOS 签名证书（base64 的 .p12）            |
-| `APPLE_CERTIFICATE_PASSWORD`         | 证书密码                                    |
-| `APPLE_SIGNING_IDENTITY`             | 签名身份                                    |
-| `APPLE_ID`                           | 公证用的 Apple ID                           |
-| `APPLE_PASSWORD`                     | Apple ID 的 app-specific password           |
-| `APPLE_TEAM_ID`                      | Apple Team ID                               |
-| `WINDOWS_CERTIFICATE`                | Windows Authenticode 证书（base64 的 .pfx） |
-| `WINDOWS_CERTIFICATE_PASSWORD`       | .pfx 导出密码                               |
+| Runner           | 产物                                               |
+| ---------------- | -------------------------------------------------- |
+| `macos-latest`   | universal dmg（Apple Silicon 和 Intel 合成一个包） |
+| `windows-latest` | NSIS（`.exe`）和 MSI                               |
+| `ubuntu-24.04`   | AppImage 和 deb                                    |
 
-Updater 的**公钥**以后写在 `tauri.conf.json`，不要把私钥提交上来。这些 secret 都还没创建；留空时 macOS / Windows 会打未签名包，Windows 的证书导入步骤会跳过。没有 Apple 证书时，Apple Silicon 上从 GitHub 下载的包可能被系统标成已损坏，正式分发前需要补签名，或在 Tauri 配置里使用 ad-hoc identity。
+pnpm store 用 `actions/setup-node` 的 `cache: pnpm` 缓存，Cargo 用 `swatinem/rust-cache` 缓存 `apps/desktop/src-tauri/target`。打包前会先 `pnpm turbo run build --filter=@ai-notes/desktop^...`，因为桌面端引用的是各包的 `dist/`。
 
-Linux 依赖按 Tauri 2 的 Debian 前置要求安装在 `ubuntu-24.04` 上（WebKitGTK 4.1、ayatana appindicator，另加 AppImage 需要的 `patchelf`）。
+也可以在 Actions 页面手动跑 Release，输入同样格式的 tag。手动跑之前，那个 tag 对应的提交上必须已经有匹配的 `tauri.conf.json`。
+
+仓库 Settings → Actions → General → Workflow permissions 要允许读写，`GITHUB_TOKEN` 才能创建 Release。
+
+签名和 updater 只通过 GitHub Actions secrets 注入。仓库里没有密钥，也不要补假的。这些 secret 现在都可以不建，流水线仍会出包：
+
+| Secret                               | 不配置时                                           |
+| ------------------------------------ | -------------------------------------------------- |
+| `TAURI_SIGNING_PRIVATE_KEY`          | 不签名 updater 产物                                |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 同上                                               |
+| `APPLE_CERTIFICATE`                  | macOS 用 ad-hoc 签名（identity `-`），仍然产出 dmg |
+| `APPLE_CERTIFICATE_PASSWORD`         | 有证书时才需要                                     |
+| `APPLE_SIGNING_IDENTITY`             | 有证书时才需要                                     |
+| `APPLE_ID`                           | 不公证                                             |
+| `APPLE_PASSWORD`                     | 不公证                                             |
+| `APPLE_TEAM_ID`                      | 不公证                                             |
+| `WINDOWS_CERTIFICATE`                | MSI / NSIS 不做 Authenticode                       |
+| `WINDOWS_CERTIFICATE_PASSWORD`       | 有证书时才需要                                     |
+
+空的 `APPLE_CERTIFICATE` 不会传给 Tauri。macOS 从 GitHub 下载未正式签名的包时，系统可能把它标成已损坏；要对外分发时再配上面的 Apple secrets。Updater 的公钥以后写在 `tauri.conf.json`，私钥只放 `TAURI_SIGNING_PRIVATE_KEY`。
+
+Linux 依赖按 Tauri 2 的 Debian 要求装在 `ubuntu-24.04` 上（WebKitGTK 4.1、ayatana appindicator、`patchelf`，以及 AppImage 用的 fuse）。`APPIMAGE_EXTRACT_AND_RUN=1`，避免在 CI 里挂载 FUSE。
 
 ## 依赖更新
 
@@ -147,7 +171,7 @@ Linux 依赖按 Tauri 2 的 Debian 前置要求安装在 `ubuntu-24.04` 上（We
 
 ### Layout
 
-`apps/desktop` is the Tauri 2 + Vite + React shell: open a folder, edit Markdown, and save it. `packages/core` is the vault filesystem port, and `packages/editor` is the CodeMirror 6 editor. `apps/web`, indexer, AI, and plugins are still placeholders.
+`apps/desktop` is the Tauri 2 + Vite + React shell: open a folder, edit Markdown, and save it. `packages/core` is the vault filesystem port, and `packages/editor` is the CodeMirror 6 editor. `packages/ui` holds the design tokens and the base components; `apps/ui-preview` renders them. `apps/web`, indexer, AI, and plugins are still placeholders.
 
 ### Commands
 
@@ -162,6 +186,8 @@ Node 26.13.0 LTS is pinned in `.nvmrc`. pnpm 12.16.1 is pinned in `packageManage
 
 ### CI and release
 
-CI runs on pull requests and pushes to `main`: frozen pnpm install, then Turbo `lint`, `typecheck`, `test`, and `build`, then Prettier. The release workflow runs on `v*` tags and manual dispatch. It builds macOS (arm64 and x64), Windows, and Linux bundles with `tauri-apps/tauri-action` and uploads them to a draft GitHub Release. `apps/desktop/src-tauri/tauri.conf.json` is present (`version` `0.1.0`). Code-signing and updater material belongs in GitHub secrets only; none are committed or invented here.
+CI runs on pull requests and pushes to `main`: frozen pnpm install, then Turbo `lint`, `typecheck`, `test`, and `build`, then Prettier. It does not build desktop installers.
+
+To release, bump `apps/desktop/src-tauri/tauri.conf.json` `version` (and the desktop `package.json` / `Cargo.toml` versions), merge to `main`, then push a tag such as `v0.2.0`. The tag must be `v` plus that version. `.github/workflows/release.yml` then builds a universal macOS dmg, Windows NSIS and MSI installers, and a Linux AppImage and deb, and uploads them to a draft GitHub Release. pnpm and Cargo are cached. Signing secrets are optional placeholders; without them the workflow still produces unsigned bundles (macOS uses an ad-hoc identity). Do not commit key material.
 
 Keep the Turbo `build` task as a frontend asset build. Do not point it at `tauri build`.

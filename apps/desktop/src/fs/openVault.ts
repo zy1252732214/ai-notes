@@ -20,7 +20,7 @@ export async function openFolderVault(): Promise<OpenedVault | null> {
     });
     if (selected === null || Array.isArray(selected)) return null;
     return {
-      vault: new Vault(folderName(selected), new TauriVaultFileSystem(selected)),
+      vault: new Vault(folderName(selected), new TauriVaultFileSystem(selected), selected),
       plugins: new TauriPluginStorage(selected),
     };
   }

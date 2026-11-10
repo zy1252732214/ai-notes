@@ -1,12 +1,14 @@
 import { VaultError, basename, parentVaultPath, type Vault } from '@ai-notes/core';
 import type { PluginServices } from '@ai-notes/plugin-host';
 import type { NoteEvent, NoteMetadata, VaultEntry } from '@ai-notes/plugin-sdk';
+import { getNoteIndex } from '../search/client';
 
 export interface PluginServiceHooks {
   getVault: () => Vault | null;
   getActive: () => { path: string; content: string } | null;
   onEvent: (event: NoteEvent) => void;
   onRefresh: () => Promise<void>;
+  onIndexChange: () => void;
   insertAtCursor: (text: string) => void;
   replaceSelection: (text: string) => void;
 }
@@ -23,6 +25,13 @@ function metadata(path: string, content: string): NoteMetadata {
     tags: [],
     links: [],
   };
+}
+
+async function saved(path: string, content: string, hooks: PluginServiceHooks) {
+  await getNoteIndex()
+    ?.noteSaved(path, content)
+    .catch(() => undefined);
+  hooks.onIndexChange();
 }
 
 function requireVault(getVault: () => Vault | null): Vault {
@@ -63,6 +72,7 @@ export function createVaultPluginServices(hooks: PluginServiceHooks): PluginServ
         await vault.writeNote(path, content);
       }
       hooks.onEvent({ type: created ? 'note:created' : 'note:modified', path });
+      await saved(path, content, hooks);
       await hooks.onRefresh();
       return metadata(path, content);
     },
@@ -70,17 +80,26 @@ export function createVaultPluginServices(hooks: PluginServiceHooks): PluginServ
       const vault = requireVault(hooks.getVault);
       await vault.writeNote(path, content);
       hooks.onEvent({ type: 'note:modified', path });
+      await saved(path, content, hooks);
       await hooks.onRefresh();
       return metadata(path, content);
     },
     async deleteNote(path) {
       await requireVault(hooks.getVault).delete(path);
       hooks.onEvent({ type: 'note:deleted', path });
+      await getNoteIndex()
+        ?.noteDeleted(path)
+        .catch(() => undefined);
+      hooks.onIndexChange();
       await hooks.onRefresh();
     },
     async renameNote(from, to) {
       await requireVault(hooks.getVault).rename(from, to);
       hooks.onEvent({ type: 'note:renamed', from, to });
+      await getNoteIndex()
+        ?.noteRenamed(from, to)
+        .catch(() => undefined);
+      hooks.onIndexChange();
       await hooks.onRefresh();
     },
     async metadata(path) {

@@ -97,6 +97,15 @@ export interface SearchOptions {
   limit?: number;
 }
 
+export type LinkKind = 'wikilink' | 'markdown' | 'embed' | 'block';
+
+export interface Backlink {
+  path: string;
+  title: string;
+  kind: LinkKind;
+  dstPath: string;
+}
+
 export interface SearchHit {
   noteId: number;
   path: string;

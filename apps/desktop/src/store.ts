@@ -18,6 +18,7 @@ import { create } from 'zustand';
 import { pluginController } from './plugins/controller';
 import { ensureHelloNotes } from './plugins/example';
 import { createVaultPluginServices } from './plugins/services';
+import { closeNoteIndex, getNoteIndex, openNoteIndex } from './search/client';
 
 export interface NoteTab {
   path: string;
@@ -51,6 +52,7 @@ interface AppState {
   activePath: string | null;
   saveError: string | null;
   cursor: { line: number; column: number };
+  indexRevision: number;
   setThemeMode: (mode: ThemeMode) => void;
   toggleLeft: () => void;
   toggleRight: () => void;
@@ -164,7 +166,11 @@ async function persist(path: string, content: string): Promise<void> {
   if (!vault) return;
   try {
     await vault.writeNote(path, content);
+    await getNoteIndex()
+      ?.noteSaved(path, content)
+      .catch(() => undefined);
     useAppStore.setState((state) => ({
+      indexRevision: state.indexRevision + 1,
       tabs: state.tabs.map((tab) =>
         tab.path === path ? { ...tab, savedContent: content, dirty: tab.content !== content } : tab,
       ),
@@ -247,6 +253,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activePath: null,
   saveError: null,
   cursor: { line: 1, column: 1 },
+  indexRevision: 0,
 
   setThemeMode: (themeMode) => {
     rememberTheme(themeMode);
@@ -269,6 +276,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     stopWatch = null;
     disposeSavers();
     pluginController.detach();
+    closeNoteIndex();
     if (refreshTimer) clearTimeout(refreshTimer);
     set({
       vault,
@@ -285,6 +293,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       commandOpen: false,
     });
     await get().refreshTree();
+    try {
+      await openNoteIndex(vault);
+      set((state) => ({ indexRevision: state.indexRevision + 1 }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '索引失败';
+      set({ banner: message });
+    }
     attachWatch(vault);
     if (plugins) {
       await ensureHelloNotes(plugins);
@@ -418,8 +433,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     const fileName = ensureMarkdownName(name);
     const path = joinVaultPath(get().selectedDirectory, fileName);
     const title = fileName.replace(/\.md$/i, '');
-    await vault.createNote(path, `# ${title}\n\n`);
+    const content = `# ${title}\n\n`;
+    await vault.createNote(path, content);
     pluginController.emit({ type: 'note:created', path });
+    await getNoteIndex()
+      ?.noteSaved(path, content)
+      .catch(() => undefined);
+    set((state) => ({ indexRevision: state.indexRevision + 1 }));
     await get().refreshTree();
     const directory = parentVaultPath(path);
     if (directory) {
@@ -455,6 +475,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const affected = await flushAffected(path);
     await vault.rename(path, target);
     pluginController.emit({ type: 'note:renamed', from: path, to: target });
+    await getNoteIndex()
+      ?.noteRenamed(path, target)
+      .catch(() => undefined);
+    set((state) => ({ indexRevision: state.indexRevision + 1 }));
     dropSavers(affected);
     set((state) => ({
       tabs: state.tabs.map((tab) => {
@@ -478,6 +502,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     for (const key of affected) await savers.get(key)?.flush();
     await vault.delete(path);
     pluginController.emit({ type: 'note:deleted', path });
+    await getNoteIndex()
+      ?.noteDeleted(path)
+      .catch(() => undefined);
+    set((state) => ({ indexRevision: state.indexRevision + 1 }));
     dropSavers(affected);
     set((state) => {
       const tabs = state.tabs.filter(
@@ -507,6 +535,8 @@ function vaultServices() {
     },
     onEvent: (event: NoteEvent) => pluginController.emit(event),
     onRefresh: () => useAppStore.getState().refreshTree(),
+    onIndexChange: () =>
+      useAppStore.setState((state) => ({ indexRevision: state.indexRevision + 1 })),
     insertAtCursor: (text) => appendToActive(text),
     replaceSelection: (text) => appendToActive(text),
   });
