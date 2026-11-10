@@ -1,8 +1,18 @@
 import { MarkdownEditor } from '@ai-notes/editor';
 import { VaultError } from '@ai-notes/core';
-import { useAppStore } from '../store';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { openFolderVault } from '../fs/openVault';
+import {
+  beginOllamaOnboarding,
+  getOnboardingProbe,
+  ollamaHint,
+  subscribeOnboardingProbe,
+  welcomeMode,
+  type WelcomeMode,
+} from '../onboarding/guide';
+import { useAppStore } from '../store';
 import { ReviewView } from './ReviewView';
+import { WelcomeScreen } from './WelcomeScreen';
 
 export function EditorPane() {
   const vault = useAppStore((state) => state.vault);
@@ -16,7 +26,6 @@ export function EditorPane() {
   const setCursor = useAppStore((state) => state.setCursor);
   const openDialog = useAppStore((state) => state.openDialog);
   const openVault = useAppStore((state) => state.openVault);
-  const openSampleVault = useAppStore((state) => state.openSampleVault);
   const setBanner = useAppStore((state) => state.setBanner);
   const reveal = useAppStore((state) => state.reveal);
   const openLink = useAppStore((state) => state.openLink);
@@ -56,35 +65,42 @@ export function EditorPane() {
           reveal={jump}
           onOpenLink={(target) => void openLink(target)}
         />
-      ) : reviewOpen ? null : (
+      ) : reviewOpen ? null : vault ? (
         <div className="empty-state">
-          <h1>{vault ? vault.name : '打开一个笔记库'}</h1>
-          {vault ? (
-            <>
-              <p>从左侧选择一篇笔记，或新建一篇。正文会按 Markdown 原文保存。</p>
-              <button
-                className="button primary"
-                onClick={() => openDialog({ kind: 'create-note' })}
-              >
-                新建笔记
-              </button>
-            </>
-          ) : (
-            <>
-              <p>选择一个文件夹作为 Vault。里面的 Markdown 文件会显示在左侧，编辑后写回磁盘。</p>
-              <div className="empty-actions">
-                <button className="button primary" onClick={() => void openFolder()}>
-                  打开文件夹
-                </button>
-                <button className="button" onClick={() => void openSampleVault()}>
-                  打开示例库
-                </button>
-              </div>
-              <p className="hint">示例库只在内存里，用来熟悉界面，不会写入磁盘。</p>
-            </>
-          )}
+          <h1>{vault.name}</h1>
+          <p>从左侧选择一篇笔记，或新建一篇。正文会按 Markdown 原文保存。</p>
+          <button className="button primary" onClick={() => openDialog({ kind: 'create-note' })}>
+            新建笔记
+          </button>
         </div>
+      ) : (
+        <LibraryWelcome onOpenFolder={() => void openFolder()} />
       )}
     </main>
+  );
+}
+
+function LibraryWelcome({ onOpenFolder }: { onOpenFolder: () => void }) {
+  const openSampleVault = useAppStore((state) => state.openSampleVault);
+  const [mode] = useState<WelcomeMode>(() =>
+    typeof localStorage === 'undefined' ? 'first-run' : welcomeMode(localStorage),
+  );
+  const probe = useSyncExternalStore(
+    subscribeOnboardingProbe,
+    getOnboardingProbe,
+    getOnboardingProbe,
+  );
+  useEffect(() => {
+    void beginOllamaOnboarding(typeof localStorage === 'undefined' ? undefined : localStorage);
+  }, []);
+  return (
+    <WelcomeScreen
+      mode={mode}
+      hint={ollamaHint(probe)}
+      onOpenSample={() => {
+        void openSampleVault();
+      }}
+      onOpenFolder={onOpenFolder}
+    />
   );
 }
