@@ -10,6 +10,7 @@ import {
   type AiSettings,
   type ProviderSettings,
 } from '../ai/settings';
+import { getNoteIndex } from '../search/client';
 import { useAppStore } from '../store';
 
 export function SettingsDialog() {
@@ -54,6 +55,7 @@ export function SettingsDialog() {
               void (async () => {
                 try {
                   await saveAiSettings(normalizeAiSettings(draft));
+                  void getNoteIndex()?.syncEmbeddings();
                   setSettingsOpen(false);
                 } catch (caught) {
                   setError(caught instanceof Error ? caught.message : '无法保存');
@@ -105,6 +107,26 @@ export function SettingsDialog() {
             value={active.model}
             spellCheck={false}
             onChange={(event) => updateActive({ model: event.target.value })}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label="嵌入模型"
+          htmlFor="ai-embed-model"
+          description="留空则只用全文检索。嵌入使用上面的接口地址和 API Key。"
+        >
+          <Input
+            id="ai-embed-model"
+            label="嵌入模型"
+            labelHidden
+            value={draft.embedModel}
+            spellCheck={false}
+            placeholder={
+              draft.provider === 'ollama' ? 'nomic-embed-text' : 'text-embedding-3-small'
+            }
+            onChange={(event) => {
+              setDraft((current) => ({ ...current, embedModel: event.target.value }));
+              setError(null);
+            }}
           />
         </SettingsRow>
         <SettingsRow

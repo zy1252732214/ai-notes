@@ -114,6 +114,7 @@ describe('keychain migration', () => {
       apiKey: 'sk-live-secret',
     },
     ollama: { ...defaultAiSettings.ollama, apiKey: 'ollama-token' },
+    embedModel: 'text-embedding-3-small',
   };
 
   it('moves plaintext keys into the vault and reloads them from memory', async () => {
@@ -133,7 +134,13 @@ describe('keychain migration', () => {
     expect(loaded.openai.apiKey).toBe('sk-live-secret');
     expect(loaded.ollama.apiKey).toBe('ollama-token');
     expect(loaded.openai.baseUrl).toBe('https://api.deepseek.com/v1');
-    expect(JSON.parse(store.raw() ?? '{}').openai.apiKey).toBe('');
+    expect(loaded.embedModel).toBe('text-embedding-3-small');
+    const stored = JSON.parse(store.raw() ?? '{}') as {
+      embedModel?: string;
+      openai?: { apiKey?: string };
+    };
+    expect(stored.embedModel).toBe('text-embedding-3-small');
+    expect(stored.openai?.apiKey).toBe('');
   });
 
   it('keeps the keychain value on the next launch after plaintext is gone', async () => {

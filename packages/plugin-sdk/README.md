@@ -102,15 +102,15 @@ export default class HelloNotesPlugin extends Plugin {
 
 ## API 分组
 
-| 分组                            | 能力                                                                      |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| `app.vault`                     | `read`、`list`、`create`、`modify`、`delete`、`rename`、`getMetadata`     |
-| `app.commands`                  | `register`，快捷键用 `Hotkey` 或 `Mod+Shift+H`                            |
-| `app.views`                     | 侧栏、标签页、状态栏、设置页                                              |
-| `app.editor`                    | CodeMirror 扩展、代码块渲染器、当前编辑器                                 |
-| `app.ai`                        | `chat`、`complete`（带 `citations`）、`registerTool`                      |
-| `app.events`                    | 订阅或取消 `note:created` / `modified` / `opened` / `renamed` / `deleted` |
-| `app.clipboard` / `app.network` | 对应权限的剪贴板和代发请求                                                |
+| 分组                            | 能力                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| `app.vault`                     | `read`、`list`、`search`、`create`、`modify`、`delete`、`rename`、`getMetadata` |
+| `app.commands`                  | `register`，快捷键用 `Hotkey` 或 `Mod+Shift+H`                                  |
+| `app.views`                     | 侧栏、标签页、状态栏、设置页                                                    |
+| `app.editor`                    | CodeMirror 扩展、代码块渲染器、当前编辑器                                       |
+| `app.ai`                        | `chat`、`complete`（带 `citations`）、`registerTool`                            |
+| `app.events`                    | 订阅或取消 `note:created` / `modified` / `opened` / `renamed` / `deleted`       |
+| `app.clipboard` / `app.network` | 对应权限的剪贴板和代发请求                                                      |
 
 生命周期是 `onload` 和 `onunload`。`onload` 里拿到的注册项放进 `ctx.subscriptions`，宿主会在 `onunload` 之后释放。
 

@@ -1,7 +1,7 @@
 import { createSampleVault } from '@ai-notes/core';
 import { describe, expect, it } from 'vitest';
 
-import { createDesktopIndex } from './client';
+import { createDesktopIndex, setEmbedderProvider } from './client';
 
 describe('browser note index', () => {
   it('reindexes a vault and updates backlinks incrementally', async () => {
@@ -26,5 +26,29 @@ describe('browser note index', () => {
     expect((await index.backlinks('项目/路线.md')).map((link) => link.path)).toEqual(['欢迎.md']);
     await index.noteDeleted('欢迎.md');
     expect(await index.backlinks('项目/路线.md')).toEqual([]);
+  });
+
+  it('embeds new chunks and keeps vectors across a rename', async () => {
+    setEmbedderProvider(() => ({
+      model: 'demo',
+      embed: (texts) =>
+        Promise.resolve(texts.map((text) => (text.includes('三栏布局') ? [1, 0] : [0, 1]))),
+    }));
+    try {
+      const vault = createSampleVault();
+      const index = createDesktopIndex(vault);
+      await index.reindex();
+      const hits = await index.searchHybrid('没有关键词', [1, 0], 5, 'demo');
+      expect(hits[0]?.path).toBe('日常/周报.md');
+      await index.noteRenamed('日常/周报.md', '日常/回顾.md');
+      const renamed = await index.searchHybrid('没有关键词', [1, 0], 5, 'demo');
+      expect(renamed[0]?.path).toBe('日常/回顾.md');
+      await index.noteDeleted('日常/回顾.md');
+      expect(
+        (await index.searchHybrid('没有关键词', [1, 0], 5, 'demo')).map((hit) => hit.path),
+      ).not.toContain('日常/回顾.md');
+    } finally {
+      setEmbedderProvider(null);
+    }
   });
 });

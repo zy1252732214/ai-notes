@@ -139,6 +139,10 @@ export async function boot(plugin, manifest) {
         delete: (path) => rpc(pluginId, 'vault.delete', { path }),
         rename: (from, to) => rpc(pluginId, 'vault.rename', { from, to }),
         getMetadata: (path) => rpc(pluginId, 'vault.metadata', { path }),
+        search: (query, options) => rpc(pluginId, 'vault.search', {
+          query: query,
+          limit: options && options.limit,
+        }),
       },
       commands: {
         register(command) {

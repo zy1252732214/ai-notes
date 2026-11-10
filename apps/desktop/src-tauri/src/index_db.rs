@@ -1,9 +1,10 @@
 use regex::Regex;
 use rusqlite::{params, Connection, OptionalExtension};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{LazyLock, Mutex};
+use std::sync::{LazyLock, Mutex, Once};
 use tauri::State;
 
 const SCHEMA: &str = r#"
@@ -42,6 +43,16 @@ CREATE TABLE IF NOT EXISTS links (
 );
 CREATE INDEX IF NOT EXISTS idx_links_dst_note ON links(dst_note_id);
 CREATE INDEX IF NOT EXISTS idx_links_dst_path ON links(dst_path);
+CREATE TABLE IF NOT EXISTS schema_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS chunk_vectors (
+  chunk_id INTEGER PRIMARY KEY,
+  model TEXT NOT NULL,
+  dim INTEGER NOT NULL,
+  embedding BLOB NOT NULL
+);
 "#;
 
 struct OpenIndex {
@@ -61,7 +72,7 @@ impl Default for IndexState {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchHit {
     note_id: i64,
@@ -78,6 +89,22 @@ pub struct SearchHit {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct PendingChunk {
+    chunk_id: i64,
+    path: String,
+    heading_path: String,
+    text: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VectorUpdate {
+    chunk_id: i64,
+    embedding: Vec<f32>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Backlink {
     path: String,
     title: String,
@@ -87,6 +114,7 @@ pub struct Backlink {
 
 #[tauri::command]
 pub fn index_open(state: State<'_, IndexState>, root: String) -> Result<(), String> {
+    install_sqlite_vec();
     let root_path = canonicalize_dir(&root)?;
     let directory = root_path.join(".ainotes");
     fs::create_dir_all(&directory).map_err(|err| err.to_string())?;
@@ -124,6 +152,42 @@ pub fn index_rename(state: State<'_, IndexState>, from: String, to: String) -> R
 #[tauri::command]
 pub fn search(state: State<'_, IndexState>, query: String, limit: u32) -> Result<Vec<SearchHit>, String> {
     with_conn(&state, |conn, _root| search_notes(conn, &query, limit))
+}
+
+#[tauri::command]
+pub fn search_hybrid(
+    state: State<'_, IndexState>,
+    query: String,
+    embedding: Option<Vec<f32>>,
+    limit: u32,
+    model: Option<String>,
+) -> Result<Vec<SearchHit>, String> {
+    with_conn(&state, |conn, _root| {
+        search_hybrid_notes(conn, &query, embedding.as_deref(), limit, model.as_deref())
+    })
+}
+
+#[tauri::command]
+pub fn index_pending_chunks(
+    state: State<'_, IndexState>,
+    model: String,
+) -> Result<Vec<PendingChunk>, String> {
+    with_conn(&state, |conn, _root| pending_chunks(conn, &model))
+}
+
+#[tauri::command]
+pub fn index_set_vectors(
+    state: State<'_, IndexState>,
+    model: String,
+    vectors: Vec<VectorUpdate>,
+) -> Result<(), String> {
+    with_conn(&state, |conn, _root| {
+        let rows: Vec<(i64, Vec<f32>)> = vectors
+            .into_iter()
+            .map(|row| (row.chunk_id, row.embedding))
+            .collect();
+        set_vectors(conn, &model, &rows)
+    })
 }
 
 #[tauri::command]
@@ -457,6 +521,8 @@ fn clear_chunks(conn: &Connection, note_id: i64) -> Result<(), String> {
     for id in ids {
         conn.execute("DELETE FROM chunks_fts WHERE rowid = ?1", [id])
             .map_err(|err| err.to_string())?;
+        let _ = conn.execute("DELETE FROM chunk_vectors WHERE chunk_id = ?1", [id]);
+        let _ = conn.execute("DELETE FROM chunk_vec WHERE rowid = ?1", [id]);
     }
     conn.execute("DELETE FROM chunks WHERE note_id = ?1", [note_id])
         .map_err(|err| err.to_string())?;
@@ -815,6 +881,311 @@ fn highlight(text: &str, query: &str) -> Option<String> {
     None
 }
 
+fn install_sqlite_vec() {
+    static ONCE: Once = Once::new();
+    ONCE.call_once(|| unsafe {
+        rusqlite::ffi::sqlite3_auto_extension(Some(std::mem::transmute(
+            sqlite_vec::sqlite3_vec_init as *const (),
+        )));
+    });
+}
+
+const MIN_VECTOR_SIMILARITY: f64 = 0.25;
+
+fn search_hybrid_notes(
+    conn: &Connection,
+    query: &str,
+    embedding: Option<&[f32]>,
+    limit: u32,
+    model: Option<&str>,
+) -> Result<Vec<SearchHit>, String> {
+    let limit = limit.clamp(1, 100) as usize;
+    let Some(embedding) = embedding.filter(|vector| !vector.is_empty()) else {
+        return search_notes(conn, query, limit as u32);
+    };
+    if !vector_index_matches(conn, model, embedding.len()) {
+        return search_notes(conn, query, limit as u32);
+    }
+    let pool = (limit * 4).clamp(20, 100) as u32;
+    let keyword = if query.trim().is_empty() {
+        Vec::new()
+    } else {
+        search_notes(conn, query, pool)?
+    };
+    let semantic = semantic_hits(conn, query, embedding, pool as usize)?;
+    Ok(fuse_hits(&keyword, &semantic, limit))
+}
+
+fn pending_chunks(conn: &Connection, model: &str) -> Result<Vec<PendingChunk>, String> {
+    let model = model.trim();
+    if model.is_empty() {
+        return Err("model is required".into());
+    }
+    let mut statement = conn
+        .prepare(
+            r#"SELECT c.id, n.path, c.heading_path, c.text
+               FROM chunks c
+               JOIN notes n ON n.id = c.note_id
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM chunk_vectors v
+                 WHERE v.chunk_id = c.id AND v.model = ?1
+               )
+               ORDER BY c.id"#,
+        )
+        .map_err(|err| err.to_string())?;
+    let rows = statement
+        .query_map(params![model], |row| {
+            Ok(PendingChunk {
+                chunk_id: row.get(0)?,
+                path: row.get(1)?,
+                heading_path: row.get(2)?,
+                text: row.get(3)?,
+            })
+        })
+        .map_err(|err| err.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(|err| err.to_string())
+}
+
+fn set_vectors(conn: &Connection, model: &str, vectors: &[(i64, Vec<f32>)]) -> Result<(), String> {
+    let model = model.trim();
+    if model.is_empty() {
+        return Err("model is required".into());
+    }
+    if vectors.is_empty() {
+        return Ok(());
+    }
+    let dim = vectors[0].1.len();
+    if dim == 0 || dim > 8192 {
+        return Err("embedding must not be empty".into());
+    }
+    for (_, embedding) in vectors {
+        if embedding.len() != dim {
+            return Err("embeddings in one batch must share a dimension".into());
+        }
+        if embedding.iter().any(|value| !value.is_finite()) {
+            return Err("embedding values must be finite numbers".into());
+        }
+    }
+    let tx = conn.unchecked_transaction().map_err(|err| err.to_string())?;
+    let stored_model = meta(&tx, "vector_model");
+    let stored_dim = meta(&tx, "vector_dim").and_then(|value| value.parse::<usize>().ok());
+    let switching = stored_model.as_deref() != Some(model) || stored_dim != Some(dim);
+    if switching && (stored_model.is_some() || stored_dim.is_some()) {
+        tx.execute("DELETE FROM chunk_vectors", [])
+            .map_err(|err| err.to_string())?;
+        let _ = tx.execute_batch("DROP TABLE IF EXISTS chunk_vec;");
+    }
+    set_meta(&tx, "vector_model", model)?;
+    set_meta(&tx, "vector_dim", &dim.to_string())?;
+    ensure_vec_table(&tx, dim)?;
+    for (chunk_id, embedding) in vectors {
+        if *chunk_id <= 0 {
+            return Err("chunkId must be a positive integer".into());
+        }
+        let exists: Option<i64> = tx
+            .query_row("SELECT id FROM chunks WHERE id = ?1", [chunk_id], |row| row.get(0))
+            .optional()
+            .map_err(|err| err.to_string())?;
+        if exists.is_none() {
+            continue;
+        }
+        let blob = f32_blob(embedding);
+        tx.execute(
+            r#"INSERT INTO chunk_vectors(chunk_id, model, dim, embedding)
+               VALUES (?1, ?2, ?3, ?4)
+               ON CONFLICT(chunk_id) DO UPDATE SET
+                 model = excluded.model,
+                 dim = excluded.dim,
+                 embedding = excluded.embedding"#,
+            params![chunk_id, model, dim as i64, blob],
+        )
+        .map_err(|err| err.to_string())?;
+        tx.execute("DELETE FROM chunk_vec WHERE rowid = ?1", [chunk_id])
+            .map_err(|err| err.to_string())?;
+        tx.execute(
+            "INSERT INTO chunk_vec(rowid, embedding) VALUES (?1, ?2)",
+            params![chunk_id, f32_blob(embedding)],
+        )
+        .map_err(|err| err.to_string())?;
+    }
+    tx.commit().map_err(|err| err.to_string())?;
+    Ok(())
+}
+
+fn semantic_hits(
+    conn: &Connection,
+    query: &str,
+    embedding: &[f32],
+    limit: usize,
+) -> Result<Vec<SearchHit>, String> {
+    if !table_exists(conn, "chunk_vec")? {
+        return Ok(Vec::new());
+    }
+    let blob = f32_blob(embedding);
+    let mut statement = conn
+        .prepare("SELECT rowid, distance FROM chunk_vec WHERE embedding MATCH ?1 AND k = ?2")
+        .map_err(|err| err.to_string())?;
+    let rows = statement
+        .query_map(params![blob, limit as i64], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, f64>(1)?))
+        })
+        .map_err(|err| err.to_string())?;
+    let mut ids = Vec::new();
+    for row in rows {
+        let (id, distance) = row.map_err(|err| err.to_string())?;
+        if distance < 1.0 - MIN_VECTOR_SIMILARITY {
+            ids.push(id);
+        }
+    }
+    drop(statement);
+    let mut hits = Vec::new();
+    for id in ids {
+        if let Some(hit) = load_hit(conn, id, query)? {
+            hits.push(hit);
+        }
+    }
+    Ok(hits)
+}
+
+fn load_hit(conn: &Connection, chunk_id: i64, query: &str) -> Result<Option<SearchHit>, String> {
+    let mut statement = conn
+        .prepare(
+            r#"SELECT c.id, c.note_id, c.heading_path, c.start, c."end", c.text, n.path, n.title
+               FROM chunks c JOIN notes n ON n.id = c.note_id WHERE c.id = ?1"#,
+        )
+        .map_err(|err| err.to_string())?;
+    let mut rows = statement
+        .query(params![chunk_id])
+        .map_err(|err| err.to_string())?;
+    let Some(row) = rows.next().map_err(|err| err.to_string())? else {
+        return Ok(None);
+    };
+    let text: String = row.get(5).map_err(|err| err.to_string())?;
+    let heading: String = row.get(2).map_err(|err| err.to_string())?;
+    let title: String = row.get(7).map_err(|err| err.to_string())?;
+    let snippet = if query.trim().is_empty() {
+        plain_excerpt(&text)
+    } else {
+        snippet(&text, &heading, &title, query)
+    };
+    Ok(Some(SearchHit {
+        chunk_id: row.get(0).map_err(|err| err.to_string())?,
+        note_id: row.get(1).map_err(|err| err.to_string())?,
+        heading_path: heading,
+        start: row.get(3).map_err(|err| err.to_string())?,
+        end: row.get(4).map_err(|err| err.to_string())?,
+        text,
+        path: row.get(6).map_err(|err| err.to_string())?,
+        title,
+        snippet,
+        score: 0.0,
+    }))
+}
+
+fn fuse_hits(keyword: &[SearchHit], semantic: &[SearchHit], limit: usize) -> Vec<SearchHit> {
+    let mut scores: HashMap<i64, f64> = HashMap::new();
+    let mut first: HashMap<i64, SearchHit> = HashMap::new();
+    for list in [keyword, semantic] {
+        for (rank, hit) in list.iter().enumerate() {
+            *scores.entry(hit.chunk_id).or_insert(0.0) += 1.0 / (60.0 + rank as f64 + 1.0);
+            first.entry(hit.chunk_id).or_insert_with(|| hit.clone());
+        }
+    }
+    let mut hits: Vec<SearchHit> = first
+        .into_iter()
+        .map(|(id, mut hit)| {
+            hit.score = scores.get(&id).copied().unwrap_or(0.0);
+            hit
+        })
+        .collect();
+    hits.sort_by(|left, right| {
+        right
+            .score
+            .partial_cmp(&left.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(left.chunk_id.cmp(&right.chunk_id))
+    });
+    hits.truncate(limit);
+    hits
+}
+
+fn vector_index_matches(conn: &Connection, model: Option<&str>, dim: usize) -> bool {
+    let stored_dim = meta(conn, "vector_dim").and_then(|value| value.parse::<usize>().ok());
+    if stored_dim != Some(dim) {
+        return false;
+    }
+    let stored = meta(conn, "vector_model");
+    match model {
+        Some(expected) => stored.as_deref() == Some(expected),
+        None => stored.is_some(),
+    }
+}
+
+fn ensure_vec_table(conn: &Connection, dim: usize) -> Result<(), String> {
+    let stored_dim = meta(conn, "vector_dim").and_then(|value| value.parse::<usize>().ok());
+    if table_exists(conn, "chunk_vec")? && stored_dim == Some(dim) {
+        return Ok(());
+    }
+    conn.execute_batch("DROP TABLE IF EXISTS chunk_vec;")
+        .map_err(|err| err.to_string())?;
+    conn.execute_batch(&format!(
+        "CREATE VIRTUAL TABLE chunk_vec USING vec0(embedding float[{dim}] distance_metric=cosine);"
+    ))
+    .map_err(|err| err.to_string())?;
+    Ok(())
+}
+
+fn table_exists(conn: &Connection, name: &str) -> Result<bool, String> {
+    let count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE name = ?1",
+            [name],
+            |row| row.get(0),
+        )
+        .map_err(|err| err.to_string())?;
+    Ok(count > 0)
+}
+
+fn meta(conn: &Connection, key: &str) -> Option<String> {
+    conn.query_row(
+        "SELECT value FROM schema_meta WHERE key = ?1",
+        [key],
+        |row| row.get(0),
+    )
+    .optional()
+    .ok()
+    .flatten()
+}
+
+fn set_meta(conn: &Connection, key: &str, value: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT INTO schema_meta(key, value) VALUES (?1, ?2)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        params![key, value],
+    )
+    .map(|_| ())
+    .map_err(|err| err.to_string())
+}
+
+fn f32_blob(values: &[f32]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(values.len() * 4);
+    for value in values {
+        out.extend_from_slice(&value.to_le_bytes());
+    }
+    out
+}
+
+fn plain_excerpt(text: &str) -> String {
+    let collapsed: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let mut chars = collapsed.chars();
+    let excerpt: String = chars.by_ref().take(80).collect();
+    if chars.next().is_some() {
+        format!("{excerpt}…")
+    } else {
+        excerpt
+    }
+}
+
 fn remap(path: &str, from: &str, to: &str) -> String {
     if path == from {
         to.to_string()
@@ -888,6 +1259,7 @@ mod tests {
     use super::*;
 
     fn memory() -> Connection {
+        install_sqlite_vec();
         let conn = Connection::open_in_memory().unwrap();
         prepare(&conn).unwrap();
         conn
@@ -927,5 +1299,42 @@ mod tests {
         assert_eq!(backlinks_for(&conn, "日常/周报.md")[0].path, "欢迎.md");
         assert_eq!(search_notes(&conn, "本地全文", 5).unwrap()[0].path, "日常/周报.md");
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn hybrid_search_uses_sqlite_vec() {
+        let conn = memory();
+        let version: String = conn
+            .query_row("select vec_version()", [], |row| row.get(0))
+            .unwrap();
+        assert!(version.starts_with('v'));
+        upsert(&conn, "a.md", "# A\n\n苹果笔记。\n", 1).unwrap();
+        upsert(&conn, "b.md", "# B\n\n检索检索检索。\n", 1).unwrap();
+        let pending = pending_chunks(&conn, "demo").unwrap();
+        assert_eq!(pending.len(), 2);
+        let rows: Vec<(i64, Vec<f32>)> = pending
+            .iter()
+            .map(|chunk| {
+                let embedding = if chunk.path == "a.md" {
+                    vec![1.0, 0.0]
+                } else {
+                    vec![0.0, 1.0]
+                };
+                (chunk.chunk_id, embedding)
+            })
+            .collect();
+        set_vectors(&conn, "demo", &rows).unwrap();
+        let hits = search_hybrid_notes(&conn, "没有这个词", Some(&[1.0, 0.0]), 2, Some("demo")).unwrap();
+        assert_eq!(hits[0].path, "a.md");
+        rename_path(&conn, "a.md", "fruit.md");
+        let renamed = search_hybrid_notes(&conn, "苹果", Some(&[1.0, 0.0]), 1, Some("demo")).unwrap();
+        assert_eq!(renamed[0].path, "fruit.md");
+        upsert(&conn, "fruit.md", "# 水果\n\n改写。\n", 2).unwrap();
+        assert!(pending_chunks(&conn, "demo")
+            .unwrap()
+            .iter()
+            .any(|chunk| chunk.path == "fruit.md"));
+        delete_path(&conn, "b.md");
+        assert!(search_notes(&conn, "检索", 5).unwrap().is_empty());
     }
 }

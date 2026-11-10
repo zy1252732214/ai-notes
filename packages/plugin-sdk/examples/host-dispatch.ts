@@ -18,6 +18,8 @@ export function describeRequest(request: PluginRpcRequest): string {
       return request.params.path;
     case 'vault.rename':
       return `${request.params.from} -> ${request.params.to}`;
+    case 'vault.search':
+      return request.params.query;
     case 'commands.register':
       return request.params.id;
     case 'commands.unregister':

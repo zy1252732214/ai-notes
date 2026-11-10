@@ -19,6 +19,7 @@ export interface CitationSource {
   title: string;
   excerpt: string;
   start: number;
+  end?: number;
 }
 
 const NOTE_LIMIT = 4000;
@@ -39,8 +40,9 @@ export function sourceFromHit(hit: SearchHit): CitationSource {
   return {
     path: hit.path,
     title: hit.title || fileTitle(hit.path),
-    excerpt: clip(stripSnippet(hit.snippet) || hit.text, EXCERPT_LIMIT),
+    excerpt: clip(hit.text || stripSnippet(hit.snippet), EXCERPT_LIMIT),
     start: hit.start,
+    end: hit.end,
   };
 }
 

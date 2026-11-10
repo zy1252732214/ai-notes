@@ -38,6 +38,7 @@ describe('installDesktopSecrets', () => {
           model: 'llama3.2',
           apiKey: '',
         },
+        embedModel: '',
       },
       store,
     );

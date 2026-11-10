@@ -10,6 +10,8 @@ export interface AiSettings {
   provider: AiProviderId;
   openai: ProviderSettings;
   ollama: ProviderSettings;
+  /** Empty means keyword search only. Uses the active provider's address and API key. */
+  embedModel: string;
 }
 
 export interface KeyValueStore {
@@ -51,6 +53,7 @@ export const defaultAiSettings: AiSettings = {
     model: 'llama3.2',
     apiKey: '',
   },
+  embedModel: '',
 };
 
 let keychain: SecretStore | null = null;
@@ -124,7 +127,12 @@ export function normalizeAiSettings(input: AiSettings): AiSettings {
   assertBaseUrl(active.baseUrl);
   if (openai.baseUrl) assertBaseUrl(openai.baseUrl);
   if (ollama.baseUrl) assertBaseUrl(ollama.baseUrl);
-  return { provider, openai, ollama };
+  return {
+    provider,
+    openai,
+    ollama,
+    embedModel: typeof input.embedModel === 'string' ? input.embedModel.trim() : '',
+  };
 }
 
 export function activeProvider(settings: AiSettings): ProviderSettings {
@@ -247,6 +255,7 @@ function parseAiSettings(value: unknown): AiSettings {
     provider: record.provider === 'ollama' ? 'ollama' : 'openai',
     openai: cleanProvider(record.openai, defaultAiSettings.openai),
     ollama: cleanProvider(record.ollama, defaultAiSettings.ollama),
+    embedModel: typeof record.embedModel === 'string' ? record.embedModel.trim() : '',
   };
 }
 

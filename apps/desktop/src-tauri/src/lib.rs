@@ -3,7 +3,8 @@ mod secrets;
 mod vault;
 
 use index_db::{
-    backlinks, index_delete, index_open, index_rename, index_upsert, reindex, search, IndexState,
+    backlinks, index_delete, index_open, index_pending_chunks, index_rename, index_set_vectors,
+    index_upsert, reindex, search, search_hybrid, IndexState,
 };
 use secrets::{secret_available, secret_delete, secret_get, secret_set};
 use vault::{
@@ -34,6 +35,9 @@ pub fn run() {
             index_delete,
             index_rename,
             search,
+            search_hybrid,
+            index_pending_chunks,
+            index_set_vectors,
             backlinks,
             reindex,
             secret_available,

@@ -7,6 +7,7 @@ import type {
   NetworkResponse,
   NoteMetadata,
   VaultEntry,
+  VaultSearchHit,
 } from '@ai-notes/plugin-sdk';
 
 export interface ActiveNote {
@@ -24,6 +25,7 @@ export interface PluginServices {
   deleteNote(path: string): Promise<void>;
   renameNote(from: string, to: string): Promise<void>;
   metadata(path: string): Promise<NoteMetadata>;
+  searchNotes(query: string, limit?: number): Promise<readonly VaultSearchHit[]>;
   activeNote(): ActiveNote | null;
   replaceSelection(text: string): Promise<void>;
   insertAtCursor(text: string): Promise<void>;

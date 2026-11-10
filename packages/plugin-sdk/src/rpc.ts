@@ -1,7 +1,7 @@
 import type { ChatRequest, ChatResult, CompleteRequest, CompleteResult } from './api/ai.js';
 import type { NetworkRequest, NetworkResponse } from './api/network.js';
 import type { NoteEventType } from './api/events.js';
-import type { NoteMetadata, VaultEntry } from './api/vault.js';
+import type { NoteMetadata, VaultEntry, VaultSearchHit } from './api/vault.js';
 import type { SettingsField } from './api/views.js';
 import type { JsonSchemaObject } from './json-schema.js';
 import type { PluginErrorCode } from './errors.js';
@@ -53,6 +53,10 @@ export interface PluginToHostMethods {
   'vault.delete': { params: { path: string }; result: null };
   'vault.rename': { params: { from: string; to: string }; result: null };
   'vault.metadata': { params: { path: string }; result: NoteMetadata };
+  'vault.search': {
+    params: { query: string; limit?: number };
+    result: readonly VaultSearchHit[];
+  };
   'commands.register': {
     params: { id: string; name: string; hotkey?: string; editorOnly?: boolean };
     result: Registration;
@@ -127,6 +131,7 @@ export const METHOD_PERMISSION = {
   'vault.read': 'vault:read',
   'vault.list': 'vault:read',
   'vault.metadata': 'vault:read',
+  'vault.search': 'vault:read',
   'vault.create': 'vault:write',
   'vault.modify': 'vault:write',
   'vault.delete': 'vault:write',
