@@ -23,7 +23,7 @@ export function EditorPane() {
   const openFolder = async () => {
     try {
       const next = await openFolderVault();
-      if (next) await openVault(next);
+      if (next) await openVault(next.vault, next.plugins);
     } catch (error) {
       const message =
         error instanceof VaultError || error instanceof Error ? error.message : '无法打开文件夹';

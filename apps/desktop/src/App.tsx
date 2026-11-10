@@ -4,11 +4,14 @@ import { CommandPalette } from './components/CommandPalette';
 import { EditorPane } from './components/EditorPane';
 import { FileTree } from './components/FileTree';
 import { NameDialog } from './components/NameDialog';
+import { PluginSettings } from './components/PluginSettings';
 import { QuickSwitcher } from './components/QuickSwitcher';
 import { SearchPanel } from './components/SearchPanel';
 import { SettingsDialog } from './components/SettingsDialog';
 import { StatusBar } from './components/StatusBar';
 import { TopBar } from './components/TopBar';
+import { pluginController } from './plugins/controller';
+import { matchesHotkey } from './plugins/hotkey';
 import { useAppStore } from './store';
 import { applyTheme } from './theme';
 
@@ -39,28 +42,51 @@ export function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
-      if (!mod) return;
       const key = event.key.toLowerCase();
       const store = useAppStore.getState();
-      if (event.repeat || event.altKey || event.isComposing) return;
-      if (key === 's' && !event.shiftKey) {
+      if (mod && !event.repeat && !event.altKey && !event.isComposing) {
+        if (key === 's' && !event.shiftKey) {
+          event.preventDefault();
+          void store.saveActive();
+          return;
+        }
+        if (key === 'k' && !event.shiftKey) {
+          event.preventDefault();
+          store.setCommandOpen(!store.commandOpen);
+          return;
+        }
+        if ((key === 'f' || event.code === 'KeyF') && event.shiftKey) {
+          event.preventDefault();
+          store.setSearchOpen(!store.searchOpen);
+          return;
+        }
+        if ((key === 'o' || event.code === 'KeyO') && !event.shiftKey) {
+          event.preventDefault();
+          store.setSwitcherOpen(!store.switcherOpen);
+          return;
+        }
+        if (event.key === '\\') {
+          event.preventDefault();
+          store.toggleLeft();
+          return;
+        }
+        if (key === 'j' && !event.shiftKey) {
+          event.preventDefault();
+          store.toggleRight();
+          return;
+        }
+      }
+      const target = event.target;
+      const typing =
+        target instanceof HTMLElement &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (typing && !mod) return;
+      const command = pluginController
+        .commands()
+        .find((item) => item.hotkey && matchesHotkey(event, item.hotkey));
+      if (command) {
         event.preventDefault();
-        void store.saveActive();
-      } else if (key === 'k' && !event.shiftKey) {
-        event.preventDefault();
-        store.setCommandOpen(!store.commandOpen);
-      } else if ((key === 'f' || event.code === 'KeyF') && event.shiftKey) {
-        event.preventDefault();
-        store.setSearchOpen(!store.searchOpen);
-      } else if ((key === 'o' || event.code === 'KeyO') && !event.shiftKey) {
-        event.preventDefault();
-        store.setSwitcherOpen(!store.switcherOpen);
-      } else if (event.key === '\\') {
-        event.preventDefault();
-        store.toggleLeft();
-      } else if (key === 'j' && !event.shiftKey) {
-        event.preventDefault();
-        store.toggleRight();
+        pluginController.invoke(command.id);
       }
     };
     const onHide = () => {
@@ -113,6 +139,7 @@ export function App() {
       <QuickSwitcher />
       <SettingsDialog />
       <NameDialog />
+      <PluginSettings />
     </div>
   );
 }
