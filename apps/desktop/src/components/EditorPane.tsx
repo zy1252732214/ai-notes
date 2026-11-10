@@ -17,6 +17,8 @@ export function EditorPane() {
   const openSampleVault = useAppStore((state) => state.openSampleVault);
   const setBanner = useAppStore((state) => state.setBanner);
   const reveal = useAppStore((state) => state.reveal);
+  const openLink = useAppStore((state) => state.openLink);
+  const jump = reveal && active && reveal.path === active.path ? reveal : null;
 
   const openFolder = async () => {
     try {
@@ -44,7 +46,8 @@ export function EditorPane() {
           onChange={(content) => updateContent(active.path, content)}
           onSave={() => void saveActive()}
           onCursorChange={setCursor}
-          reveal={reveal && reveal.path === active.path ? reveal : null}
+          reveal={jump}
+          onOpenLink={(target) => void openLink(target)}
         />
       ) : (
         <div className="empty-state">

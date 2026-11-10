@@ -36,8 +36,10 @@ pnpm --filter @ai-notes/desktop exec vite
 pnpm --filter @ai-notes/desktop dev
 ```
 
-Linux 需要 WebKitGTK 4.1。`Ctrl/Cmd+S` 立即保存，停笔约 800ms 后自动保存。`Ctrl/Cmd+\` 收起文件树，`Ctrl/Cmd+J` 开关右侧面板，`Ctrl/Cmd+K` 打开命令面板。
+Linux 需要 WebKitGTK 4.1。`Ctrl/Cmd+S` 立即保存，停笔约 800ms 后自动保存。`Ctrl/Cmd+\` 收起文件树，`Ctrl/Cmd+J` 开关右侧面板，`Ctrl/Cmd+K` 打开命令面板。`Ctrl/Cmd+Shift+F` 全文搜索当前笔记库，结果带片段，点击后跳到命中位置。`Ctrl/Cmd+O` 按文件名模糊匹配并打开笔记。
 
-打开笔记库时，如果 `.ainotes/plugins/hello-notes` 还不存在，会写入示例插件。它在沙箱 iframe 里运行，命令面板里的「统计笔记数量」和 `Ctrl/Cmd+Shift+H` 会列出笔记数量。顶栏的插件按钮可以启用或禁用它。没有 `vault:write` 等权限的调用会被宿主拒绝。命令面板也会搜索当前笔记库的全文，右侧面板显示反向链接。
+右侧「链接」列出反向链接和文中的 `[[双链]]`，点击会打开对应笔记；编辑器里点击双链也会跳转。右侧「问答」把当前笔记和检索片段交给 `@ai-notes/ai` 的模型路由，回答以流式输出，并附上可以点开的引用。提供方、接口地址、模型名和 API Key 在「模型设置」里，只写入本机 `localStorage`，不进笔记库。模型请求由界面里的 `fetch` 发给 `@ai-notes/ai` 路由；浏览器开发时，接口需要允许当前页面的来源（本机 Ollama 可设置 `OLLAMA_ORIGINS`）。浏览器开发模式的检索走内存索引，和桌面端的 `search` / `backlinks` 是同一套调用。
+
+打开笔记库时，如果 `.ainotes/plugins/hello-notes` 还不存在，会写入示例插件。它在沙箱 iframe 里运行，命令面板里的「统计笔记数量」和 `Ctrl/Cmd+Shift+H` 会列出笔记数量。顶栏的插件按钮可以启用或禁用它。没有 `vault:write` 等权限的调用会被宿主拒绝。命令面板可以打开全文搜索，也可以运行插件命令。右侧同时有问答、反向链接和插件沙箱面板。
 
 发版步骤见根目录 README。tag 必须是 `v` 加上 `src-tauri/tauri.conf.json` 的 `version`（当前 `0.1.0`，对应 tag `v0.1.0`）。流水线打的是 universal macOS dmg、Windows nsis/msi、Linux AppImage/deb。签名私钥和 updater 密钥只放在 GitHub Actions secrets，不要提交；没配密钥时仍会出未签名包。

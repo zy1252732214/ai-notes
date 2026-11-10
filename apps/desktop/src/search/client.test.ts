@@ -48,7 +48,7 @@ describe('browser note index', () => {
         (await index.searchHybrid('没有关键词', [1, 0], 5, 'demo')).map((hit) => hit.path),
       ).not.toContain('日常/回顾.md');
     } finally {
-      setEmbedderProvider(() => null);
+      setEmbedderProvider(null);
     }
   });
 });

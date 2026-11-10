@@ -1,365 +1,280 @@
+import { Button, ChatMessage, Textarea } from '@ai-notes/ui';
+import { useEffect, useRef, useState } from 'react';
 import {
-  citationsForAnswer,
-  ragMessages,
-  withActiveNote,
-  type RagCitation,
-  type RagSource,
-} from '@ai-notes/ai';
-import type { Backlink, SearchHit } from '@ai-notes/indexer';
-import { useState, useSyncExternalStore } from 'react';
+  answerParts,
+  buildAskMessages,
+  citationsFromAnswer,
+  explainAiError,
+  isAbortError,
+  sourceFromHit,
+  sourceFromNote,
+  streamAnswer,
+  type CitationSource,
+} from '../ai/ask';
+import { loadAiSettings } from '../ai/settings';
+import { getEmbedError, getNoteIndex, retrieveNotes } from '../search/client';
+import { listNoteFiles } from '../search/files';
+import { resolveNoteLink } from '../search/links';
+import { useAppStore } from '../store';
 
-import {
-  chatConfigured,
-  createChatRouter,
-  currentEmbedError,
-  defaultBaseUrl,
-  embedConfigured,
-  getModelSettings,
-  subscribeModelSettings,
-  retryEmbeddings,
-  updateModelSecrets,
-  updateModelSettings,
-  type ChatProviderId,
-  type EmbedProviderId,
-  type ModelSettings,
-} from '../ai/model-settings';
-import { getNoteIndex, retrieveNotes } from '../search/client';
-import { noteTitle, useAppStore } from '../store';
-
-interface AskMessage {
-  id: number;
-  role: 'user' | 'assistant';
+interface Turn {
+  id: string;
+  role: 'user' | 'assistant' | 'error';
   content: string;
-  citations: RagCitation[];
+  citations: CitationSource[];
+  pending?: boolean;
 }
 
-let nextMessageId = 1;
-
-export function AskPane({ links }: { links: readonly Backlink[] }) {
-  const model = useSyncExternalStore(subscribeModelSettings, getModelSettings);
+export function AskPane() {
+  const vaultEpoch = useAppStore((state) => state.vaultEpoch);
   const activePath = useAppStore((state) => state.activePath);
-  const indexRevision = useAppStore((state) => state.indexRevision);
+  const tabs = useAppStore((state) => state.tabs);
+  const tree = useAppStore((state) => state.tree);
   const openNote = useAppStore((state) => state.openNote);
+  const openLink = useAppStore((state) => state.openLink);
+  const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
+  const settingsOpen = useAppStore((state) => state.settingsOpen);
+  const indexRevision = useAppStore((state) => state.indexRevision);
   const [draft, setDraft] = useState('');
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
-  const [messages, setMessages] = useState<AskMessage[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const embedError = currentEmbedError();
-  const status = !embedConfigured(model.settings)
-    ? '未配置嵌入模型，检索只用全文。'
-    : embedError
-      ? `嵌入失败，已改用全文检索：${embedError}`
-      : '混合检索：全文 + 向量。';
+  const abortRef = useRef<AbortController | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+  const epochRef = useRef(vaultEpoch);
+  epochRef.current = vaultEpoch;
 
-  const ask = async (question: string) => {
-    const trimmed = question.trim();
-    if (!trimmed || busy) return;
-    const userId = nextMessageId;
-    nextMessageId += 1;
-    const assistantId = nextMessageId;
-    nextMessageId += 1;
+  useEffect(() => {
+    setTurns([]);
+    setBusy(false);
+    abortRef.current?.abort();
+  }, [vaultEpoch]);
+
+  useEffect(() => {
+    const node = logRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
+  }, [turns]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const send = async () => {
+    const question = draft.trim();
+    if (!question || busy) return;
+    const settings = loadAiSettings();
+    const active = tabs.find((tab) => tab.path === activePath) ?? null;
+    const files = listNoteFiles(tree);
+    const note = active ? sourceFromNote(active.path, active.content) : null;
+    let retrieved: CitationSource[] = [];
+    const index = getNoteIndex();
+    if (index) {
+      try {
+        const hits = await retrieveNotes(question, 5);
+        retrieved = hits.map(sourceFromHit).filter((source) => source.path !== note?.path);
+      } catch {
+        retrieved = [];
+      }
+    }
+    const messages = buildAskMessages(question, note, retrieved);
+    const sources = note ? [note, ...retrieved] : retrieved;
+    const epochAtSend = epochRef.current;
+    const userId = crypto.randomUUID();
+    const assistantId = crypto.randomUUID();
     setDraft('');
-    setError(null);
     setBusy(true);
-    setMessages((current) => [
+    setTurns((current) => [
       ...current,
-      { id: userId, role: 'user', content: trimmed, citations: [] },
-      { id: assistantId, role: 'assistant', content: '', citations: [] },
+      { id: userId, role: 'user', content: question, citations: [] },
+      { id: assistantId, role: 'assistant', content: '', citations: [], pending: true },
     ]);
-    const replace = (content: string, citations: RagCitation[]) => {
-      setMessages((current) =>
-        current.map((message) =>
-          message.id === assistantId ? { ...message, content, citations } : message,
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    let text = '';
+    try {
+      for await (const event of streamAnswer(settings, messages, undefined, controller.signal)) {
+        if (epochRef.current !== epochAtSend) return;
+        text += event.delta;
+        const next = text;
+        setTurns((current) =>
+          current.map((turn) =>
+            turn.id === assistantId
+              ? {
+                  ...turn,
+                  content: next,
+                  citations: citationsFromAnswer(next, sources, files, false),
+                }
+              : turn,
+          ),
+        );
+      }
+      const finalText = text;
+      setTurns((current) =>
+        current.map((turn) =>
+          turn.id === assistantId
+            ? {
+                ...turn,
+                pending: false,
+                content: finalText,
+                citations: citationsFromAnswer(finalText, sources, files, true),
+              }
+            : turn,
         ),
       );
-    };
-    let text = '';
-    let sources: RagSource[] = [];
-    try {
-      const index = getNoteIndex();
-      if (!index) {
-        replace('先打开一个笔记库，再提问。', []);
-        return;
-      }
-      const hits = await retrieveNotes(trimmed, 6);
-      const state = useAppStore.getState();
-      const tab = state.tabs.find((item) => item.path === state.activePath);
-      sources = withActiveNote(
-        hits.map(toSource),
-        tab && state.activePath ? activeSource(state.activePath, tab.content) : null,
+    } catch (error) {
+      if (epochRef.current !== epochAtSend) return;
+      const message = explainAiError(error);
+      setTurns((current) =>
+        current.map((turn) => {
+          if (turn.id !== assistantId) return turn;
+          if (isAbortError(error) && turn.content) return { ...turn, pending: false };
+          if (turn.content) {
+            return { ...turn, pending: false };
+          }
+          return { ...turn, role: 'error', pending: false, content: message };
+        }),
       );
-      const router = createChatRouter();
-      if (!router) {
-        replace('还没有配置对话模型。下面是检索到的笔记片段。', citationsForAnswer('', sources));
-        return;
+      if (!isAbortError(error) && text) {
+        setTurns((current) => [
+          ...current,
+          { id: crypto.randomUUID(), role: 'error', content: message, citations: [] },
+        ]);
       }
-      for await (const event of router.stream(
-        {
-          messages: ragMessages(trimmed, sources, state.activePath ?? undefined),
-          feature: 'chat',
-        },
-        { provider: 'chat' },
-      )) {
-        if (!event.delta) continue;
-        text += event.delta;
-        replace(text, []);
-      }
-      replace(text || '模型没有返回内容。', citationsForAnswer(text, sources));
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : '提问失败';
-      setError(message);
-      replace(text || '这次没有生成回答。', citationsForAnswer(text, sources));
     } finally {
-      setBusy(false);
+      if (abortRef.current === controller) abortRef.current = null;
+      if (epochRef.current === epochAtSend) setBusy(false);
     }
   };
 
   return (
-    <>
-      <div className="ai-body">
-        <p className="hint" data-index-revision={indexRevision}>
-          {status}
+    <div className="ask-pane">
+      <div className="ai-log" ref={logRef}>
+        <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
+          {retrievalLabel()}
         </p>
-        {messages.length === 0 ? (
-          <p>向笔记库提问。回答会附上可以点开的引用，并跳到对应片段。</p>
-        ) : (
-          <div className="ask-log">
-            {messages.map((message) => (
-              <article key={message.id} className={`ask-${message.role}`}>
-                <p className="ask-role">{message.role === 'user' ? '你' : '回答'}</p>
-                {message.content ? <p className="ask-text">{message.content}</p> : null}
-                {message.citations.length > 0 ? (
-                  <div className="ask-citations">
-                    {message.citations.map((citation) => (
-                      <button
-                        key={`${message.id}:${citation.index}:${citation.notePath}:${citation.startOffset}`}
-                        type="button"
-                        className="ask-citation"
-                        onClick={() =>
-                          void openNote(citation.notePath, {
-                            start: citation.startOffset,
-                            end: citation.endOffset,
-                          })
-                        }
-                      >
-                        <strong>
-                          [{citation.index}] {citation.title}
-                        </strong>
-                        <span>{citation.notePath}</span>
-                        {citation.quote ? <q>{citation.quote}</q> : null}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        )}
-        {error ? <p className="plugin-error">{error}</p> : null}
-        <ModelForm settings={model.settings} secrets={model.secrets} disabled={busy} />
-        <p>反向链接</p>
-        {activePath && links.length > 0 ? (
-          <ul className="backlinks">
-            {links.map((link) => (
-              <li key={`${link.path}:${link.kind}`}>
-                <button type="button" onClick={() => void openNote(link.path)}>
-                  {link.title || link.path}
-                </button>
-                <span className="hint">{link.path}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="hint">
-            {activePath ? '还没有笔记指向这里。' : '打开一篇笔记后显示反向链接。'}
+        {turns.length === 0 ? (
+          <p className="ai-hint">
+            向当前笔记提问。回答会附上可以点开的引用。模型提供方和 API Key
+            在设置里，只存在这台设备上。
           </p>
-        )}
+        ) : null}
+        {turns.map((turn) => {
+          if (turn.role === 'user') {
+            return <ChatMessage key={turn.id} role="user" content={turn.content} />;
+          }
+          if (turn.role === 'error') {
+            return (
+              <p key={turn.id} className="ai-error" role="alert">
+                {turn.content}
+              </p>
+            );
+          }
+          return (
+            <div key={turn.id} className="ai-answer-block">
+              <article className="an-chat an-chat--assistant" aria-label="AI 回复">
+                <p className="an-chat__role">AI 回复</p>
+                <div className="an-chat__content">
+                  {turn.pending && !turn.content ? '正在回答…' : null}
+                  <AnswerText
+                    text={turn.content}
+                    onOpen={(target) => {
+                      const path = resolveNoteLink(target, listNoteFiles(tree));
+                      if (path) void openNote(path);
+                      else void openLink(target);
+                    }}
+                  />
+                </div>
+              </article>
+              {turn.citations.map((citation) => (
+                <div
+                  key={`${turn.id}:${citation.path}:${citation.start}`}
+                  className="ai-citation"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => void openCitation(citation)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    void openCitation(citation);
+                  }}
+                >
+                  <ChatMessage
+                    role="citation"
+                    citation={{
+                      title: citation.title,
+                      source: citation.path,
+                      excerpt: citation.excerpt || '打开这篇笔记',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
       <form
         className="ai-composer"
         onSubmit={(event) => {
           event.preventDefault();
-          void ask(draft);
+          void send();
         }}
       >
-        <textarea
-          placeholder={
-            chatConfigured(model.settings)
-              ? '向笔记库提问'
-              : '先在上面配置对话模型，或直接看检索结果'
-          }
+        <Textarea
+          label="向这篇笔记提问"
+          labelHidden
           rows={3}
           value={draft}
+          placeholder="向这篇笔记提问"
           disabled={busy}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
+              void send();
             }
           }}
         />
-        <button
-          className="button primary"
-          type="submit"
-          disabled={busy || draft.trim().length === 0}
-        >
-          {busy ? '回答中' : '发送'}
-        </button>
+        <div className="ai-composer-actions">
+          <Button type="button" variant="ghost" onClick={() => setSettingsOpen(true)}>
+            设置
+          </Button>
+          {busy ? (
+            <Button type="button" onClick={() => abortRef.current?.abort()}>
+              停止
+            </Button>
+          ) : (
+            <Button type="submit" variant="primary" disabled={!draft.trim()}>
+              发送
+            </Button>
+          )}
+        </div>
       </form>
-    </>
+    </div>
   );
 }
 
-function ModelForm({
-  settings,
-  secrets,
-  disabled,
-}: {
-  settings: ModelSettings;
-  secrets: { chatApiKey: string; embedApiKey: string };
-  disabled: boolean;
-}) {
-  const patch = (next: Partial<ModelSettings>) => {
-    void updateModelSettings({ ...settings, ...next });
-  };
-  return (
-    <details className="model-settings">
-      <summary>模型</summary>
-      <p className="hint">API Key 只留在这次会话的内存里，不会写入笔记库。</p>
-      <label>
-        对话接口
-        <select
-          value={settings.chatProvider}
-          disabled={disabled}
-          onChange={(event) => {
-            const chatProvider = event.target.value as ChatProviderId;
-            patch({
-              chatProvider,
-              chatBaseUrl: swapDefault(settings.chatBaseUrl, settings.chatProvider, chatProvider),
-            });
-          }}
-        >
-          <option value="openai">OpenAI 兼容</option>
-          <option value="ollama">Ollama</option>
-        </select>
-      </label>
-      <label>
-        对话地址
-        <input
-          value={settings.chatBaseUrl}
-          disabled={disabled}
-          onChange={(event) => patch({ chatBaseUrl: event.target.value })}
-        />
-      </label>
-      <label>
-        对话模型
-        <input
-          value={settings.chatModel}
-          placeholder={settings.chatProvider === 'ollama' ? 'qwen2.5' : 'gpt-4o-mini'}
-          disabled={disabled}
-          onChange={(event) => patch({ chatModel: event.target.value })}
-        />
-      </label>
-      <label>
-        对话 API Key
-        <input
-          type="password"
-          value={secrets.chatApiKey}
-          autoComplete="off"
-          disabled={disabled}
-          onChange={(event) => updateModelSecrets({ chatApiKey: event.target.value })}
-          onBlur={() => retryEmbeddings()}
-        />
-      </label>
-      <label>
-        嵌入
-        <select
-          value={settings.embedProvider}
-          disabled={disabled}
-          onChange={(event) => {
-            const embedProvider = event.target.value as EmbedProviderId;
-            const previous = settings.embedProvider === 'off' ? 'ollama' : settings.embedProvider;
-            patch({
-              embedProvider,
-              embedBaseUrl:
-                embedProvider === 'off'
-                  ? settings.embedBaseUrl
-                  : swapDefault(settings.embedBaseUrl, previous, embedProvider),
-            });
-          }}
-        >
-          <option value="off">关闭（只用全文）</option>
-          <option value="openai">OpenAI 兼容</option>
-          <option value="ollama">Ollama</option>
-        </select>
-      </label>
-      {settings.embedProvider === 'off' ? null : (
-        <>
-          <label>
-            嵌入地址
-            <input
-              value={settings.embedBaseUrl}
-              disabled={disabled}
-              onChange={(event) => patch({ embedBaseUrl: event.target.value })}
-            />
-          </label>
-          <label>
-            嵌入模型
-            <input
-              value={settings.embedModel}
-              placeholder={
-                settings.embedProvider === 'ollama' ? 'nomic-embed-text' : 'text-embedding-3-small'
-              }
-              disabled={disabled}
-              onChange={(event) => patch({ embedModel: event.target.value })}
-            />
-          </label>
-          <label>
-            嵌入 API Key
-            <input
-              type="password"
-              value={secrets.embedApiKey}
-              placeholder="留空则沿用对话密钥"
-              autoComplete="off"
-              disabled={disabled}
-              onChange={(event) => updateModelSecrets({ embedApiKey: event.target.value })}
-              onBlur={() => retryEmbeddings()}
-            />
-          </label>
-        </>
-      )}
-    </details>
+function openCitation(citation: CitationSource): Promise<void> {
+  const openNote = useAppStore.getState().openNote;
+  return openNote(citation.path, {
+    from: citation.start,
+    ...(citation.end !== undefined ? { to: citation.end } : {}),
+  });
+}
+
+function retrievalLabel(): string {
+  const error = getEmbedError();
+  if (error) return `嵌入失败，已改用全文检索：${error}`;
+  if (!loadAiSettings().embedModel.trim()) return '未配置嵌入模型，检索只用全文。';
+  return '混合检索：全文 + 向量。';
+}
+
+function AnswerText({ text, onOpen }: { text: string; onOpen: (target: string) => void }) {
+  return answerParts(text).map((part, index) =>
+    part.kind === 'link' ? (
+      <button key={index} type="button" className="wiki-jump" onClick={() => onOpen(part.text)}>
+        {`[[${part.text}]]`}
+      </button>
+    ) : (
+      <span key={index}>{part.text}</span>
+    ),
   );
-}
-
-function swapDefault(current: string, from: ChatProviderId, to: ChatProviderId): string {
-  const trimmed = current.trim();
-  if (!trimmed || trimmed === defaultBaseUrl(from)) return defaultBaseUrl(to);
-  return current;
-}
-
-function toSource(hit: SearchHit): RagSource {
-  return {
-    chunkId: hit.chunkId,
-    path: hit.path,
-    title: hit.title,
-    headingPath: hit.headingPath,
-    start: hit.start,
-    end: hit.end,
-    text: hit.text,
-  };
-}
-
-function activeSource(path: string, content: string): RagSource {
-  const text = content.slice(0, 1200);
-  return {
-    chunkId: -1,
-    path,
-    title: noteTitle(path),
-    headingPath: '',
-    start: 0,
-    end: text.length,
-    text,
-  };
 }

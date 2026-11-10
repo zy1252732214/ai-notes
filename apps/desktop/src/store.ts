@@ -15,10 +15,13 @@ import {
 import { MemoryPluginStorage, type PluginStorage } from '@ai-notes/plugin-host';
 import type { NoteEvent } from '@ai-notes/plugin-sdk';
 import { create } from 'zustand';
+import { cursorFromOffset } from './editor/position';
 import { pluginController } from './plugins/controller';
 import { ensureHelloNotes } from './plugins/example';
 import { createVaultPluginServices } from './plugins/services';
 import { closeNoteIndex, getNoteIndex, openNoteIndex } from './search/client';
+import { listNoteFiles } from './search/files';
+import { linkLabel, resolveNoteLink } from './search/links';
 
 export interface NoteTab {
   path: string;
@@ -35,11 +38,26 @@ export interface DialogRequest {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
+export interface NoteReveal {
+  path: string;
+  from: number;
+  to: number;
+  nonce: number;
+}
+
+export interface NoteJump {
+  from: number;
+  to?: number;
+}
+
 interface AppState {
   themeMode: ThemeMode;
   leftOpen: boolean;
   rightOpen: boolean;
   commandOpen: boolean;
+  searchOpen: boolean;
+  switcherOpen: boolean;
+  settingsOpen: boolean;
   pluginsOpen: boolean;
   dialog: DialogRequest | null;
   banner: string | null;
@@ -53,13 +71,17 @@ interface AppState {
   saveError: string | null;
   cursor: { line: number; column: number };
   indexRevision: number;
-  reveal: { path: string; start: number; end: number; token: number } | null;
+  vaultEpoch: number;
+  reveal: NoteReveal | null;
   setThemeMode: (mode: ThemeMode) => void;
   toggleLeft: () => void;
   toggleRight: () => void;
   setLeftOpen: (open: boolean) => void;
   setRightOpen: (open: boolean) => void;
   setCommandOpen: (open: boolean) => void;
+  setSearchOpen: (open: boolean) => void;
+  setSwitcherOpen: (open: boolean) => void;
+  setSettingsOpen: (open: boolean) => void;
   setPluginsOpen: (open: boolean) => void;
   setFilter: (filter: string) => void;
   setCursor: (cursor: { line: number; column: number }) => void;
@@ -71,7 +93,8 @@ interface AppState {
   refreshTree: () => Promise<void>;
   toggleExpanded: (path: string) => void;
   selectDirectory: (path: string) => void;
-  openNote: (path: string, at?: { start: number; end: number }) => Promise<void>;
+  openNote: (path: string, at?: NoteJump) => Promise<void>;
+  openLink: (target: string) => Promise<void>;
   closeTab: (path: string) => Promise<void>;
   updateContent: (path: string, content: string) => void;
   saveActive: () => Promise<void>;
@@ -82,12 +105,6 @@ interface AppState {
 }
 
 const THEME_KEY = 'ai-notes.theme';
-let revealToken = 0;
-
-function nextReveal(path: string, at: { start: number; end: number }) {
-  revealToken += 1;
-  return { path, start: at.start, end: at.end, token: revealToken };
-}
 const AUTOSAVE_MS = 800;
 
 const savers = new Map<string, DebouncedSaver>();
@@ -248,6 +265,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   leftOpen: true,
   rightOpen: true,
   commandOpen: false,
+  searchOpen: false,
+  switcherOpen: false,
+  settingsOpen: false,
   pluginsOpen: false,
   dialog: null,
   banner: null,
@@ -261,6 +281,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   saveError: null,
   cursor: { line: 1, column: 1 },
   indexRevision: 0,
+  vaultEpoch: 0,
   reveal: null,
 
   setThemeMode: (themeMode) => {
@@ -271,8 +292,66 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleRight: () => set((state) => ({ rightOpen: !state.rightOpen })),
   setLeftOpen: (leftOpen) => set({ leftOpen }),
   setRightOpen: (rightOpen) => set({ rightOpen }),
-  setCommandOpen: (commandOpen) => set({ commandOpen }),
-  setPluginsOpen: (pluginsOpen) => set({ pluginsOpen }),
+  setCommandOpen: (commandOpen) =>
+    set(
+      commandOpen
+        ? {
+            commandOpen: true,
+            searchOpen: false,
+            switcherOpen: false,
+            settingsOpen: false,
+            pluginsOpen: false,
+          }
+        : { commandOpen: false },
+    ),
+  setSearchOpen: (searchOpen) =>
+    set(
+      searchOpen
+        ? {
+            searchOpen: true,
+            commandOpen: false,
+            switcherOpen: false,
+            settingsOpen: false,
+            pluginsOpen: false,
+          }
+        : { searchOpen: false },
+    ),
+  setSwitcherOpen: (switcherOpen) =>
+    set(
+      switcherOpen
+        ? {
+            switcherOpen: true,
+            commandOpen: false,
+            searchOpen: false,
+            settingsOpen: false,
+            pluginsOpen: false,
+          }
+        : { switcherOpen: false },
+    ),
+  setSettingsOpen: (settingsOpen) =>
+    set(
+      settingsOpen
+        ? {
+            settingsOpen: true,
+            commandOpen: false,
+            searchOpen: false,
+            switcherOpen: false,
+            pluginsOpen: false,
+          }
+        : { settingsOpen: false },
+    ),
+  setPluginsOpen: (pluginsOpen) =>
+    set(
+      pluginsOpen
+        ? {
+            pluginsOpen: true,
+            commandOpen: false,
+            searchOpen: false,
+            switcherOpen: false,
+            settingsOpen: false,
+          }
+        : { pluginsOpen: false },
+    ),
   setFilter: (filter) => set({ filter }),
   setCursor: (cursor) => set({ cursor }),
   setBanner: (banner) => set({ banner }),
@@ -299,6 +378,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       cursor: { line: 1, column: 1 },
       dialog: null,
       commandOpen: false,
+      searchOpen: false,
+      switcherOpen: false,
+      settingsOpen: false,
+      pluginsOpen: false,
+      reveal: null,
+      vaultEpoch: get().vaultEpoch + 1,
     });
     await get().refreshTree();
     try {
@@ -367,16 +452,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   openNote: async (path, at) => {
     const vault = get().vault;
     if (!vault) return;
-    const reveal = at ? nextReveal(path, at) : null;
+    const revealFor = (nonce: number): NoteReveal | null =>
+      at ? { path, from: at.from, to: at.to ?? at.from, nonce } : null;
     const existing = get().tabs.find((tab) => tab.path === path);
     if (existing) {
-      set({
+      set((state) => ({
         activePath: path,
         selectedDirectory: parentVaultPath(path),
         saveError: null,
-        cursor: { line: 1, column: 1 },
-        reveal,
-      });
+        reveal: revealFor((state.reveal?.nonce ?? 0) + 1),
+        cursor: at ? cursorFromOffset(existing.content, at.from) : { line: 1, column: 1 },
+      }));
       pluginController.emit({ type: 'note:opened', path });
       return;
     }
@@ -386,10 +472,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       activePath: path,
       selectedDirectory: parentVaultPath(path),
       saveError: null,
-      cursor: { line: 1, column: 1 },
-      reveal,
+      reveal: revealFor((state.reveal?.nonce ?? 0) + 1),
+      cursor: at ? cursorFromOffset(content, at.from) : { line: 1, column: 1 },
     }));
     pluginController.emit({ type: 'note:opened', path });
+  },
+
+  openLink: async (target) => {
+    const path = resolveNoteLink(target, listNoteFiles(get().tree));
+    if (!path) {
+      set({ banner: `找不到笔记「${linkLabel(target, null)}」` });
+      return;
+    }
+    await get().openNote(path);
   },
 
   closeTab: async (path) => {

@@ -1,3 +1,4 @@
+import { ModelRouter, OllamaProvider, OpenAICompatibleProvider } from '@ai-notes/ai';
 import { isMarkdownPath, type Vault } from '@ai-notes/core';
 import {
   fillMissingEmbeddings,
@@ -7,6 +8,7 @@ import {
   type PendingChunk,
   type SearchHit,
 } from '@ai-notes/indexer';
+import { activeProvider, loadAiSettings } from '../ai/settings';
 import { isTauri } from '../fs/runtime';
 
 export interface NoteEmbedder {
@@ -14,7 +16,11 @@ export interface NoteEmbedder {
   embed(texts: readonly string[]): Promise<readonly (readonly number[])[]>;
 }
 
-export interface DesktopIndex {
+/**
+ * 界面依赖的检索面，对齐 `@ai-notes/indexer` 的 `search` 与 `backlinks`。
+ * 桌面壳打开真实文件夹时走 Tauri 命令；浏览器和示例库用 `MemoryIndex`。
+ */
+export interface NoteQuery {
   search(query: string, limit?: number): Promise<SearchHit[]>;
   searchHybrid(
     query: string,
@@ -23,6 +29,9 @@ export interface DesktopIndex {
     model?: string,
   ): Promise<SearchHit[]>;
   backlinks(path: string): Promise<Backlink[]>;
+}
+
+export interface DesktopIndex extends NoteQuery {
   reindex(): Promise<void>;
   noteSaved(path: string, content: string): Promise<void>;
   noteDeleted(path: string): Promise<void>;
@@ -32,11 +41,52 @@ export interface DesktopIndex {
   dispose(): void;
 }
 
-let embedderProvider: () => NoteEmbedder | null = () => null;
+let embedderOverride: (() => NoteEmbedder | null) | null = null;
 let embedError: string | null = null;
 
-export function setEmbedderProvider(provider: () => NoteEmbedder | null): void {
-  embedderProvider = provider;
+/** Tests inject an embedder. Production reads the model name from AI settings. */
+export function setEmbedderProvider(provider: (() => NoteEmbedder | null) | null): void {
+  embedderOverride = provider;
+}
+
+function currentEmbedder(): NoteEmbedder | null {
+  if (embedderOverride) return embedderOverride();
+  return embedderFromSettings();
+}
+
+function embedderFromSettings(): NoteEmbedder | null {
+  if (typeof localStorage === 'undefined') return null;
+  const settings = loadAiSettings(localStorage);
+  const embedModel = settings.embedModel.trim();
+  if (!embedModel) return null;
+  const active = activeProvider(settings);
+  if (!active.baseUrl) return null;
+  const model = `${settings.provider}:${embedModel}`;
+  return {
+    model,
+    async embed(texts) {
+      const apiKey = active.apiKey || undefined;
+      const provider =
+        settings.provider === 'ollama'
+          ? new OllamaProvider({
+              baseUrl: active.baseUrl,
+              ...(apiKey ? { apiKey } : {}),
+              defaultModel: embedModel,
+            })
+          : new OpenAICompatibleProvider({
+              baseUrl: active.baseUrl,
+              ...(apiKey ? { apiKey } : {}),
+              defaultModel: embedModel,
+            });
+      const router = new ModelRouter({ providers: [provider] });
+      const result = await router.embed({
+        input: texts.length === 1 ? (texts[0] ?? '') : [...texts],
+        model: embedModel,
+        feature: 'embed',
+      });
+      return result.embeddings;
+    },
+  };
 }
 
 export function getEmbedError(): string | null {
@@ -47,7 +97,7 @@ async function syncEmbeddings(target: {
   pendingChunks(model: string): readonly PendingChunk[] | Promise<readonly PendingChunk[]>;
   setChunkVectors(model: string, vectors: readonly ChunkVectorWrite[]): void | Promise<void>;
 }): Promise<void> {
-  const embedder = embedderProvider();
+  const embedder = currentEmbedder();
   if (!embedder) {
     embedError = null;
     return;
@@ -64,7 +114,7 @@ async function syncEmbeddings(target: {
 export async function retrieveNotes(query: string, limit = 6): Promise<SearchHit[]> {
   const index = getNoteIndex();
   if (!index) return [];
-  const embedder = embedderProvider();
+  const embedder = currentEmbedder();
   if (!embedder) return index.searchHybrid(query, null, limit);
   try {
     const [embedding] = await embedder.embed([query]);

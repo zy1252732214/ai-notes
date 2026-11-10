@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@ai-notes/ui/tokens.css';
+import '@ai-notes/ui/components.css';
 import { App } from './App';
 import { installPluginBridge } from './plugins/controller';
 import { applyTheme } from './theme';

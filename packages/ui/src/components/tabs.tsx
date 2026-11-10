@@ -15,6 +15,8 @@ export interface TabsProps {
   value?: string;
   defaultValue?: string;
   onChange?: (id: string) => void;
+  /** 保留未选中面板的 DOM，避免切走时丢掉内部状态。 */
+  keepMounted?: boolean;
   className?: string;
 }
 
@@ -44,7 +46,15 @@ export function nextTabId(
   return next?.id ?? null;
 }
 
-export function Tabs({ label, tabs, value, defaultValue, onChange, className }: TabsProps) {
+export function Tabs({
+  label,
+  tabs,
+  value,
+  defaultValue,
+  onChange,
+  keepMounted = false,
+  className,
+}: TabsProps) {
   const baseId = useId().replace(/:/g, '');
   const first = enabledTabs(tabs)[0]?.id ?? tabs[0]?.id ?? '';
   const [uncontrolled, setUncontrolled] = useState(defaultValue ?? first);
@@ -89,17 +99,19 @@ export function Tabs({ label, tabs, value, defaultValue, onChange, className }: 
           );
         })}
       </div>
-      {active ? (
+      {(keepMounted ? tabs : active ? [active] : []).map((tab) => (
         <div
+          key={tab.id}
           role="tabpanel"
-          id={`${baseId}-panel-${active.id}`}
-          aria-labelledby={`${baseId}-tab-${active.id}`}
+          id={`${baseId}-panel-${tab.id}`}
+          aria-labelledby={`${baseId}-tab-${tab.id}`}
           tabIndex={0}
+          hidden={keepMounted && tab.id !== active?.id ? true : undefined}
           className="an-tabs__panel"
         >
-          {active.content}
+          {tab.content}
         </div>
-      ) : null}
+      ))}
     </div>
   );
 }
