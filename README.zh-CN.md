@@ -9,6 +9,8 @@ ai-notes 是本地优先的笔记应用：数据是你自己的 Markdown，自�
 
 ![示例库打开在 ai-notes 里：文件树、Markdown 编辑器和问答面板](docs/assets/sample-vault.png)
 
+[演示：打开示例库、写入双链、搜索，并向问答要一条带引用的回答](docs/assets/demo.mp4)
+
 界面目前是中文。截图来自浏览器预览里的内存示例库。
 
 ## 特性

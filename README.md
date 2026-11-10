@@ -9,6 +9,8 @@ ai-notes is a local-first notebook: the notes are Markdown files you own, with b
 
 ![The sample vault open in ai-notes: file tree, Markdown editor, and the ask panel](docs/assets/sample-vault.png)
 
+[Demo: open the sample vault, add a wikilink, search, and ask with citations](docs/assets/demo.mp4)
+
 The interface is in Chinese today. Screenshots are the in-memory sample vault, opened from the browser preview.
 
 ## Features

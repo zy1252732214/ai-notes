@@ -2,46 +2,50 @@
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
  * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
+ * 强调色只有一种克制的墨绿色。问答和引用复用它，不另做一套亮色。
  */
 
 :root {
-  --an-bg-base: #ffffff;
-  --an-bg-subtle: #f6f6f7;
-  --an-bg-elevated: #ffffff;
-  --an-text-primary: #1f1f23;
-  --an-text-secondary: #5c5c66;
-  --an-text-tertiary: #8e8e99;
-  --an-border-default: #e4e4e8;
-  --an-accent: #5b5bd6;
-  --an-ai: #8e4ec6;
-  --an-ai-subtle: #f5eefc;
-  --an-success: #2f9e5b;
-  --an-warning: #c98a1a;
-  --an-danger: #d14343;
-  --an-on-accent: #ffffff;
+  --an-bg-base: #fbfaf8;
+  --an-bg-subtle: #f3f1ec;
+  --an-bg-elevated: #fffcf9;
+  --an-text-primary: #1c1917;
+  --an-text-secondary: #57534e;
+  --an-text-tertiary: #8a847c;
+  --an-border-default: #e6e1d8;
+  --an-accent: #3c6e62;
+  --an-ai: #3c6e62;
+  --an-ai-subtle: #eef3f1;
+  --an-success: #2f7d4a;
+  --an-warning: #a16207;
+  --an-danger: #b42318;
+  --an-on-accent: #fbfaf8;
 
-  --an-font-ui: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  --an-font-code: 'JetBrains Mono', Menlo, monospace;
+  --an-font-ui:
+    -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC',
+    'Noto Sans CJK SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --an-font-code:
+    'JetBrains Mono', 'SF Mono', ui-monospace, 'Sarasa Mono SC', Menlo, Consolas, monospace;
 
-  --an-font-size-h1: 28px;
-  --an-line-h1: 36px;
+  --an-font-size-h1: 32px;
+  --an-line-h1: 40px;
   --an-font-weight-h1: 600;
-  --an-font-size-h2: 22px;
-  --an-line-h2: 30px;
+  --an-font-size-h2: 24px;
+  --an-line-h2: 32px;
   --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
-  --an-line-h3: 26px;
+  --an-line-h3: 28px;
   --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
-  --an-line-body: 26px;
+  --an-line-body: 28px;
   --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
-  --an-line-ui: 20px;
+  --an-line-ui: 22px;
   --an-font-weight-ui: 400;
   --an-font-size-small: 12px;
   --an-line-small: 16px;
   --an-font-weight-small: 400;
-  --an-font-size-code: 14px;
+  --an-font-size-code: 13px;
   --an-line-code: 22px;
   --an-font-weight-code: 400;
 
@@ -52,40 +56,48 @@
   --an-space-6: 24px;
   --an-space-8: 32px;
 
-  --an-radius-sm: 4px;
+  --an-radius-sm: 6px;
   --an-radius-md: 8px;
   --an-radius-lg: 12px;
+  --an-radius-xl: 16px;
 
-  --an-topbar-height: 44px;
-  --an-statusbar-height: 28px;
-  --an-sidebar-width: 240px;
-  --an-sidebar-min-width: 180px;
+  --an-shadow-sm: 0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent);
+  --an-shadow-md: 0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
+  --an-shadow-lg: 0 24px 48px color-mix(in srgb, var(--an-text-primary) 14%, transparent);
+
+  --an-motion-fast: 120ms ease;
+  --an-motion-base: 180ms ease;
+
+  --an-topbar-height: 48px;
+  --an-statusbar-height: 32px;
+  --an-sidebar-width: 260px;
+  --an-sidebar-min-width: 200px;
   --an-sidebar-max-width: 400px;
-  --an-ai-panel-width: 360px;
+  --an-ai-panel-width: 380px;
   --an-ai-panel-min-width: 300px;
   --an-ai-panel-max-width: 560px;
-  --an-editor-max-width: 720px;
+  --an-editor-max-width: 680px;
   --an-command-palette-width: 640px;
-  --an-command-palette-top: 20%;
+  --an-command-palette-top: 12%;
   --an-breakpoint-compact: 900px;
 
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --an-bg-base: #1e1e20;
-  --an-bg-subtle: #252528;
-  --an-bg-elevated: #2d2d31;
-  --an-text-primary: #e8e8ea;
-  --an-text-secondary: #a6a6b0;
-  --an-text-tertiary: #74747e;
-  --an-border-default: #38383d;
-  --an-accent: #7c7cf0;
-  --an-ai: #b07fe8;
-  --an-ai-subtle: #2e2338;
-  --an-success: #4cc47e;
-  --an-warning: #e5a93a;
-  --an-danger: #f06a6a;
-  --an-on-accent: #ffffff;
+  --an-bg-base: #1c1b19;
+  --an-bg-subtle: #242320;
+  --an-bg-elevated: #2c2b28;
+  --an-text-primary: #f4f1ea;
+  --an-text-secondary: #c4bfb4;
+  --an-text-tertiary: #8d877c;
+  --an-border-default: #3a3834;
+  --an-accent: #9dc7b8;
+  --an-ai: #9dc7b8;
+  --an-ai-subtle: #24302c;
+  --an-success: #7dcea0;
+  --an-warning: #e0b15a;
+  --an-danger: #f0a097;
+  --an-on-accent: #14201c;
   color-scheme: dark;
 }

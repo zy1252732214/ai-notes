@@ -2,7 +2,7 @@
 
 ai-notes 的设计令牌和基础组件。令牌覆盖颜色、字体、间距、圆角、布局尺寸，以及深浅色切换。组件是一组 React 控件，颜色和尺寸只引用这些 `--an-*` 变量。
 
-`tokens.css` 是令牌的唯一来源，桌面端通过 `@ai-notes/ui/tokens.css` 引用。`src/tokens.ts` 是同一套数值的类型化镜像，改令牌时两处一起改。组件样式在 `components.css`，文件开头会引入令牌。
+`tokens.css` 是令牌的唯一来源，桌面端通过 `@ai-notes/ui/tokens.css` 引用。`src/tokens.ts` 是同一套数值的类型化镜像，改令牌时两处一起改。完整说明在 [docs/design-system.md](../../docs/design-system.md)。组件样式在 `components.css`，文件开头会引入令牌。
 
 ```css
 @import '@ai-notes/ui/tokens.css';
@@ -67,38 +67,38 @@ pnpm --filter @ai-notes/ui-preview dev
 
 ## 颜色
 
-| 变量                  | 用途                     | 浅色      | 深色      |
-| --------------------- | ------------------------ | --------- | --------- |
-| `--an-bg-base`        | 编辑区背景               | `#ffffff` | `#1e1e20` |
-| `--an-bg-subtle`      | 侧栏、面板背景           | `#f6f6f7` | `#252528` |
-| `--an-bg-elevated`    | 弹窗、浮条、命令面板     | `#ffffff` | `#2d2d31` |
-| `--an-text-primary`   | 正文、标题               | `#1f1f23` | `#e8e8ea` |
-| `--an-text-secondary` | 次要说明                 | `#5c5c66` | `#a6a6b0` |
-| `--an-text-tertiary`  | 占位符、时间戳           | `#8e8e99` | `#74747e` |
-| `--an-border-default` | 分割线、输入框边框       | `#e4e4e8` | `#38383d` |
-| `--an-accent`         | 品牌色、主按钮、链接     | `#5b5bd6` | `#7c7cf0` |
-| `--an-on-accent`      | 主按钮上的文字           | `#ffffff` | `#ffffff` |
-| `--an-ai`             | AI 生成内容、AI 面板强调 | `#8e4ec6` | `#b07fe8` |
-| `--an-ai-subtle`      | AI 内容底色              | `#f5eefc` | `#2e2338` |
-| `--an-success`        | 同步成功、保存成功       | `#2f9e5b` | `#4cc47e` |
-| `--an-warning`        | 需要注意                 | `#c98a1a` | `#e5a93a` |
-| `--an-danger`         | 删除、错误、危险权限     | `#d14343` | `#f06a6a` |
+| 变量                  | 用途                           | 浅色      | 深色      |
+| --------------------- | ------------------------------ | --------- | --------- |
+| `--an-bg-base`        | 编辑区背景                     | `#fbfaf8` | `#1c1b19` |
+| `--an-bg-subtle`      | 侧栏、面板背景                 | `#f3f1ec` | `#242320` |
+| `--an-bg-elevated`    | 弹窗、浮条、命令面板           | `#fffcf9` | `#2c2b28` |
+| `--an-text-primary`   | 正文、标题                     | `#1c1917` | `#f4f1ea` |
+| `--an-text-secondary` | 次要说明                       | `#57534e` | `#c4bfb4` |
+| `--an-text-tertiary`  | 占位符、时间戳                 | `#8a847c` | `#8d877c` |
+| `--an-border-default` | 分割线、输入框边框             | `#e6e1d8` | `#3a3834` |
+| `--an-accent`         | 主按钮、链接、焦点             | `#3c6e62` | `#9dc7b8` |
+| `--an-on-accent`      | 主按钮上的文字                 | `#fbfaf8` | `#14201c` |
+| `--an-ai`             | 与强调色相同，问答不另做品牌色 | `#3c6e62` | `#9dc7b8` |
+| `--an-ai-subtle`      | 引用和回答的浅底               | `#eef3f1` | `#24302c` |
+| `--an-success`        | 同步成功、保存成功             | `#2f7d4a` | `#7dcea0` |
+| `--an-warning`        | 需要注意                       | `#a16207` | `#e0b15a` |
+| `--an-danger`         | 删除、错误、危险权限           | `#b42318` | `#f0a097` |
 
 ## 字体
 
-界面字体 `--an-font-ui`：`-apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif`。
+界面字体 `--an-font-ui`：`-apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC', 'Microsoft YaHei', 'Segoe UI', sans-serif`。
 
-代码字体 `--an-font-code`：`'JetBrains Mono', Menlo, monospace`。
+代码字体 `--an-font-code`：`'JetBrains Mono', 'SF Mono', ui-monospace, 'Sarasa Mono SC', Menlo, Consolas, monospace`。
 
 | 级别  | 字号 | 行高 | 字重 | 用途                 |
 | ----- | ---- | ---- | ---- | -------------------- |
-| H1    | 28px | 36px | 600  | 笔记标题             |
-| H2    | 22px | 30px | 600  | 二级标题             |
-| H3    | 18px | 26px | 600  | 三级标题             |
-| Body  | 16px | 26px | 400  | 笔记正文             |
-| UI    | 14px | 20px | 400  | 侧栏、按钮、菜单     |
+| H1    | 32px | 40px | 600  | 笔记标题             |
+| H2    | 24px | 32px | 600  | 二级标题             |
+| H3    | 18px | 28px | 600  | 三级标题             |
+| Body  | 16px | 28px | 400  | 笔记正文             |
+| UI    | 14px | 22px | 400  | 侧栏、按钮、菜单     |
 | Small | 12px | 16px | 400  | 状态栏、时间戳、引用 |
-| Code  | 14px | 22px | 400  | 代码块、行内代码     |
+| Code  | 13px | 22px | 400  | 代码块、行内代码     |
 
 字号变量是 `--an-font-size-*`，行高是 `--an-line-*`，字重是 `--an-font-weight-*`。`*` 为 `h1`、`h2`、`h3`、`body`、`ui`、`small`、`code`。
 
@@ -106,21 +106,25 @@ pnpm --filter @ai-notes/ui-preview dev
 
 间距按 4px 栅格：`--an-space-1` 4px、`--an-space-2` 8px、`--an-space-3` 12px、`--an-space-4` 16px、`--an-space-6` 24px、`--an-space-8` 32px。
 
-圆角：`--an-radius-sm` 4px、`--an-radius-md` 8px、`--an-radius-lg` 12px。
+圆角：`--an-radius-sm` 6px、`--an-radius-md` 8px、`--an-radius-lg` 12px、`--an-radius-xl` 16px。
+
+阴影：`--an-shadow-sm`、`--an-shadow-md`、`--an-shadow-lg`。颜色用 `color-mix` 从文字色派生，浅色和深色共用。
+
+动效：`--an-motion-fast` 120ms、`--an-motion-base` 180ms。只用于颜色、背景和边框。`prefers-reduced-motion: reduce` 时关掉。
 
 ## 布局
 
 | 变量                         | 值    | 含义                       |
 | ---------------------------- | ----- | -------------------------- |
-| `--an-topbar-height`         | 44px  | 顶栏高度                   |
-| `--an-statusbar-height`      | 28px  | 状态栏高度                 |
-| `--an-sidebar-width`         | 240px | 左栏默认宽度               |
-| `--an-sidebar-min-width`     | 180px | 左栏可拖下限               |
+| `--an-topbar-height`         | 48px  | 顶栏高度                   |
+| `--an-statusbar-height`      | 32px  | 状态栏高度                 |
+| `--an-sidebar-width`         | 260px | 左栏默认宽度               |
+| `--an-sidebar-min-width`     | 200px | 左栏可拖下限               |
 | `--an-sidebar-max-width`     | 400px | 左栏可拖上限               |
-| `--an-ai-panel-width`        | 360px | AI 面板默认宽度            |
-| `--an-ai-panel-min-width`    | 300px | AI 面板可拖下限            |
-| `--an-ai-panel-max-width`    | 560px | AI 面板可拖上限            |
-| `--an-editor-max-width`      | 720px | 编辑区正文最大宽度         |
+| `--an-ai-panel-width`        | 380px | 右侧面板默认宽度           |
+| `--an-ai-panel-min-width`    | 300px | 右侧面板可拖下限           |
+| `--an-ai-panel-max-width`    | 560px | 右侧面板可拖上限           |
+| `--an-editor-max-width`      | 680px | 编辑区正文最大宽度         |
 | `--an-command-palette-width` | 640px | 命令面板宽度               |
-| `--an-command-palette-top`   | 20%   | 命令面板距顶部             |
+| `--an-command-palette-top`   | 12%   | 命令面板距顶部             |
 | `--an-breakpoint-compact`    | 900px | 窄于此宽度时左右栏改为抽屉 |

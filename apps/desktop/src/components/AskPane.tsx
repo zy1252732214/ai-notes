@@ -170,8 +170,8 @@ export function AskPane() {
           }
           return (
             <div key={turn.id} className="ai-answer-block">
-              <article className="an-chat an-chat--assistant" aria-label="AI 回复">
-                <p className="an-chat__role">AI 回复</p>
+              <article className="an-chat an-chat--assistant" aria-label="回答">
+                <p className="an-chat__role">回答</p>
                 <div className="an-chat__content">
                   {turn.pending && !turn.content ? '正在回答…' : null}
                   <AnswerText

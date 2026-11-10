@@ -11,11 +11,13 @@ import {
   type ProviderSettings,
 } from '../ai/settings';
 import { getNoteIndex } from '../search/client';
-import { useAppStore } from '../store';
+import { useAppStore, type ThemeMode } from '../store';
 
 export function SettingsDialog() {
   const open = useAppStore((state) => state.settingsOpen);
   const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
+  const themeMode = useAppStore((state) => state.themeMode);
+  const setThemeMode = useAppStore((state) => state.setThemeMode);
   const [draft, setDraft] = useState<AiSettings>(defaultAiSettings);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +71,20 @@ export function SettingsDialog() {
       }
     >
       <div className="ai-settings">
+        <SettingsRow label="外观" htmlFor="theme-mode" description="跟随系统，或固定为浅色、深色。">
+          <Select
+            id="theme-mode"
+            label="外观"
+            labelHidden
+            value={themeMode}
+            options={[
+              { value: 'system', label: '跟随系统' },
+              { value: 'light', label: '浅色' },
+              { value: 'dark', label: '深色' },
+            ]}
+            onChange={(value) => setThemeMode(value as ThemeMode)}
+          />
+        </SettingsRow>
         <SettingsRow
           label="提供方"
           htmlFor="ai-provider"

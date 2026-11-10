@@ -1,6 +1,11 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
-import { HighlightStyle, bracketMatching, syntaxHighlighting } from '@codemirror/language';
+import {
+  HighlightStyle,
+  bracketMatching,
+  syntaxHighlighting,
+  syntaxTree,
+} from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import {
   Decoration,
@@ -42,20 +47,82 @@ export interface MarkdownEditorProps {
 }
 
 const highlightStyle = HighlightStyle.define([
-  { tag: tags.heading1, fontWeight: '600', color: 'var(--an-text-primary)' },
-  { tag: tags.heading2, fontWeight: '600', color: 'var(--an-text-primary)' },
-  { tag: tags.heading3, fontWeight: '600', color: 'var(--an-text-primary)' },
+  {
+    tag: tags.heading1,
+    fontWeight: 'var(--an-font-weight-h1)',
+    fontSize: 'var(--an-font-size-h1)',
+    lineHeight: 'var(--an-line-h1)',
+    color: 'var(--an-text-primary)',
+  },
+  {
+    tag: tags.heading2,
+    fontWeight: 'var(--an-font-weight-h2)',
+    fontSize: 'var(--an-font-size-h2)',
+    lineHeight: 'var(--an-line-h2)',
+    color: 'var(--an-text-primary)',
+  },
+  {
+    tag: tags.heading3,
+    fontWeight: 'var(--an-font-weight-h3)',
+    fontSize: 'var(--an-font-size-h3)',
+    lineHeight: 'var(--an-line-h3)',
+    color: 'var(--an-text-primary)',
+  },
   { tag: tags.heading4, fontWeight: '600', color: 'var(--an-text-secondary)' },
   { tag: tags.link, color: 'var(--an-accent)' },
   { tag: tags.url, color: 'var(--an-accent)' },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strong, fontWeight: '600' },
-  { tag: tags.monospace, fontFamily: 'var(--an-font-code)', fontSize: 'var(--an-font-size-code)' },
-  { tag: tags.quote, color: 'var(--an-text-secondary)' },
+  {
+    tag: tags.monospace,
+    fontFamily: 'var(--an-font-code)',
+    fontSize: 'var(--an-font-size-code)',
+    backgroundColor: 'var(--an-bg-subtle)',
+    borderRadius: '4px',
+  },
+  { tag: tags.quote, color: 'var(--an-text-secondary)', fontStyle: 'italic' },
+  { tag: tags.list, color: 'var(--an-text-tertiary)' },
   { tag: tags.meta, color: 'var(--an-text-tertiary)' },
   { tag: tags.processingInstruction, color: 'var(--an-text-tertiary)' },
   { tag: tags.comment, color: 'var(--an-text-tertiary)' },
 ]);
+
+const codeLine = Decoration.line({ class: 'cm-code-line' });
+
+const codeBlockLines = ViewPlugin.fromClass(
+  class CodeBlockLines {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = codeBlockDecorations(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = codeBlockDecorations(update.view);
+      }
+    }
+  },
+  { decorations: (plugin) => plugin.decorations },
+);
+
+function codeBlockDecorations(view: EditorView): DecorationSet {
+  const marks: ReturnType<typeof codeLine.range>[] = [];
+  for (const { from, to } of view.visibleRanges) {
+    syntaxTree(view.state).iterate({
+      from,
+      to,
+      enter(node) {
+        if (node.name !== 'FencedCode') return;
+        const start = view.state.doc.lineAt(node.from).number;
+        const end = view.state.doc.lineAt(node.to).number;
+        for (let number = start; number <= end; number += 1) {
+          marks.push(codeLine.range(view.state.doc.line(number).from));
+        }
+        return false;
+      },
+    });
+  }
+  return Decoration.set(marks, true);
+}
 
 const wikiDecorator = new MatchDecorator({
   regexp: /\[\[[^\]\n]+\]\]/g,
@@ -89,9 +156,20 @@ const editorTheme = EditorView.theme({
   '.cm-content': {
     maxWidth: 'var(--an-editor-max-width)',
     margin: '0 auto',
-    padding: '48px 24px 40vh',
+    padding: 'calc(var(--an-space-8) + var(--an-space-4)) var(--an-space-8) 40vh',
     caretColor: 'var(--an-accent)',
     fontSize: 'var(--an-font-size-body)',
+    fontFamily: 'var(--an-font-ui)',
+  },
+  '.cm-line': {
+    padding: '0 var(--an-space-1)',
+  },
+  '.cm-line.cm-code-line': {
+    backgroundColor: 'var(--an-bg-subtle)',
+    borderRadius: 'var(--an-radius-sm)',
+    fontFamily: 'var(--an-font-code)',
+    fontSize: 'var(--an-font-size-code)',
+    lineHeight: 'var(--an-line-code)',
   },
   '.cm-cursor, .cm-dropCursor': {
     borderLeftColor: 'var(--an-accent)',
@@ -104,8 +182,11 @@ const editorTheme = EditorView.theme({
   },
   '.cm-wikilink': {
     color: 'var(--an-accent)',
-    backgroundColor: 'color-mix(in srgb, var(--an-accent) 12%, transparent)',
-    borderRadius: '4px',
+    backgroundColor: 'transparent',
+    borderRadius: 'var(--an-radius-sm)',
+    textDecoration: 'underline',
+    textDecorationColor: 'color-mix(in srgb, var(--an-accent) 40%, transparent)',
+    textUnderlineOffset: '3px',
     cursor: 'text',
   },
   '&.cm-wikilink-armed .cm-wikilink:hover': {
@@ -189,6 +270,8 @@ export function MarkdownEditor({
           markdown(),
           syntaxHighlighting(highlightStyle),
           wikiLinks,
+          codeBlockLines,
+          EditorView.lineWrapping,
           editorTheme,
           EditorView.domEventHandlers({
             click(event, view) {
@@ -203,7 +286,6 @@ export function MarkdownEditor({
               return true;
             },
           }),
-          EditorView.lineWrapping,
           placeholder('开始写点什么…'),
           keymap.of([
             {
