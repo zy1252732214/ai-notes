@@ -38,4 +38,6 @@ pnpm --filter @ai-notes/desktop dev
 
 Linux 需要 WebKitGTK 4.1。`Ctrl/Cmd+S` 立即保存，停笔约 800ms 后自动保存。`Ctrl/Cmd+\` 收起文件树，`Ctrl/Cmd+J` 开关右侧面板，`Ctrl/Cmd+K` 打开命令面板。
 
+打开笔记库时，如果 `.ainotes/plugins/hello-notes` 还不存在，会写入示例插件。它在沙箱 iframe 里运行，命令面板里的「统计笔记数量」和 `Ctrl/Cmd+Shift+H` 会列出笔记数量。顶栏的插件按钮可以启用或禁用它。没有 `vault:write` 等权限的调用会被宿主拒绝。命令面板也会搜索当前笔记库的全文，右侧面板显示反向链接。
+
 发版步骤见根目录 README。tag 必须是 `v` 加上 `src-tauri/tauri.conf.json` 的 `version`（当前 `0.1.0`，对应 tag `v0.1.0`）。流水线打的是 universal macOS dmg、Windows nsis/msi、Linux AppImage/deb。签名私钥和 updater 密钥只放在 GitHub Actions secrets，不要提交；没配密钥时仍会出未签名包。

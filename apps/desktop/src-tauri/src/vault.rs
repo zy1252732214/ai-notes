@@ -46,6 +46,32 @@ fn validate_rel(rel: &str) -> Result<String, String> {
     Ok(normalized)
 }
 
+fn validate_ainotes(rel: &str) -> Result<String, String> {
+    if rel.is_empty() || rel.contains('\0') {
+        return Err("路径无效".into());
+    }
+    let normalized = rel.replace('\\', "/");
+    if normalized.starts_with('/') || normalized.ends_with('/') || normalized.contains("//") {
+        return Err("路径无效".into());
+    }
+    let mut segments = normalized.split('/');
+    if segments.next() != Some(".ainotes") {
+        return Err("只能访问 .ainotes".into());
+    }
+    for segment in segments {
+        if segment.is_empty() || segment == "." || segment == ".." {
+            return Err("路径无效".into());
+        }
+    }
+    Ok(normalized)
+}
+
+fn resolve_ainotes(root: &str, rel: &str) -> Result<(PathBuf, PathBuf), String> {
+    let root = canonical_root(root)?;
+    let rel = validate_ainotes(rel)?;
+    Ok((root.clone(), root.join(rel)))
+}
+
 fn resolve(root: &str, rel: &str) -> Result<(PathBuf, PathBuf), String> {
     let root = canonical_root(root)?;
     let rel = validate_rel(rel)?;
@@ -177,6 +203,53 @@ pub fn vault_rename(root: String, from: String, to: String) -> Result<(), String
         ensure_inside(&root_path, parent)?;
     }
     std::fs::rename(source, target).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn plugin_read(root: String, path: String) -> Result<Option<String>, String> {
+    let (_root, target) = resolve_ainotes(&root, &path)?;
+    if !target.exists() {
+        return Ok(None);
+    }
+    if !target.is_file() {
+        return Err("不是文件".into());
+    }
+    std::fs::read_to_string(target).map(Some).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn plugin_write(root: String, path: String, contents: String) -> Result<(), String> {
+    let (root_path, target) = resolve_ainotes(&root, &path)?;
+    if let Some(parent) = target.parent() {
+        std::fs::create_dir_all(parent).map_err(|err| err.to_string())?;
+        if parent.exists() {
+            ensure_inside(&root_path, parent)?;
+        }
+    }
+    std::fs::write(target, contents).map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn plugin_list(root: String, path: String) -> Result<Vec<String>, String> {
+    let (_root, target) = resolve_ainotes(&root, &path)?;
+    if !target.exists() {
+        return Ok(Vec::new());
+    }
+    if !target.is_dir() {
+        return Err("不是目录".into());
+    }
+    let mut names = Vec::new();
+    for entry in std::fs::read_dir(&target).map_err(|err| err.to_string())? {
+        let entry = entry.map_err(|err| err.to_string())?;
+        if entry.file_type().map(|kind| kind.is_symlink()).unwrap_or(true) {
+            continue;
+        }
+        if let Some(name) = entry.file_name().to_str() {
+            names.push(name.to_string());
+        }
+    }
+    names.sort();
+    Ok(names)
 }
 
 #[tauri::command]

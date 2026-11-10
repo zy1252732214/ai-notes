@@ -1,8 +1,9 @@
 import { filterVaultTree, type VaultNode } from '@ai-notes/core';
 import { VaultError } from '@ai-notes/core';
 import type { SearchHit } from '@ai-notes/indexer';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { openFolderVault } from '../fs/openVault';
+import { pluginController } from '../plugins/controller';
 import { getNoteIndex } from '../search/client';
 import { useAppStore } from '../store';
 
@@ -21,6 +22,10 @@ export function CommandPalette() {
   const indexRevision = useAppStore((state) => state.indexRevision);
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
+  const pluginSnapshot = useSyncExternalStore(
+    pluginController.subscribe,
+    pluginController.getSnapshot,
+  );
   const [hits, setHits] = useState<SearchHit[]>([]);
 
   useEffect(() => {
@@ -31,8 +36,8 @@ export function CommandPalette() {
 
   const items = useMemo(() => {
     if (!open) return [];
-    return buildCommands(query, tree, Boolean(vault), hits);
-  }, [open, query, tree, vault, hits]);
+    return buildCommands(query, tree, Boolean(vault), pluginSnapshot.items, hits);
+  }, [open, query, tree, vault, pluginSnapshot, hits]);
 
   useEffect(() => {
     setIndex(0);
@@ -125,6 +130,7 @@ function buildCommands(
   query: string,
   tree: readonly VaultNode[],
   hasVault: boolean,
+  plugins: ReturnType<typeof pluginController.getSnapshot>['items'],
   hits: readonly SearchHit[],
 ): CommandItem[] {
   const store = useAppStore.getState();
@@ -159,6 +165,19 @@ function buildCommands(
     { id: 'theme-dark', title: '主题：深色', run: () => store.setThemeMode('dark') },
     { id: 'left', title: '显示或收起文件树', hint: 'Ctrl \\', run: () => store.toggleLeft() },
     { id: 'right', title: '显示或收起 AI 面板', hint: 'Ctrl J', run: () => store.toggleRight() },
+    {
+      id: 'plugins',
+      title: '插件设置',
+      run: () => store.setPluginsOpen(true),
+    },
+    ...plugins.flatMap((plugin) =>
+      plugin.commands.map((command) => ({
+        id: `plugin:${command.pluginId}:${command.id}`,
+        title: command.name,
+        hint: command.hotkey ? `插件 · ${command.hotkey}` : '插件',
+        run: () => pluginController.invoke(command.id),
+      })),
+    ),
   ];
   const needle = query.trim().toLowerCase();
   const matchedActions = actions.filter(
@@ -192,7 +211,7 @@ function buildCommands(
 
 async function openFolder() {
   const vault = await openFolderVault();
-  if (vault) await useAppStore.getState().openVault(vault);
+  if (vault) await useAppStore.getState().openVault(vault.vault, vault.plugins);
 }
 
 function flattenFiles(nodes: readonly VaultNode[]): VaultNode[] {

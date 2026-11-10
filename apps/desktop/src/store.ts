@@ -12,7 +12,12 @@ import {
   type Vault,
   type VaultNode,
 } from '@ai-notes/core';
+import { MemoryPluginStorage, type PluginStorage } from '@ai-notes/plugin-host';
+import type { NoteEvent } from '@ai-notes/plugin-sdk';
 import { create } from 'zustand';
+import { pluginController } from './plugins/controller';
+import { ensureHelloNotes } from './plugins/example';
+import { createVaultPluginServices } from './plugins/services';
 import { closeNoteIndex, getNoteIndex, openNoteIndex } from './search/client';
 
 export interface NoteTab {
@@ -35,6 +40,7 @@ interface AppState {
   leftOpen: boolean;
   rightOpen: boolean;
   commandOpen: boolean;
+  pluginsOpen: boolean;
   dialog: DialogRequest | null;
   banner: string | null;
   vault: Vault | null;
@@ -53,12 +59,13 @@ interface AppState {
   setLeftOpen: (open: boolean) => void;
   setRightOpen: (open: boolean) => void;
   setCommandOpen: (open: boolean) => void;
+  setPluginsOpen: (open: boolean) => void;
   setFilter: (filter: string) => void;
   setCursor: (cursor: { line: number; column: number }) => void;
   setBanner: (banner: string | null) => void;
   openDialog: (dialog: DialogRequest) => void;
   closeDialog: () => void;
-  openVault: (vault: Vault) => Promise<void>;
+  openVault: (vault: Vault, plugins?: PluginStorage) => Promise<void>;
   openSampleVault: () => Promise<void>;
   refreshTree: () => Promise<void>;
   toggleExpanded: (path: string) => void;
@@ -169,6 +176,7 @@ async function persist(path: string, content: string): Promise<void> {
       ),
       saveError: state.activePath === path ? null : state.saveError,
     }));
+    pluginController.emit({ type: 'note:modified', path });
   } catch (error) {
     const message = error instanceof Error ? error.message : '保存失败';
     useAppStore.setState({ saveError: message });
@@ -233,6 +241,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   leftOpen: true,
   rightOpen: true,
   commandOpen: false,
+  pluginsOpen: false,
   dialog: null,
   banner: null,
   vault: null,
@@ -255,16 +264,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   setLeftOpen: (leftOpen) => set({ leftOpen }),
   setRightOpen: (rightOpen) => set({ rightOpen }),
   setCommandOpen: (commandOpen) => set({ commandOpen }),
+  setPluginsOpen: (pluginsOpen) => set({ pluginsOpen }),
   setFilter: (filter) => set({ filter }),
   setCursor: (cursor) => set({ cursor }),
   setBanner: (banner) => set({ banner }),
   openDialog: (dialog) => set({ dialog, commandOpen: false }),
   closeDialog: () => set({ dialog: null }),
 
-  openVault: async (vault) => {
+  openVault: async (vault, plugins) => {
     stopWatch?.();
     stopWatch = null;
     disposeSavers();
+    pluginController.detach();
     closeNoteIndex();
     if (refreshTimer) clearTimeout(refreshTimer);
     set({
@@ -290,13 +301,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ banner: message });
     }
     attachWatch(vault);
+    if (plugins) {
+      await ensureHelloNotes(plugins);
+      await pluginController.attach(plugins, vaultServices(), {
+        onLog: (message) => useAppStore.getState().setBanner(message),
+      });
+    }
     const tree = get().tree;
     const initial = findByName(tree, '欢迎.md') ?? firstFile(tree);
     if (initial) await get().openNote(initial);
   },
 
   openSampleVault: async () => {
-    await get().openVault(createSampleVault());
+    await get().openVault(createSampleVault(), new MemoryPluginStorage());
   },
 
   refreshTree: async () => {
@@ -350,6 +367,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         saveError: null,
         cursor: { line: 1, column: 1 },
       });
+      pluginController.emit({ type: 'note:opened', path });
       return;
     }
     const content = await vault.readNote(path);
@@ -360,6 +378,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       saveError: null,
       cursor: { line: 1, column: 1 },
     }));
+    pluginController.emit({ type: 'note:opened', path });
   },
 
   closeTab: async (path) => {
@@ -416,6 +435,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const title = fileName.replace(/\.md$/i, '');
     const content = `# ${title}\n\n`;
     await vault.createNote(path, content);
+    pluginController.emit({ type: 'note:created', path });
     await getNoteIndex()
       ?.noteSaved(path, content)
       .catch(() => undefined);
@@ -454,6 +474,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (target === path) return;
     const affected = await flushAffected(path);
     await vault.rename(path, target);
+    pluginController.emit({ type: 'note:renamed', from: path, to: target });
     await getNoteIndex()
       ?.noteRenamed(path, target)
       .catch(() => undefined);
@@ -480,6 +501,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     for (const key of affected) savers.get(key)?.cancel();
     for (const key of affected) await savers.get(key)?.flush();
     await vault.delete(path);
+    pluginController.emit({ type: 'note:deleted', path });
     await getNoteIndex()
       ?.noteDeleted(path)
       .catch(() => undefined);
@@ -502,6 +524,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().refreshTree();
   },
 }));
+
+function vaultServices() {
+  return createVaultPluginServices({
+    getVault: () => useAppStore.getState().vault,
+    getActive: () => {
+      const state = useAppStore.getState();
+      const tab = state.tabs.find((item) => item.path === state.activePath);
+      return tab && state.activePath ? { path: state.activePath, content: tab.content } : null;
+    },
+    onEvent: (event: NoteEvent) => pluginController.emit(event),
+    onRefresh: () => useAppStore.getState().refreshTree(),
+    onIndexChange: () =>
+      useAppStore.setState((state) => ({ indexRevision: state.indexRevision + 1 })),
+    insertAtCursor: (text) => appendToActive(text),
+    replaceSelection: (text) => appendToActive(text),
+  });
+}
+
+function appendToActive(text: string) {
+  const state = useAppStore.getState();
+  if (!state.activePath) return;
+  const tab = state.tabs.find((item) => item.path === state.activePath);
+  if (!tab) return;
+  state.updateContent(state.activePath, `${tab.content}${text}`);
+}
 
 export function noteTitle(path: string): string {
   return basename(path).replace(/\.md$/i, '');
