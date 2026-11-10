@@ -71,6 +71,20 @@ describe('authorize', () => {
         denied: true,
       },
       {
+        name: 'vault.search without permission',
+        permissions: [],
+        method: 'vault.search',
+        params: { query: '笔记' },
+        denied: true,
+      },
+      {
+        name: 'vault.search',
+        permissions: read,
+        method: 'vault.search',
+        params: { query: '笔记' },
+        denied: false,
+      },
+      {
         name: 'ai.chat',
         permissions: [],
         method: 'ai.chat',

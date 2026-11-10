@@ -450,6 +450,9 @@ importers:
       '@ai-notes/core':
         specifier: workspace:*
         version: link:../core
+      sqlite-vec:
+        specifier: 0.1.6
+        version: 0.1.6
     devDependencies:
       '@types/node':
         specifier: 26.6.6
@@ -1639,6 +1642,29 @@ packages:
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
+
+  sqlite-vec-darwin-arm64@0.1.6:
+    resolution: {integrity: sha512-5duw/xhM3xE6BCQd//eAkyHgBp9FIwK6veldRhPG96dT6Zpjov3bG02RuE7JAQj0SVJYRW8bJwZ4LxqW0+Q7Dw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  sqlite-vec-darwin-x64@0.1.6:
+    resolution: {integrity: sha512-MFkKjNfJ5pamFHhyTsrqdxALrjuvpSEZdu6Q/0vMxFa6sr5YlfabeT5xGqEbuH0iobsT1Hca5EZxLhLy0jHYkw==}
+    cpu: [x64]
+    os: [darwin]
+
+  sqlite-vec-linux-x64@0.1.6:
+    resolution: {integrity: sha512-411tWPswywIzdkp+zsAUav4A03f0FjnNfpZFlOw8fBebFR74RSFkwM8Xryf18gLHiYAXUBI4mjY9+/xjwBjKpg==}
+    cpu: [x64]
+    os: [linux]
+
+  sqlite-vec-windows-x64@0.1.6:
+    resolution: {integrity: sha512-Dy9/KlKJDrjuQ/RRkBqGkMZuSh5bTJDMMOFZft9VJZaXzpYxb5alpgdvD4bbKegpDdfPi2BT4+PBivsNJSlMoQ==}
+    cpu: [x64]
+    os: [win32]
+
+  sqlite-vec@0.1.6:
+    resolution: {integrity: sha512-hQZU700TU2vWPXZYDULODjKXeMio6rKX7UpPN7Tq9qjPW671IEgURGrcC5LDBMl0q9rBvAuzmcmJmImMqVibYQ==}
 
   std-env@4.3.0:
     resolution: {integrity: sha512-OtU/EgQ1kIm5KwqQpBC6ZEMXrZRui11w8zgfTWp8cdO9B8OaPsbA8bTHO2P+HNo1VlUTGMVBwPhydu6poeXiag==}
@@ -2898,6 +2924,25 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   source-map-js@1.2.2: {}
+
+  sqlite-vec-darwin-arm64@0.1.6:
+    optional: true
+
+  sqlite-vec-darwin-x64@0.1.6:
+    optional: true
+
+  sqlite-vec-linux-x64@0.1.6:
+    optional: true
+
+  sqlite-vec-windows-x64@0.1.6:
+    optional: true
+
+  sqlite-vec@0.1.6:
+    optionalDependencies:
+      sqlite-vec-darwin-arm64: 0.1.6
+      sqlite-vec-darwin-x64: 0.1.6
+      sqlite-vec-linux-x64: 0.1.6
+      sqlite-vec-windows-x64: 0.1.6
 
   std-env@4.3.0: {}
 

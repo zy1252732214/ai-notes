@@ -54,6 +54,10 @@ function services(calls: { n: number }): PluginServices {
       calls.n += 1;
       return note;
     },
+    searchNotes: async () => {
+      calls.n += 1;
+      return [];
+    },
     activeNote: () => null,
     replaceSelection: async () => {
       calls.n += 1;
@@ -122,6 +126,45 @@ describe('PluginSession permissions', () => {
     );
     expect(allowedResponse?.kind).toBe('response');
     expect(allowed.panels.map((panel) => panel.title)).toEqual(['面板']);
+  });
+
+  it('vault.search 受 vault:read 约束，并按文件夹过滤', async () => {
+    const calls = { n: 0 };
+    const granted = services(calls);
+    granted.searchNotes = async () => [
+      {
+        path: '日记/a.md',
+        title: '今天',
+        headingPath: '今天',
+        startOffset: 1,
+        endOffset: 4,
+        snippet: '今天',
+      },
+      {
+        path: '其他/b.md',
+        title: '别的',
+        headingPath: '',
+        startOffset: 0,
+        endOffset: 2,
+        snippet: '别的',
+      },
+    ];
+    const denied = await new PluginSession(manifest([]), granted).handle(
+      createRpcRequest('demo', 's1', 'vault.search', { query: '今天' }),
+    );
+    expect(denied?.kind).toBe('error');
+    expect(calls.n).toBe(0);
+
+    const allowed = await new PluginSession(
+      manifest([{ id: 'vault:read', folders: ['日记'] }]),
+      granted,
+    ).handle(createRpcRequest('demo', 's2', 'vault.search', { query: '今天' }));
+    expect(allowed?.kind).toBe('response');
+    if (allowed?.kind === 'response') {
+      expect(allowed.result).toEqual([
+        expect.objectContaining({ path: '日记/a.md', snippet: '今天' }),
+      ]);
+    }
   });
 
   it('拒绝伪造的插件 id', async () => {

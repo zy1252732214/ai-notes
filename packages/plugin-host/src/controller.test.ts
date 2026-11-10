@@ -43,6 +43,7 @@ function services(calls: { n: number }): PluginServices {
     deleteNote: async () => undefined,
     renameNote: async () => undefined,
     metadata: touch,
+    searchNotes: async () => [],
     activeNote: () => null,
     replaceSelection: async () => undefined,
     insertAtCursor: async () => undefined,

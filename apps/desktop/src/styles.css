@@ -255,6 +255,9 @@ button:disabled {
 }
 
 .ai-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: var(--an-space-4);
   color: var(--an-text-secondary);
 }

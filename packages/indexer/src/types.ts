@@ -97,6 +97,14 @@ export interface SearchOptions {
   limit?: number;
 }
 
+export interface HybridSearchOptions extends SearchOptions {
+  /**
+   * Embedding model id. Only vectors stored for this model are compared.
+   * Omit to accept any stored vector whose dimension matches the query.
+   */
+  model?: string;
+}
+
 export type LinkKind = 'wikilink' | 'markdown' | 'embed' | 'block';
 
 export interface Backlink {
@@ -152,6 +160,19 @@ export interface ChunkVector {
   model: string;
   dim: number;
   embedding: number[];
+}
+
+/** A chunk that still needs an embedding for the requested model. */
+export interface PendingChunk {
+  chunkId: number;
+  path: string;
+  headingPath: string;
+  text: string;
+}
+
+export interface ChunkVectorWrite {
+  chunkId: number;
+  embedding: ArrayLike<number>;
 }
 
 export interface IndexStats {

@@ -50,6 +50,8 @@ export type {
   VaultEntry,
   VaultEntryKind,
   VaultListOptions,
+  VaultSearchHit,
+  VaultSearchOptions,
   VaultWriteOptions,
   VaultApi,
 } from './api/vault.js';

@@ -12,7 +12,7 @@ import {
   type CitationSource,
 } from '../ai/ask';
 import { loadAiSettings } from '../ai/settings';
-import { getNoteIndex } from '../search/client';
+import { getEmbedError, getNoteIndex, retrieveNotes } from '../search/client';
 import { listNoteFiles } from '../search/files';
 import { resolveNoteLink } from '../search/links';
 import { useAppStore } from '../store';
@@ -33,6 +33,8 @@ export function AskPane() {
   const openNote = useAppStore((state) => state.openNote);
   const openLink = useAppStore((state) => state.openLink);
   const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
+  const settingsOpen = useAppStore((state) => state.settingsOpen);
+  const indexRevision = useAppStore((state) => state.indexRevision);
   const [draft, setDraft] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -66,7 +68,7 @@ export function AskPane() {
     const index = getNoteIndex();
     if (index) {
       try {
-        const hits = await index.search(question, 5);
+        const hits = await retrieveNotes(question, 5);
         retrieved = hits.map(sourceFromHit).filter((source) => source.path !== note?.path);
       } catch {
         retrieved = [];
@@ -146,6 +148,9 @@ export function AskPane() {
   return (
     <div className="ask-pane">
       <div className="ai-log" ref={logRef}>
+        <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
+          {retrievalLabel()}
+        </p>
         {turns.length === 0 ? (
           <p className="ai-hint">
             向当前笔记提问。回答会附上可以点开的引用。模型提供方和 API Key
@@ -185,11 +190,11 @@ export function AskPane() {
                   className="ai-citation"
                   role="link"
                   tabIndex={0}
-                  onClick={() => void openNote(citation.path, { from: citation.start })}
+                  onClick={() => void openCitation(citation)}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
                     event.preventDefault();
-                    void openNote(citation.path, { from: citation.start });
+                    void openCitation(citation);
                   }}
                 >
                   <ChatMessage
@@ -245,6 +250,21 @@ export function AskPane() {
       </form>
     </div>
   );
+}
+
+function openCitation(citation: CitationSource): Promise<void> {
+  const openNote = useAppStore.getState().openNote;
+  return openNote(citation.path, {
+    from: citation.start,
+    ...(citation.end !== undefined ? { to: citation.end } : {}),
+  });
+}
+
+function retrievalLabel(): string {
+  const error = getEmbedError();
+  if (error) return `嵌入失败，已改用全文检索：${error}`;
+  if (!loadAiSettings().embedModel.trim()) return '未配置嵌入模型，检索只用全文。';
+  return '混合检索：全文 + 向量。';
 }
 
 function AnswerText({ text, onOpen }: { text: string; onOpen: (target: string) => void }) {

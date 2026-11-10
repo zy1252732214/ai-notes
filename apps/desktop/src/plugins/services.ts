@@ -1,7 +1,7 @@
 import { VaultError, basename, parentVaultPath, type Vault } from '@ai-notes/core';
 import type { PluginServices } from '@ai-notes/plugin-host';
-import type { NoteEvent, NoteMetadata, VaultEntry } from '@ai-notes/plugin-sdk';
-import { getNoteIndex } from '../search/client';
+import type { NoteEvent, NoteMetadata, VaultEntry, VaultSearchHit } from '@ai-notes/plugin-sdk';
+import { getNoteIndex, retrieveNotes } from '../search/client';
 
 export interface PluginServiceHooks {
   getVault: () => Vault | null;
@@ -32,6 +32,11 @@ async function saved(path: string, content: string, hooks: PluginServiceHooks) {
     ?.noteSaved(path, content)
     .catch(() => undefined);
   hooks.onIndexChange();
+}
+
+function clampSearchLimit(limit: number | undefined): number {
+  if (!Number.isInteger(limit) || limit === undefined || limit < 1) return 8;
+  return Math.min(20, limit);
 }
 
 function requireVault(getVault: () => Vault | null): Vault {
@@ -105,6 +110,18 @@ export function createVaultPluginServices(hooks: PluginServiceHooks): PluginServ
     async metadata(path) {
       const content = await requireVault(hooks.getVault).readNote(path);
       return metadata(path, content);
+    },
+    async searchNotes(query, limit) {
+      if (!hooks.getVault()) return [];
+      const hits = await retrieveNotes(query, clampSearchLimit(limit));
+      return hits.map((hit): VaultSearchHit => ({
+        path: hit.path,
+        title: hit.title,
+        headingPath: hit.headingPath,
+        startOffset: hit.start,
+        endOffset: hit.end,
+        snippet: hit.snippet.replaceAll('<b>', '').replaceAll('</b>', ''),
+      }));
     },
     activeNote() {
       const active = hooks.getActive();

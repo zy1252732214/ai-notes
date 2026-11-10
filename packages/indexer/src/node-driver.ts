@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 
@@ -16,13 +17,37 @@ interface Statement {
  * The class stays behind {@link SqlDriver} so Tauri can substitute its own.
  */
 export function openNodeDatabase(filename: string = ':memory:'): SqlDriver {
-  const db = new DatabaseSync(filename);
+  const db = new DatabaseSync(filename, { allowExtension: true });
   db.exec('PRAGMA foreign_keys = ON;');
   db.exec('PRAGMA busy_timeout = 5000;');
   if (filename !== ':memory:') {
     db.exec('PRAGMA journal_mode = WAL;');
   }
+  loadSqliteVec(db);
   return new NodeSqliteDriver(db);
+}
+
+/**
+ * sqlite-vec is optional at runtime. `node:sqlite` can load it when the
+ * platform package is installed. If it cannot, vector search uses the
+ * float32 blobs in `chunk_vectors` instead of the `vec0` virtual table.
+ */
+function loadSqliteVec(db: DatabaseSync): void {
+  try {
+    db.enableLoadExtension(true);
+    const required = createRequire(import.meta.url);
+    const mod = required('sqlite-vec') as { getLoadablePath?: () => string };
+    if (typeof mod.getLoadablePath !== 'function') return;
+    db.loadExtension(mod.getLoadablePath());
+  } catch {
+    // Cosine ranking over chunk_vectors still works.
+  } finally {
+    try {
+      db.enableLoadExtension(false);
+    } catch {
+      // Extension loading was already disabled.
+    }
+  }
 }
 
 /**
