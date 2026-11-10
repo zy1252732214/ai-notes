@@ -15,10 +15,17 @@ import {
 } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { useEffect, useRef } from 'react';
+import { wikilinkAt } from './wikilink.js';
 
 export interface EditorCursor {
   line: number;
   column: number;
+}
+
+export interface EditorReveal {
+  from: number;
+  to: number;
+  nonce: number;
 }
 
 export interface MarkdownEditorProps {
@@ -27,6 +34,9 @@ export interface MarkdownEditorProps {
   onChange: (value: string) => void;
   onSave: () => void;
   onCursorChange?: (cursor: EditorCursor) => void;
+  /** Scroll the match into view. `nonce` changes on every jump, even to the same offset. */
+  reveal?: EditorReveal | null;
+  onOpenLink?: (target: string) => void;
 }
 
 const highlightStyle = HighlightStyle.define([
@@ -94,6 +104,7 @@ const editorTheme = EditorView.theme({
     color: 'var(--an-accent)',
     backgroundColor: 'color-mix(in srgb, var(--an-accent) 12%, transparent)',
     borderRadius: '4px',
+    cursor: 'pointer',
   },
 });
 
@@ -109,6 +120,8 @@ export function MarkdownEditor({
   onChange,
   onSave,
   onCursorChange,
+  reveal = null,
+  onOpenLink,
 }: MarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -116,9 +129,11 @@ export function MarkdownEditor({
   const onChangeRef = useRef(onChange);
   const onSaveRef = useRef(onSave);
   const onCursorRef = useRef(onCursorChange);
+  const onOpenLinkRef = useRef(onOpenLink);
   onChangeRef.current = onChange;
   onSaveRef.current = onSave;
   onCursorRef.current = onCursorChange;
+  onOpenLinkRef.current = onOpenLink;
 
   useEffect(() => {
     const parent = hostRef.current;
@@ -136,6 +151,19 @@ export function MarkdownEditor({
           syntaxHighlighting(highlightStyle),
           wikiLinks,
           editorTheme,
+          EditorView.domEventHandlers({
+            click(event, view) {
+              const open = onOpenLinkRef.current;
+              if (!open || event.button !== 0 || event.shiftKey) return false;
+              const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+              if (pos == null) return false;
+              const target = wikilinkAt(view.state.doc.toString(), pos);
+              if (!target) return false;
+              event.preventDefault();
+              open(target);
+              return true;
+            },
+          }),
           EditorView.lineWrapping,
           placeholder('开始写点什么…'),
           keymap.of([
@@ -180,6 +208,19 @@ export function MarkdownEditor({
     view.dispatch({ changes: { from: 0, to: current.length, insert: value } });
     externalRef.current = false;
   }, [path, value]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || !reveal) return;
+    const length = view.state.doc.length;
+    const from = Math.max(0, Math.min(reveal.from, length));
+    const to = Math.max(from, Math.min(reveal.to, length));
+    view.dispatch({
+      selection: { anchor: from, head: to },
+      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+    });
+    view.focus();
+  }, [path, reveal]);
 
   return <div className="markdown-editor" ref={hostRef} />;
 }

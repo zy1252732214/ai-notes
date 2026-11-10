@@ -39,7 +39,7 @@ import { Button, Dialog, ToastProvider, useToast } from '@ai-notes/ui';
 | `Textarea`         | 多行输入，关联方式和 `Input` 相同                                      |
 | `Select`           | 按钮打开列表。方向键移动，Enter / Space 选中，Esc 关闭                 |
 | `Switch`           | `role="switch"`。点按钮或文字都会切换                                  |
-| `Tabs`             | 方向键、Home、End 移动，并跳过禁用项                                   |
+| `Tabs`             | 方向键、Home、End 移动，并跳过禁用项。`keepMounted` 保留未选中面板     |
 | `Tooltip`          | 悬停或聚焦显示，Esc 关闭。子节点要能聚焦                               |
 | `Dialog`           | 模态对话框。Esc、关闭按钮和点击遮罩都会关闭，Tab 在内部循环            |
 | `Toast`            | `ToastProvider` + `useToast().push()`。错误是 `alert`，其余是 `status` |
