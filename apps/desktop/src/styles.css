@@ -255,6 +255,9 @@ button:disabled {
 }
 
 .ai-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: var(--an-space-4);
   color: var(--an-text-secondary);
 }
@@ -306,6 +309,95 @@ button:disabled {
 .ai-composer textarea {
   resize: none;
   min-height: 72px;
+}
+
+.ask-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-4);
+  margin-bottom: var(--an-space-4);
+}
+
+.ask-role {
+  margin: 0 0 var(--an-space-1);
+  color: var(--an-text-tertiary);
+  font-size: var(--an-font-size-small);
+}
+
+.ask-text {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--an-text-primary);
+}
+
+.ask-user .ask-text {
+  color: var(--an-text-secondary);
+}
+
+.ask-citations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-2);
+  margin-top: var(--an-space-2);
+}
+
+.ask-citation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--an-space-2) var(--an-space-3);
+  border: 1px solid var(--an-border-default);
+  border-radius: var(--an-radius-md);
+  background: var(--an-bg-base);
+  text-align: left;
+}
+
+.ask-citation strong {
+  color: var(--an-text-primary);
+  font-weight: 600;
+}
+
+.ask-citation span,
+.ask-citation q {
+  color: var(--an-text-tertiary);
+  font-size: var(--an-font-size-small);
+}
+
+.ask-citation q {
+  color: var(--an-text-secondary);
+}
+
+.model-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-2);
+  margin: 0 0 var(--an-space-4);
+}
+
+.model-settings summary {
+  cursor: pointer;
+  color: var(--an-text-primary);
+  font-weight: 600;
+}
+
+.model-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-1);
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+}
+
+.model-settings input,
+.model-settings select {
+  width: 100%;
+  border: 1px solid var(--an-border-default);
+  border-radius: var(--an-radius-md);
+  background: var(--an-bg-base);
+  color: var(--an-text-primary);
+  padding: var(--an-space-2) var(--an-space-3);
 }
 
 .search-field input:focus,

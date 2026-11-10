@@ -5,12 +5,12 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
 import { getNoteIndex } from '../search/client';
 import { useAppStore } from '../store';
+import { AskPane } from './AskPane';
 
 export function AiPanel() {
   const rightOpen = useAppStore((state) => state.rightOpen);
   const activePath = useAppStore((state) => state.activePath);
   const indexRevision = useAppStore((state) => state.indexRevision);
-  const openNote = useAppStore((state) => state.openNote);
   const snapshot = useSyncExternalStore(pluginController.subscribe, pluginController.getSnapshot);
   const panels = snapshot.items.flatMap((item) =>
     item.panels.map((panel) => ({ ...panel, pluginName: item.name })),
@@ -65,40 +65,7 @@ export function AiPanel() {
         ))}
       </div>
       {active === 'ai' ? (
-        <>
-          <div className="ai-body">
-            <p>这一栏会用来向当前笔记提问。回答会附上可以点开的引用。</p>
-            <p className="hint">命令面板可以全文搜索当前笔记库。</p>
-            <p>反向链接</p>
-            {activePath && links.length > 0 ? (
-              <ul className="backlinks">
-                {links.map((link) => (
-                  <li key={`${link.path}:${link.kind}`}>
-                    <button type="button" onClick={() => void openNote(link.path)}>
-                      {link.title || link.path}
-                    </button>
-                    <span className="hint">{link.path}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="hint">
-                {activePath ? '还没有笔记指向这里。' : '打开一篇笔记后显示反向链接。'}
-              </p>
-            )}
-          </div>
-          <form
-            className="ai-composer"
-            onSubmit={(event) => {
-              event.preventDefault();
-            }}
-          >
-            <textarea placeholder="向这篇笔记提问" disabled rows={3} />
-            <button className="button" type="submit" disabled>
-              发送
-            </button>
-          </form>
-        </>
+        <AskPane links={links} />
       ) : (
         <div className="ai-body">
           <p>{panels.find((panel) => panel.id === active)?.pluginName}</p>

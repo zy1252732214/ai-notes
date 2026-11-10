@@ -35,6 +35,23 @@ export interface VaultWriteOptions {
   overwrite?: boolean;
 }
 
+/** 只读检索结果。有嵌入模型时是全文加向量，否则只有全文。 */
+export interface VaultSearchHit {
+  path: string;
+  title: string;
+  /** 标题路径，用 ` / ` 连接。 */
+  headingPath: string;
+  startOffset: number;
+  endOffset: number;
+  /** 纯文本摘要，不含 HTML。 */
+  snippet: string;
+}
+
+export interface VaultSearchOptions {
+  /** 默认 8，最大 20。 */
+  limit?: number;
+}
+
 /**
  * 笔记读写。路径都是 Vault 相对路径，使用 `/`，不能以 `/` 开头，不能包含 `..`。
  * 读操作需要 `vault:read`（并受 folders 限制）；写操作需要 `vault:write`。
@@ -60,4 +77,10 @@ export interface VaultApi {
 
   /** 读取索引里的元数据，不返回正文。 */
   getMetadata(path: string): Promise<NoteMetadata>;
+
+  /**
+   * 混合检索。需要 `vault:read`。
+   * `folders` 有限制时，只返回这些文件夹里的命中。
+   */
+  search(query: string, options?: VaultSearchOptions): Promise<readonly VaultSearchHit[]>;
 }

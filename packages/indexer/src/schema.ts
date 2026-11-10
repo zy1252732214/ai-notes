@@ -2,9 +2,10 @@
  * Index schema aligned with the architecture data model:
  * notes, chunks, chunks_fts, chunk_vectors, usage.
  *
- * `chunk_vectors` stores a float32 blob so embeddings can be written before
- * sqlite-vec is packaged. Once the extension is loaded, create the virtual
- * table with {@link chunkVecVirtualTableSql} and backfill from this table.
+ * `chunk_vectors` stores a float32 blob. When sqlite-vec is loaded, the same
+ * vectors are mirrored into the `chunk_vec` virtual table created by
+ * {@link chunkVecVirtualTableSql}. The blob table is the source of truth:
+ * hosts that cannot load the extension rank those blobs directly.
  * Tags, memories, and conversations belong to other packages and are not
  * created here. Statements use IF NOT EXISTS so they can share one file.
  */
@@ -85,15 +86,15 @@ ON CONFLICT(key) DO NOTHING;
 
 /**
  * sqlite-vec virtual table. Run it only after the host has loaded sqlite-vec.
- * `dimensions` must match the embedding model; changing models means dropping
- * and rebuilding this table.
+ * `rowid` is the chunk id. `dimensions` must match the embedding model;
+ * changing the dimension means dropping and rebuilding this table.
+ * Distance is cosine, so a smaller `distance` is a closer chunk.
  */
 export function chunkVecVirtualTableSql(dimensions: number): string {
   if (!Number.isInteger(dimensions) || dimensions <= 0 || dimensions > 8192) {
     throw new Error('dimensions must be a positive integer up to 8192');
   }
   return `CREATE VIRTUAL TABLE IF NOT EXISTS chunk_vec USING vec0(
-  chunk_id INTEGER PRIMARY KEY,
-  embedding float[${dimensions}]
+  embedding float[${dimensions}] distance_metric=cosine
 );`;
 }

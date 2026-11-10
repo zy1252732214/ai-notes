@@ -21,12 +21,21 @@ export interface EditorCursor {
   column: number;
 }
 
+export interface EditorReveal {
+  start: number;
+  end: number;
+  /** Changes whenever the caller wants to scroll again, even to the same offset. */
+  token: number;
+}
+
 export interface MarkdownEditorProps {
   path: string;
   value: string;
   onChange: (value: string) => void;
   onSave: () => void;
   onCursorChange?: (cursor: EditorCursor) => void;
+  /** Select this range and scroll it into view. */
+  reveal?: EditorReveal | null;
 }
 
 const highlightStyle = HighlightStyle.define([
@@ -109,6 +118,7 @@ export function MarkdownEditor({
   onChange,
   onSave,
   onCursorChange,
+  reveal,
 }: MarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -180,6 +190,19 @@ export function MarkdownEditor({
     view.dispatch({ changes: { from: 0, to: current.length, insert: value } });
     externalRef.current = false;
   }, [path, value]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || !reveal) return;
+    const length = view.state.doc.length;
+    const start = Math.max(0, Math.min(reveal.start, length));
+    const end = Math.max(start, Math.min(reveal.end, length));
+    view.dispatch({
+      selection: { anchor: start, head: end },
+      effects: EditorView.scrollIntoView(start, { y: 'center' }),
+    });
+    view.focus();
+  }, [path, reveal]);
 
   return <div className="markdown-editor" ref={hostRef} />;
 }

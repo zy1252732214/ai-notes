@@ -6,6 +6,8 @@ export { OllamaProvider } from './ollama.js';
 export type { OllamaOptions } from './ollama.js';
 export { OpenAICompatibleProvider } from './openai.js';
 export type { OpenAICompatibleOptions } from './openai.js';
+export { citationsForAnswer, ragMessages, withActiveNote } from './rag.js';
+export type { RagCitation, RagSource } from './rag.js';
 export { ModelRouter } from './router.js';
 export type {
   ChatMessage,

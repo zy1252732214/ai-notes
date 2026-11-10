@@ -14,7 +14,9 @@
 - 搜索返回分数（越大越相关）、`<b>` 包裹的摘要，以及块在原文中的偏移。
 - 解析 `[[双链]]`、嵌入和块引用，写入 `links`。`backlinks(path)` 返回指向这篇笔记的来源。文件名唯一时，`[[周报]]` 能对上 `日常/周报.md`。
 - `MemoryIndex` 提供同一套增量更新、搜索和反链，给浏览器开发模式用，不依赖 SQLite。
-- `chunk_vectors` 用 float32 BLOB 先存嵌入。sqlite-vec 装上之后，用 `chunkVecVirtualTableSql(dimensions)` 建虚表再回填。
+- `chunk_vectors` 保存 float32 嵌入。Node 驱动会加载 sqlite-vec，把同一批向量镜像到 `chunk_vec`（`vec0`，余弦距离）。扩展加载不了时，用这些 BLOB 做余弦相似度，检索不会停。
+- `searchHybrid(query, embedding, { model })` 用 RRF 合并全文和向量。没有查询向量时结果与 `search` 相同。换模型或改维度会丢掉旧向量，只重嵌还没跟上的块。
+- `pendingChunks(model)` 和 `fillMissingEmbeddings` 配合增量索引：内容没变不重嵌，修改会丢掉该笔记的旧向量，改名保留，删除一并删掉。
 - SQLite 调用都走 `SqlDriver`。Node 用 `node:sqlite`；Tauri 可以实现同一接口，把 SQL 交给 Rust。
 
 数据库建议放在 Vault 的 `.ainotes/index.db`。删掉这个文件即可重建索引。

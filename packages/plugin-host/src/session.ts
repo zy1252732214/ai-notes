@@ -1,6 +1,8 @@
 import {
   createRpcError,
   createRpcResponse,
+  findPermission,
+  isPathWithinFolders,
   isPluginRpcRequest,
   isRpcEnvelope,
   type NoteEventType,
@@ -124,6 +126,8 @@ export class PluginSession {
         return null;
       case 'vault.metadata':
         return this.services.metadata(text(record.path));
+      case 'vault.search':
+        return this.searchNotes(text(record.query), record.limit);
       case 'commands.register':
         return this.registerCommand(record);
       case 'commands.unregister':
@@ -190,6 +194,21 @@ export class PluginSession {
       default:
         throw new Error(`未知方法 ${method}`);
     }
+  }
+
+  private async searchNotes(query: string, limit: unknown) {
+    const hits = await this.services.searchNotes(
+      query,
+      typeof limit === 'number' ? limit : undefined,
+    );
+    const folders = findPermission(this.manifest.permissions ?? [], 'vault:read')?.folders;
+    return hits.filter((hit) => {
+      try {
+        return isPathWithinFolders(hit.path, folders);
+      } catch {
+        return false;
+      }
+    });
   }
 
   private registerCommand(record: Record<string, unknown>): { registrationId: string } {

@@ -53,6 +53,7 @@ interface AppState {
   saveError: string | null;
   cursor: { line: number; column: number };
   indexRevision: number;
+  reveal: { path: string; start: number; end: number; token: number } | null;
   setThemeMode: (mode: ThemeMode) => void;
   toggleLeft: () => void;
   toggleRight: () => void;
@@ -70,7 +71,7 @@ interface AppState {
   refreshTree: () => Promise<void>;
   toggleExpanded: (path: string) => void;
   selectDirectory: (path: string) => void;
-  openNote: (path: string) => Promise<void>;
+  openNote: (path: string, at?: { start: number; end: number }) => Promise<void>;
   closeTab: (path: string) => Promise<void>;
   updateContent: (path: string, content: string) => void;
   saveActive: () => Promise<void>;
@@ -81,6 +82,12 @@ interface AppState {
 }
 
 const THEME_KEY = 'ai-notes.theme';
+let revealToken = 0;
+
+function nextReveal(path: string, at: { start: number; end: number }) {
+  revealToken += 1;
+  return { path, start: at.start, end: at.end, token: revealToken };
+}
 const AUTOSAVE_MS = 800;
 
 const savers = new Map<string, DebouncedSaver>();
@@ -254,6 +261,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   saveError: null,
   cursor: { line: 1, column: 1 },
   indexRevision: 0,
+  reveal: null,
 
   setThemeMode: (themeMode) => {
     rememberTheme(themeMode);
@@ -356,9 +364,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   selectDirectory: (selectedDirectory) => set({ selectedDirectory }),
 
-  openNote: async (path) => {
+  openNote: async (path, at) => {
     const vault = get().vault;
     if (!vault) return;
+    const reveal = at ? nextReveal(path, at) : null;
     const existing = get().tabs.find((tab) => tab.path === path);
     if (existing) {
       set({
@@ -366,6 +375,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         selectedDirectory: parentVaultPath(path),
         saveError: null,
         cursor: { line: 1, column: 1 },
+        reveal,
       });
       pluginController.emit({ type: 'note:opened', path });
       return;
@@ -377,6 +387,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedDirectory: parentVaultPath(path),
       saveError: null,
       cursor: { line: 1, column: 1 },
+      reveal,
     }));
     pluginController.emit({ type: 'note:opened', path });
   },

@@ -25,7 +25,8 @@
     "test": "vitest run --config ../../vitest.config.ts --root ."
   },
   "dependencies": {
-    "@ai-notes/core": "workspace:*"
+    "@ai-notes/core": "workspace:*",
+    "sqlite-vec": "0.1.6"
   },
   "devDependencies": {
     "@types/node": "26.6.6",

@@ -5,13 +5,27 @@ import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   Backlink,
   Chunk,
+  ChunkVector,
+  ChunkVectorWrite,
+  HybridSearchOptions,
   NoteInput,
+  PendingChunk,
   SearchHit,
   SearchOptions,
   SyncResult,
   UpsertResult,
 } from './types.js';
+import { cosineSimilarity, mergeHits, MIN_VECTOR_SIMILARITY } from './vector.js';
 import { normalizeNotePath, type IndexOptions } from './indexer.js';
+
+interface MemoryChunk extends Chunk {
+  id: number;
+}
+
+interface StoredVector {
+  model: string;
+  embedding: number[];
+}
 
 interface MemoryNote {
   id: number;
@@ -20,7 +34,7 @@ interface MemoryNote {
   hash: string;
   mtime: number;
   content: string;
-  chunks: Chunk[];
+  chunks: MemoryChunk[];
 }
 
 interface MemoryLink {
@@ -33,8 +47,10 @@ interface MemoryLink {
 /** In-memory index used by the browser dev shell. The operation set matches {@link VaultIndex}. */
 export class MemoryIndex {
   private nextId = 1;
+  private nextChunkId = 1;
   private readonly notes = new Map<number, MemoryNote>();
   private readonly links: MemoryLink[] = [];
+  private readonly vectors = new Map<number, StoredVector>();
 
   constructor(private readonly options: IndexOptions = {}) {}
 
@@ -51,10 +67,8 @@ export class MemoryIndex {
       return { status: 'unchanged', noteId: existing.id, chunkCount: existing.chunks.length };
     }
     const title = extractTitle(path, input.content);
-    const chunks = chunkMarkdown(input.content, this.options).map((chunk, ordinal) => ({
-      ...chunk,
-      ordinal,
-    }));
+    if (existing) this.forgetChunks(existing.chunks);
+    const chunks = this.makeChunks(input.content);
     let noteId: number;
     let status: UpsertResult['status'];
     if (!existing) {
@@ -86,6 +100,7 @@ export class MemoryIndex {
   deleteNote(path: string): boolean {
     const note = this.noteByPath(normalizeNotePath(path));
     if (!note) return false;
+    this.forgetChunks(note.chunks);
     this.notes.delete(note.id);
     for (let index = this.links.length - 1; index >= 0; index -= 1) {
       const link = this.links[index];
@@ -165,7 +180,7 @@ export class MemoryIndex {
           noteId: note.id,
           path: note.path,
           title: note.title,
-          chunkId: note.id * 1000 + chunk.ordinal,
+          chunkId: chunk.id,
           headingPath: chunk.headingPath,
           start: chunk.start,
           end: chunk.end,
@@ -178,6 +193,83 @@ export class MemoryIndex {
     return hits
       .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
       .slice(0, limit);
+  }
+
+  /**
+   * Keyword search merged with stored embeddings.
+   * Without an embedding, this is exactly {@link search}.
+   */
+  searchHybrid(
+    query: string,
+    embedding: ArrayLike<number> | null | undefined,
+    options: HybridSearchOptions = {},
+  ): SearchHit[] {
+    const vector = normalizeEmbedding(embedding);
+    if (!vector) return this.search(query, options);
+    const limit = readLimit(options.limit);
+    const pool = Math.min(100, Math.max(limit * 4, 20));
+    const keyword = query.trim() ? this.search(query, { limit: pool }) : [];
+    const semantic = this.semanticHits(query, vector, options.model, pool);
+    return mergeHits([keyword, semantic], limit);
+  }
+
+  pendingChunks(model: string): PendingChunk[] {
+    const trimmed = model.trim();
+    if (!trimmed) throw new Error('model is required');
+    const pending: PendingChunk[] = [];
+    for (const note of this.notes.values()) {
+      for (const chunk of note.chunks) {
+        const stored = this.vectors.get(chunk.id);
+        if (stored?.model === trimmed) continue;
+        pending.push({
+          chunkId: chunk.id,
+          path: note.path,
+          headingPath: chunk.headingPath,
+          text: chunk.text,
+        });
+      }
+    }
+    return pending.sort((left, right) => left.chunkId - right.chunkId);
+  }
+
+  setChunkVectors(model: string, vectors: readonly ChunkVectorWrite[]): void {
+    const trimmed = model.trim();
+    if (!trimmed) throw new Error('model is required');
+    if (vectors.length === 0) return;
+    const dim = vectors[0]?.embedding.length ?? 0;
+    if (!Number.isInteger(dim) || dim <= 0) throw new Error('embedding must not be empty');
+    for (const row of vectors) {
+      if (row.embedding.length !== dim) {
+        throw new Error('embeddings in one batch must share a dimension');
+      }
+      for (const value of Array.from(row.embedding)) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+          throw new Error('embedding values must be finite numbers');
+        }
+      }
+    }
+    for (const [id, stored] of this.vectors) {
+      if (stored.model === trimmed && stored.embedding.length !== dim) this.vectors.delete(id);
+    }
+    for (const row of vectors) {
+      if (!Number.isInteger(row.chunkId) || row.chunkId <= 0) {
+        throw new Error('chunkId must be a positive integer');
+      }
+      if (!this.findChunk(row.chunkId)) continue;
+      this.vectors.set(row.chunkId, { model: trimmed, embedding: Array.from(row.embedding) });
+    }
+  }
+
+  getChunkVector(chunkId: number): ChunkVector | undefined {
+    const stored = this.vectors.get(chunkId);
+    const chunk = this.findChunk(chunkId);
+    if (!stored || !chunk) return undefined;
+    return {
+      chunkId,
+      model: stored.model,
+      dim: stored.embedding.length,
+      embedding: stored.embedding.slice(),
+    };
   }
 
   backlinks(path: string): Backlink[] {
@@ -209,6 +301,66 @@ export class MemoryIndex {
       );
   }
 
+  private makeChunks(content: string): MemoryChunk[] {
+    return chunkMarkdown(content, this.options).map((chunk) => {
+      const id = this.nextChunkId;
+      this.nextChunkId += 1;
+      return { ...chunk, id };
+    });
+  }
+
+  private forgetChunks(chunks: readonly MemoryChunk[]): void {
+    for (const chunk of chunks) this.vectors.delete(chunk.id);
+  }
+
+  private findChunk(chunkId: number): { note: MemoryNote; chunk: MemoryChunk } | undefined {
+    for (const note of this.notes.values()) {
+      const chunk = note.chunks.find((item) => item.id === chunkId);
+      if (chunk) return { note, chunk };
+    }
+    return undefined;
+  }
+
+  private semanticHits(
+    query: string,
+    embedding: number[],
+    model: string | undefined,
+    limit: number,
+  ): SearchHit[] {
+    const ranked: { hit: SearchHit; score: number }[] = [];
+    for (const note of this.notes.values()) {
+      for (const chunk of note.chunks) {
+        const stored = this.vectors.get(chunk.id);
+        if (!stored) continue;
+        if (model && stored.model !== model) continue;
+        if (stored.embedding.length !== embedding.length) continue;
+        const similarity = cosineSimilarity(embedding, stored.embedding);
+        if (similarity < MIN_VECTOR_SIMILARITY) continue;
+        ranked.push({
+          score: similarity,
+          hit: {
+            noteId: note.id,
+            path: note.path,
+            title: note.title,
+            chunkId: chunk.id,
+            headingPath: chunk.headingPath,
+            start: chunk.start,
+            end: chunk.end,
+            text: chunk.text,
+            snippet: query.trim()
+              ? buildSnippet(chunk.text, chunk.headingPath, note.title, query.trim())
+              : plainExcerpt(chunk.text),
+            score: similarity,
+          },
+        });
+      }
+    }
+    return ranked
+      .sort((left, right) => right.score - left.score || left.hit.chunkId - right.hit.chunkId)
+      .slice(0, limit)
+      .map((item) => item.hit);
+  }
+
   private noteByPath(path: string): MemoryNote | undefined {
     for (const note of this.notes.values()) {
       if (note.path === path) return note;
@@ -238,4 +390,28 @@ export class MemoryIndex {
     const notes = this.noteRefs();
     for (const link of this.links) link.dstId = resolveDestination(link.dstPath, notes);
   }
+}
+
+function readLimit(limit: number | undefined): number {
+  const value = limit ?? 20;
+  if (!Number.isInteger(value) || value < 1 || value > 100) {
+    throw new Error('limit must be an integer from 1 to 100');
+  }
+  return value;
+}
+
+function normalizeEmbedding(embedding: ArrayLike<number> | null | undefined): number[] | null {
+  if (!embedding || embedding.length === 0) return null;
+  const values: number[] = [];
+  for (let index = 0; index < embedding.length; index += 1) {
+    const value = embedding[index];
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    values.push(value);
+  }
+  return values;
+}
+
+function plainExcerpt(text: string): string {
+  const trimmed = text.trim().replace(/\s+/g, ' ');
+  return trimmed.length > 80 ? `${trimmed.slice(0, 80)}…` : trimmed;
 }
