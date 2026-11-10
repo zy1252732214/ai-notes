@@ -1,14 +1,16 @@
-# 桌面端发布流水线。
+# 桌面端发布。推送 v* tag（或手动 workflow_dispatch）时打安装包，上传到 draft GitHub Release。
 #
-# 触发：推送 v* tag（例如 v0.1.0），或手动 workflow_dispatch 并填写同一个格式的 tag。
-# 产物：macOS（Apple Silicon + Intel）、Windows、Linux 安装包，上传到一个 draft GitHub Release。
+# 不在 pull_request 上运行，避免 PR CI 去编译 Rust 或创建 Release。
+# PR 检查仍是 .github/workflows/ci.yml。
 #
-# 现在还不能成功跑完：apps/desktop 只是 TypeScript 占位，没有 Tauri 工程。
-# 前端工程师补上 Tauri 2 应用（apps/desktop/src-tauri/tauri.conf.json，以及 package.json
-# 里的 "tauri" 脚本）之后，这条流水线才会真正打包。tag 名里的版本要和 tauri.conf.json
-# 的 version 对齐（tag v0.1.0 对应 version 0.1.0）。
+# 矩阵：
+#   macOS   universal dmg（arm64 + x64 合成一个包）
+#   Windows nsis + msi
+#   Linux   AppImage + deb
 #
-# 签名和自动更新的密钥只放在 GitHub Actions secrets 里，不要写进仓库：
+# 签名 secret 都是占位。没配置时不把空值传给 Tauri（空的 APPLE_CERTIFICATE 会让打包失败），
+# macOS 改用 ad-hoc identity "-"，Windows / Linux 直接出未签名包。
+# 需要的 secret（都不要写进仓库）：
 #   TAURI_SIGNING_PRIVATE_KEY
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 #   APPLE_CERTIFICATE
@@ -19,9 +21,8 @@
 #   APPLE_TEAM_ID
 #   WINDOWS_CERTIFICATE
 #   WINDOWS_CERTIFICATE_PASSWORD
-# 公钥写进 apps/desktop/src-tauri/tauri.conf.json 的 updater.pubkey，不要把私钥提交上来。
-# 仓库 Settings → Actions → General → Workflow permissions 需要允许 GITHUB_TOKEN 读写，
-# 否则创建 Release 会报 Resource not accessible by integration。
+# Updater 公钥以后写在 tauri.conf.json，私钥只放 secret。
+# Settings → Actions → General → Workflow permissions 要允许 GITHUB_TOKEN 读写。
 
 name: Release
 
@@ -32,7 +33,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag, for example v0.1.0'
+        description: 'Release tag, for example v0.1.0. Must match tauri.conf.json.'
         required: true
         type: string
 
@@ -50,33 +51,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: macos-aarch64
+          - label: macos-universal-dmg
             platform: macos-latest
-            args: --target aarch64-apple-darwin
-          - label: macos-x64
-            platform: macos-latest
-            args: --target x86_64-apple-darwin
-          - label: linux-x64
-            platform: ubuntu-24.04
-            args: ''
-          - label: windows-x64
+            args: --target universal-apple-darwin --bundles dmg
+          - label: windows-msi-nsis
             platform: windows-latest
-            args: ''
+            args: --bundles nsis,msi
+          - label: linux-appimage-deb
+            platform: ubuntu-24.04
+            args: --bundles appimage,deb
     runs-on: ${{ matrix.platform }}
-    env:
-      # Tauri updater（minisign）。用 `pnpm tauri signer generate` 在本地生成，只把私钥放进 secrets。
-      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-      # macOS 签名与公证。未配置时打出来的是未签名包；Apple Silicon 从 GitHub 下载未签名包可能被系统标成已损坏。
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      # Windows Authenticode（.pfx 的 base64）。空着就跳过导入。
-      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -100,14 +84,6 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Require the Tauri app
-        shell: bash
-        run: |
-          if [ ! -f apps/desktop/src-tauri/tauri.conf.json ]; then
-            echo "::error::apps/desktop 还是 TypeScript 占位，没有 Tauri 应用。前端工程师需要先补上 Tauri 2 + Vite + React（含 src-tauri/tauri.conf.json 和 package.json 的 tauri 脚本），这条发布流水线才能打包。"
-            exit 1
-          fi
-
       - name: Install pnpm
         uses: pnpm/action-setup@v6
 
@@ -116,6 +92,12 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+
+      - name: Check tag matches app version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        run: node scripts/check-release-tag.mjs "$RELEASE_TAG"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -143,13 +125,78 @@ jobs:
             librsvg2-dev \
             patchelf \
             xdg-utils
+          sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse2t64 || true
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm turbo run build --filter=@ai-notes/desktop^...
+        env:
+          TURBO_TELEMETRY_DISABLED: '1'
+
+      - name: Forward signing secrets when set
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          publish() {
+            name="$1"
+            value="$2"
+            if [ -z "$value" ]; then
+              echo "$name is unset"
+              return
+            fi
+            delim="EOF_${name}_$$"
+            {
+              echo "${name}<<${delim}"
+              printf '%s\n' "$value"
+              echo "${delim}"
+            } >> "$GITHUB_ENV"
+            echo "$name is set"
+          }
+          publish APPLE_CERTIFICATE "$APPLE_CERTIFICATE"
+          publish APPLE_CERTIFICATE_PASSWORD "$APPLE_CERTIFICATE_PASSWORD"
+          publish APPLE_SIGNING_IDENTITY "$APPLE_SIGNING_IDENTITY"
+          publish APPLE_ID "$APPLE_ID"
+          publish APPLE_PASSWORD "$APPLE_PASSWORD"
+          publish APPLE_TEAM_ID "$APPLE_TEAM_ID"
+          publish WINDOWS_CERTIFICATE "$WINDOWS_CERTIFICATE"
+          publish WINDOWS_CERTIFICATE_PASSWORD "$WINDOWS_CERTIFICATE_PASSWORD"
+          publish TAURI_SIGNING_PRIVATE_KEY "$TAURI_SIGNING_PRIVATE_KEY"
+          publish TAURI_SIGNING_PRIVATE_KEY_PASSWORD "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+
+      - name: macOS ad-hoc signing when no certificate is configured
+        id: bundle
+        shell: bash
+        env:
+          BASE_ARGS: ${{ matrix.args }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          args="$BASE_ARGS"
+          if [ "${{ matrix.platform }}" = "macos-latest" ] && [ -z "$APPLE_CERTIFICATE" ]; then
+            node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync("apps/desktop/src-tauri/ci-macos-adhoc.json", JSON.stringify({ bundle: { macOS: { signingIdentity: "-" } } }, null, 2) + "\n");'
+            args="$args --config src-tauri/ci-macos-adhoc.json"
+            echo "APPLE_CERTIFICATE is unset; universal dmg will be ad-hoc signed."
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
 
       - name: Import Windows code-signing certificate
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) {
-            Write-Host "WINDOWS_CERTIFICATE is unset; building without Authenticode."
+            Write-Host "WINDOWS_CERTIFICATE is unset; building MSI/NSIS without Authenticode."
             exit 0
           }
           New-Item -ItemType Directory -Force -Path certificate | Out-Null
@@ -159,9 +206,6 @@ jobs:
           Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
           Remove-Item -Recurse -Force certificate
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Build and publish draft release
         uses: tauri-apps/tauri-action@v1
         env:
@@ -170,7 +214,7 @@ jobs:
           projectPath: apps/desktop
           tagName: ${{ steps.release_tag.outputs.tag }}
           releaseName: ai-notes ${{ steps.release_tag.outputs.tag }}
-          releaseBody: Draft desktop build for ${{ steps.release_tag.outputs.tag }}. Bundles for macOS (Apple Silicon and Intel), Windows, and Linux are attached by tauri-action.
+          releaseBody: Draft desktop build for ${{ steps.release_tag.outputs.tag }}. Attached bundles are a universal macOS dmg, Windows NSIS and MSI installers, and Linux AppImage and deb packages.
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ steps.bundle.outputs.args }}
