@@ -12,9 +12,11 @@ import {
   fontFamily,
   getSystemTheme,
   layout,
+  motion,
   radius,
   readAppliedTheme,
   resolveTheme,
+  shadow,
   space,
   typeScale,
 } from './index.js';
@@ -38,7 +40,7 @@ function parseRules(source: string): Map<string, Map<string, string>> {
     const decls = new Map<string, string>();
     for (const decl of body.matchAll(/(--an-[a-z0-9-]+)\s*:\s*([^;]+)\s*;/g)) {
       const name = decl[1];
-      const value = decl[2]?.trim();
+      const value = decl[2]?.trim().replace(/\s+/g, ' ');
       if (!name || value === undefined) continue;
       expect(decls.has(name), `${selector} ${name}`).toBe(false);
       decls.set(name, value);
@@ -100,6 +102,18 @@ describe('tokens.css', () => {
       const name = cssVarNames.radius[token];
       expected.add(name);
       expect(root.get(name)).toBe(radius[token]);
+    }
+
+    for (const token of keysOf(shadow)) {
+      const name = cssVarNames.shadow[token];
+      expected.add(name);
+      expect(root.get(name)).toBe(shadow[token]);
+    }
+
+    for (const token of keysOf(motion)) {
+      const name = cssVarNames.motion[token];
+      expected.add(name);
+      expect(root.get(name)).toBe(motion[token]);
     }
 
     for (const token of keysOf(layout)) {

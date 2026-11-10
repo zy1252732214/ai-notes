@@ -1,6 +1,6 @@
 import { IFRAME_SANDBOX } from '@ai-notes/plugin-host';
 import { IconButton } from '@ai-notes/ui';
-import { Settings, Sparkles } from 'lucide-react';
+import { Link2, MessageSquare, Settings } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
 import { useAppStore } from '../store';
@@ -33,7 +33,7 @@ export function AiPanel() {
             aria-controls="right-panel-ask"
             onClick={() => setTab('ask')}
           >
-            <Sparkles size={16} strokeWidth={1.5} />
+            <MessageSquare size={16} strokeWidth={1.5} />
             <span>问答</span>
           </button>
           <button
@@ -45,7 +45,8 @@ export function AiPanel() {
             aria-controls="right-panel-links"
             onClick={() => setTab('links')}
           >
-            链接
+            <Link2 size={16} strokeWidth={1.5} />
+            <span>链接</span>
           </button>
           {panels.map((panel) => (
             <button

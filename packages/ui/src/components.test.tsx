@@ -358,8 +358,8 @@ describe('ChatMessage', () => {
       </>,
     );
 
-    expect(screen.getByRole('article', { name: '你的消息' }).textContent).toContain('你好');
-    expect(screen.getByRole('article', { name: 'AI 回复' }).textContent).toContain('我在');
+    expect(screen.getByRole('article', { name: '提问' }).textContent).toContain('你好');
+    expect(screen.getByRole('article', { name: '回答' }).textContent).toContain('我在');
     const citation = screen.getByRole('article', { name: '引用 周记' });
     expect(citation.textContent).toContain('今天写了组件。');
     expect(citation.textContent).toContain('notes/week.md');

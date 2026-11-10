@@ -55,19 +55,19 @@ const STYLES = `
 body {
   margin: 0;
   background: transparent;
-  color: #1f1f23;
-  font: 14px/1.45 -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: #1c1917;
+  font: 14px/1.5 -apple-system, "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
 }
 .card {
   margin: 12px;
   padding: 16px;
-  border: 1px solid #e4e4e8;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid #e6e1d8;
+  border-radius: 12px;
+  background: #fffcf9;
 }
-.kicker { margin: 0; color: #8e4ec6; font-size: 12px; letter-spacing: 0.04em; }
+.kicker { margin: 0; color: #3c6e62; font-size: 12px; letter-spacing: 0.04em; }
 h1 { margin: 8px 0 0; font-size: 18px; line-height: 1.35; }
-.path { margin: 4px 0 0; color: #8e8e99; font-size: 12px; word-break: break-all; }
+.path { margin: 4px 0 0; color: #8a847c; font-size: 12px; word-break: break-all; }
 .figure {
   margin: 16px 0 0;
   font-size: 42px;
@@ -75,17 +75,18 @@ h1 { margin: 8px 0 0; font-size: 18px; line-height: 1.35; }
   font-weight: 600;
   letter-spacing: -0.03em;
 }
-.unit { margin: 2px 0 0; color: #5c5c66; }
+.unit { margin: 2px 0 0; color: #57534e; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
-.grid div { padding: 8px; border-radius: 10px; background: #f6f6f7; }
+.grid div { padding: 8px; border-radius: 8px; background: #f3f1ec; }
 .grid b { display: block; font-size: 16px; }
-.grid span { color: #5c5c66; font-size: 12px; }
-.empty { margin: 12px 0 0; color: #5c5c66; }
+.grid span { color: #57534e; font-size: 12px; }
+.empty { margin: 12px 0 0; color: #57534e; }
 @media (prefers-color-scheme: dark) {
-  body { color: #f4f4f5; }
-  .card { background: #1c1c21; border-color: #34343c; }
-  .path, .unit, .grid span, .empty { color: #a1a1aa; }
-  .grid div { background: #26262c; }
+  body { color: #f4f1ea; }
+  .card { background: #1c1b19; border-color: #3a3834; }
+  .kicker { color: #9dc7b8; }
+  .path, .unit, .grid span, .empty { color: #c4bfb4; }
+  .grid div { background: #2c2b28; }
 }
 `;
 

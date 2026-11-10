@@ -17,8 +17,8 @@ export type ChatMessageProps = ChatMessageBase &
   );
 
 const roleLabel = {
-  user: '你的消息',
-  assistant: 'AI 回复',
+  user: '提问',
+  assistant: '回答',
   citation: '引用',
 } as const;
 

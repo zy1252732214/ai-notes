@@ -16,7 +16,7 @@ export const previewSections = [
     summary: '一条搜索结果，当前项带 aria-current。',
   },
   { id: 'panel', title: 'Panel', summary: '可收起的分区，按钮上有 aria-expanded。' },
-  { id: 'chat-message', title: 'ChatMessage', summary: '用户、AI，以及带来源的引用卡片。' },
+  { id: 'chat-message', title: 'ChatMessage', summary: '提问、回答，以及带来源的引用。' },
   { id: 'settings-row', title: 'SettingsRow', summary: '设置表单的一行：标签、说明、控件。' },
 ] as const;
 

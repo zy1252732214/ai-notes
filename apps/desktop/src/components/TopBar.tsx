@@ -8,6 +8,7 @@ import {
   Search,
   Sun,
   TextSearch,
+  X,
 } from 'lucide-react';
 import { noteTitle, useAppStore } from '../store';
 import { resolveTheme } from '../theme';
@@ -65,7 +66,7 @@ export function TopBar() {
                 aria-label={`关闭${noteTitle(tab.path)}`}
                 onClick={() => void closeTab(tab.path)}
               >
-                ×
+                <X size={14} strokeWidth={1.5} />
               </button>
             </div>
           );

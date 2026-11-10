@@ -123,27 +123,28 @@ const STYLES = `
 body {
   margin: 0;
   background: transparent;
-  color: #1f1f23;
-  font: 14px/1.45 -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: #1c1917;
+  font: 14px/1.5 -apple-system, "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
 }
 .card {
   margin: 12px;
   padding: 16px;
-  border: 1px solid #e4e4e8;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid #e6e1d8;
+  border-radius: 12px;
+  background: #fffcf9;
 }
-.kicker { margin: 0; color: #8e4ec6; font-size: 12px; letter-spacing: 0.04em; }
+.kicker { margin: 0; color: #3c6e62; font-size: 12px; letter-spacing: 0.04em; }
 .day { margin: 8px 0 0; font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
-.status { margin: 8px 0 0; color: #5c5c66; }
+.status { margin: 8px 0 0; color: #57534e; }
 .excerpt { margin: 12px 0 0; white-space: pre-wrap; }
 ol { margin: 12px 0 0; padding-left: 18px; }
 li { margin: 4px 0; }
-.hint { margin: 12px 0 0; color: #8e8e99; font-size: 12px; }
+.hint { margin: 12px 0 0; color: #8a847c; font-size: 12px; }
 @media (prefers-color-scheme: dark) {
-  body { color: #f4f4f5; }
-  .card { background: #1c1c21; border-color: #34343c; }
-  .status, .hint { color: #a1a1aa; }
+  body { color: #f4f1ea; }
+  .card { background: #1c1b19; border-color: #3a3834; }
+  .kicker { color: #9dc7b8; }
+  .status, .hint { color: #c4bfb4; }
 }
 `;
 
