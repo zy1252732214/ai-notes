@@ -1,3 +1,32 @@
+export interface PointerModifiers {
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+}
+
+/** Apple platforms use Command; every other platform uses Control. */
+export function commandKeyPlatform(platform: string): boolean {
+  return /mac|iphone|ipad|ipod/i.test(platform);
+}
+
+/** True while the platform's link modifier is held. */
+export function modifierHeld(
+  event: { metaKey: boolean; ctrlKey: boolean },
+  platform: string,
+): boolean {
+  return commandKeyPlatform(platform) ? event.metaKey : event.ctrlKey;
+}
+
+/**
+ * Wikilinks open on Command-click (macOS) or Control-click (everywhere else).
+ * A plain click, or Shift-click, only moves the caret so the link text stays editable.
+ */
+export function opensOnModifierClick(event: PointerModifiers, platform: string): boolean {
+  if (event.button !== 0 || event.shiftKey) return false;
+  return modifierHeld(event, platform);
+}
+
 /** Inner text of the `[[wikilink]]` covering `offset`, or null when the offset is outside one. */
 export function wikilinkAt(source: string, offset: number): string | null {
   if (offset < 0 || offset > source.length) return null;

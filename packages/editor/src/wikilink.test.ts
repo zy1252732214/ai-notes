@@ -1,5 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { wikilinkAt } from './wikilink.js';
+import { opensOnModifierClick, wikilinkAt, type PointerModifiers } from './wikilink.js';
+
+function click(partial: Partial<PointerModifiers> = {}): PointerModifiers {
+  return { button: 0, metaKey: false, ctrlKey: false, shiftKey: false, ...partial };
+}
+
+describe('opensOnModifierClick', () => {
+  it('opens on Command-click on Apple platforms', () => {
+    expect(opensOnModifierClick(click({ metaKey: true }), 'MacIntel')).toBe(true);
+    expect(opensOnModifierClick(click({ metaKey: true }), 'macOS')).toBe(true);
+    expect(opensOnModifierClick(click({ metaKey: true }), 'iPad')).toBe(true);
+  });
+
+  it('opens on Control-click on other platforms', () => {
+    expect(opensOnModifierClick(click({ ctrlKey: true }), 'Win32')).toBe(true);
+    expect(opensOnModifierClick(click({ ctrlKey: true }), 'Windows')).toBe(true);
+    expect(opensOnModifierClick(click({ ctrlKey: true }), 'Linux x86_64')).toBe(true);
+  });
+
+  it('does not treat the other platform modifier as a click-through', () => {
+    expect(opensOnModifierClick(click({ ctrlKey: true }), 'MacIntel')).toBe(false);
+    expect(opensOnModifierClick(click({ metaKey: true }), 'Win32')).toBe(false);
+    expect(opensOnModifierClick(click({ metaKey: true }), 'Linux x86_64')).toBe(false);
+  });
+
+  it('leaves plain clicks, shift-clicks, and non-primary buttons for editing', () => {
+    expect(opensOnModifierClick(click(), 'MacIntel')).toBe(false);
+    expect(opensOnModifierClick(click(), 'Win32')).toBe(false);
+    expect(opensOnModifierClick(click({ metaKey: true, shiftKey: true }), 'macOS')).toBe(false);
+    expect(opensOnModifierClick(click({ ctrlKey: true, shiftKey: true }), 'Windows')).toBe(false);
+    expect(opensOnModifierClick(click({ metaKey: true, button: 2 }), 'MacIntel')).toBe(false);
+  });
+});
 
 describe('wikilinkAt', () => {
   const source = '见 [[周报]] 和 [[项目/计划|别名]]。';

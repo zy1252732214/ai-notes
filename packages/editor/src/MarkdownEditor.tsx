@@ -15,7 +15,7 @@ import {
 } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { useEffect, useRef } from 'react';
-import { wikilinkAt } from './wikilink.js';
+import { modifierHeld, opensOnModifierClick, wikilinkAt } from './wikilink.js';
 
 export interface EditorCursor {
   line: number;
@@ -104,9 +104,42 @@ const editorTheme = EditorView.theme({
     color: 'var(--an-accent)',
     backgroundColor: 'color-mix(in srgb, var(--an-accent) 12%, transparent)',
     borderRadius: '4px',
+    cursor: 'text',
+  },
+  '&.cm-wikilink-armed .cm-wikilink:hover': {
     cursor: 'pointer',
+    textDecoration: 'underline',
   },
 });
+
+function browserPlatform(): string {
+  if (typeof navigator === 'undefined') return '';
+  const withData = navigator as Navigator & { userAgentData?: { platform?: string } };
+  return withData.userAgentData?.platform || navigator.platform || '';
+}
+
+/** Underline a hovered wikilink only while Command (Apple) or Control is held. */
+function bindWikilinkHint(view: EditorView, platform: string): () => void {
+  const sync = (event: { metaKey: boolean; ctrlKey: boolean }) => {
+    view.dom.classList.toggle('cm-wikilink-armed', modifierHeld(event, platform));
+  };
+  const clear = () => view.dom.classList.remove('cm-wikilink-armed');
+  const onMove = (event: MouseEvent) => sync(event);
+  const onKey = (event: KeyboardEvent) => sync(event);
+  view.dom.addEventListener('mousemove', onMove);
+  view.dom.addEventListener('mouseleave', clear);
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', onKey);
+  window.addEventListener('blur', clear);
+  return () => {
+    clear();
+    view.dom.removeEventListener('mousemove', onMove);
+    view.dom.removeEventListener('mouseleave', clear);
+    window.removeEventListener('keydown', onKey);
+    window.removeEventListener('keyup', onKey);
+    window.removeEventListener('blur', clear);
+  };
+}
 
 function cursorFrom(state: EditorState): EditorCursor {
   const pos = state.selection.main.head;
@@ -139,6 +172,7 @@ export function MarkdownEditor({
     const parent = hostRef.current;
     if (!parent) return;
 
+    const platform = browserPlatform();
     const view = new EditorView({
       parent,
       state: EditorState.create({
@@ -154,7 +188,7 @@ export function MarkdownEditor({
           EditorView.domEventHandlers({
             click(event, view) {
               const open = onOpenLinkRef.current;
-              if (!open || event.button !== 0 || event.shiftKey) return false;
+              if (!open || !opensOnModifierClick(event, platform)) return false;
               const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
               if (pos == null) return false;
               const target = wikilinkAt(view.state.doc.toString(), pos);
@@ -190,10 +224,12 @@ export function MarkdownEditor({
       }),
     });
     viewRef.current = view;
+    const unbindHint = bindWikilinkHint(view, platform);
     onCursorRef.current?.(cursorFrom(view.state));
     view.focus();
 
     return () => {
+      unbindHint();
       view.destroy();
       viewRef.current = null;
     };

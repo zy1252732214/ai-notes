@@ -1,10 +1,12 @@
 mod index_db;
+mod secrets;
 mod vault;
 
 use index_db::{
     backlinks, index_delete, index_open, index_pending_chunks, index_rename, index_set_vectors,
     index_upsert, reindex, search, search_hybrid, IndexState,
 };
+use secrets::{secret_available, secret_delete, secret_get, secret_set};
 use vault::{
     plugin_list, plugin_read, plugin_write, vault_create_directory, vault_list, vault_read,
     vault_remove, vault_rename, vault_unwatch, vault_watch, vault_write, VaultWatch,
@@ -37,7 +39,11 @@ pub fn run() {
             index_pending_chunks,
             index_set_vectors,
             backlinks,
-            reindex
+            reindex,
+            secret_available,
+            secret_get,
+            secret_set,
+            secret_delete
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

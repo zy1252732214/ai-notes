@@ -38,7 +38,7 @@ pnpm --filter @ai-notes/desktop dev
 
 Linux 需要 WebKitGTK 4.1。`Ctrl/Cmd+S` 立即保存，停笔约 800ms 后自动保存。`Ctrl/Cmd+\` 收起文件树，`Ctrl/Cmd+J` 开关右侧面板，`Ctrl/Cmd+K` 打开命令面板。`Ctrl/Cmd+Shift+F` 全文搜索当前笔记库，结果带片段，点击后跳到命中位置。`Ctrl/Cmd+O` 按文件名模糊匹配并打开笔记。
 
-右侧「链接」列出反向链接和文中的 `[[双链]]`，点击会打开对应笔记；编辑器里点击双链也会跳转。右侧「问答」把当前笔记和检索片段交给 `@ai-notes/ai` 的模型路由，回答以流式输出，并附上可以点开的引用。提供方、接口地址、模型名和 API Key 在「模型设置」里，只写入本机 `localStorage`，不进笔记库。模型请求由界面里的 `fetch` 发给 `@ai-notes/ai` 路由；浏览器开发时，接口需要允许当前页面的来源（本机 Ollama 可设置 `OLLAMA_ORIGINS`）。浏览器开发模式的检索走内存索引，和桌面端的 `search` / `backlinks` 是同一套调用。
+右侧「链接」列出反向链接和文中的 `[[双链]]`，点击会打开对应笔记。编辑器里按住 Ctrl（macOS 为 Cmd）再单击双链才会跳转，普通单击只移动光标；按住修饰键悬停时，双链显示指针和下划线。右侧「问答」把当前笔记和检索片段交给 `@ai-notes/ai` 的模型路由，回答以流式输出，并附上可以点开的引用。提供方、接口地址、模型名和嵌入模型名在「模型设置」里，写入本机 `localStorage`。问答和嵌入共用的 API Key 在桌面端写入系统钥匙串（macOS Keychain、Windows 凭据管理器、Linux Secret Service）；浏览器和示例库没有钥匙串时，API Key 仍留在 `localStorage`。这些都不会写进笔记库。模型请求由界面里的 `fetch` 发给 `@ai-notes/ai` 路由；浏览器开发时，接口需要允许当前页面的来源（本机 Ollama 可设置 `OLLAMA_ORIGINS`）。浏览器开发模式的检索走内存索引，和桌面端的 `search` / `backlinks` 是同一套调用。
 
 打开笔记库时，如果 `.ainotes/plugins/hello-notes` 还不存在，会写入示例插件。它在沙箱 iframe 里运行，命令面板里的「统计笔记数量」和 `Ctrl/Cmd+Shift+H` 会列出笔记数量。顶栏的插件按钮可以启用或禁用它。没有 `vault:write` 等权限的调用会被宿主拒绝。命令面板可以打开全文搜索，也可以运行插件命令。右侧同时有问答、反向链接和插件沙箱面板。
 

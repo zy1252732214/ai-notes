@@ -17,6 +17,9 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# macOS Keychain、Windows Credential Manager、Linux Secret Service。
+# async-secret-service 走 zbus，不必在 Linux 上链接 libdbus。
+keyring = { version = "3.6.3", default-features = false, features = ["apple-native", "windows-native", "async-secret-service", "async-io", "crypto-rust"] }
 notify = "6"
 rusqlite = { version = "0.32.1", features = ["bundled"], default-features = false }
 sqlite-vec = "0.1.6"
