@@ -624,7 +624,7 @@ button:disabled {
 .welcome-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--an-space-3);
   margin: var(--an-space-6) 0 var(--an-space-3);
 }
