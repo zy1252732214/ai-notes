@@ -1,7 +1,9 @@
 import { filterVaultTree, type VaultNode } from '@ai-notes/core';
 import { VaultError } from '@ai-notes/core';
+import type { SearchHit } from '@ai-notes/indexer';
 import { useEffect, useMemo, useState } from 'react';
 import { openFolderVault } from '../fs/openVault';
+import { getNoteIndex } from '../search/client';
 import { useAppStore } from '../store';
 
 interface CommandItem {
@@ -16,8 +18,10 @@ export function CommandPalette() {
   const setCommandOpen = useAppStore((state) => state.setCommandOpen);
   const tree = useAppStore((state) => state.tree);
   const vault = useAppStore((state) => state.vault);
+  const indexRevision = useAppStore((state) => state.indexRevision);
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
+  const [hits, setHits] = useState<SearchHit[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -27,12 +31,34 @@ export function CommandPalette() {
 
   const items = useMemo(() => {
     if (!open) return [];
-    return buildCommands(query, tree, Boolean(vault));
-  }, [open, query, tree, vault]);
+    return buildCommands(query, tree, Boolean(vault), hits);
+  }, [open, query, tree, vault, hits]);
 
   useEffect(() => {
     setIndex(0);
   }, [query]);
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!open || needle.length < 2) {
+      setHits([]);
+      return;
+    }
+    const noteIndex = getNoteIndex();
+    if (!noteIndex) return;
+    let cancelled = false;
+    void noteIndex
+      .search(needle, 8)
+      .then((rows) => {
+        if (!cancelled) setHits(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setHits([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, query, indexRevision]);
 
   if (!open) return null;
 
@@ -99,6 +125,7 @@ function buildCommands(
   query: string,
   tree: readonly VaultNode[],
   hasVault: boolean,
+  hits: readonly SearchHit[],
 ): CommandItem[] {
   const store = useAppStore.getState();
   const actions: CommandItem[] = [
@@ -137,6 +164,14 @@ function buildCommands(
   const matchedActions = actions.filter(
     (item) => !needle || item.title.toLowerCase().includes(needle),
   );
+  const searchHits = hits.map((hit) => ({
+    id: `hit:${hit.path}:${hit.start}`,
+    title: hit.title || hit.path,
+    hint: hit.snippet.replaceAll(/<\/?b>/g, ''),
+    run: () => {
+      void store.openNote(hit.path);
+    },
+  }));
   const files = hasVault
     ? flattenFiles(filterVaultTree(tree, query)).map((node) => ({
         id: `file:${node.path}`,
@@ -152,7 +187,7 @@ function buildCommands(
       ? true
       : item.id === 'open-folder' || item.id === 'sample' || item.id.startsWith('theme'),
   );
-  return [...withoutVault, ...files];
+  return [...withoutVault, ...searchHits, ...files];
 }
 
 async function openFolder() {

@@ -2,12 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  chunkVecVirtualTableSql,
-  createIndex,
-  openNodeDatabase,
-  type VaultIndex,
-} from './index.js';
+import { chunkVecVirtualTableSql, createIndex, type VaultIndex } from './index.js';
+import { openNodeDatabase } from './node-driver.js';
 
 function openIndex(options?: { maxChars?: number; overlap?: number }): VaultIndex {
   return createIndex(openNodeDatabase(), options);
@@ -241,6 +237,32 @@ describe('VaultIndex', () => {
         tokensOut: 5,
       },
     ]);
+    index.close();
+  });
+
+  it('keeps backlinks current as notes are edited, renamed, and deleted', () => {
+    const index = openIndex();
+    index.upsertNote({
+      path: '欢迎.md',
+      content: '# 欢迎\n\n相关笔记：[[周报]]、[[项目/计划]]\n',
+      mtime: 1,
+    });
+    index.upsertNote({ path: '日常/周报.md', content: '# 周报\n\n正文\n', mtime: 1 });
+    index.upsertNote({ path: '项目/计划.md', content: '# 计划\n\n见 [[欢迎]]。\n', mtime: 1 });
+    expect(index.backlinks('日常/周报.md').map((link) => [link.path, link.kind])).toEqual([
+      ['欢迎.md', 'wikilink'],
+    ]);
+    expect(index.backlinks('欢迎.md').map((link) => link.path)).toEqual(['项目/计划.md']);
+
+    index.upsertNote({ path: '欢迎.md', content: '# 欢迎\n\n只剩 [[项目/计划]]。\n', mtime: 2 });
+    expect(index.backlinks('日常/周报.md')).toEqual([]);
+
+    index.renamePath('项目/计划.md', '项目/路线.md');
+    expect(index.backlinks('项目/路线.md').map((link) => link.path)).toEqual(['欢迎.md']);
+    expect(index.backlinks('项目/计划.md')).toEqual([]);
+
+    index.deletePath('日常');
+    expect(index.search('正文')).toEqual([]);
     index.close();
   });
 
