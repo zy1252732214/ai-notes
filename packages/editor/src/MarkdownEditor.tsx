@@ -6,7 +6,7 @@ import {
   syntaxHighlighting,
   syntaxTree,
 } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Prec } from '@codemirror/state';
 import {
   Decoration,
   EditorView,
@@ -124,6 +124,35 @@ function codeBlockDecorations(view: EditorView): DecorationSet {
   return Decoration.set(marks, true);
 }
 
+const selectionTextMark = Decoration.mark({ class: 'cm-selection-text' });
+
+/** `drawSelection` paints a layer behind the text and clears `::selection`, so syntax colors stay. This mark is the inner span and forces those tokens back to the body color. */
+const selectionTextColor = Prec.highest(
+  ViewPlugin.fromClass(
+    class SelectionTextColor {
+      decorations: DecorationSet;
+      constructor(view: EditorView) {
+        this.decorations = selectionTextDecorations(view);
+      }
+      update(update: ViewUpdate) {
+        if (update.selectionSet || update.docChanged || update.viewportChanged) {
+          this.decorations = selectionTextDecorations(update.view);
+        }
+      }
+    },
+    { decorations: (plugin) => plugin.decorations },
+  ),
+);
+
+function selectionTextDecorations(view: EditorView): DecorationSet {
+  const marks: Array<ReturnType<typeof selectionTextMark.range>> = [];
+  for (const range of view.state.selection.ranges) {
+    if (range.empty) continue;
+    marks.push(selectionTextMark.range(range.from, range.to));
+  }
+  return marks.length === 0 ? Decoration.none : Decoration.set(marks, true);
+}
+
 const wikiDecorator = new MatchDecorator({
   regexp: /\[\[[^\]\n]+\]\]/g,
   decoration: Decoration.mark({ class: 'cm-wikilink' }),
@@ -141,6 +170,16 @@ const wikiLinks = ViewPlugin.fromClass(
   },
   { decorations: (plugin) => plugin.decorations },
 );
+
+const selectionTheme = EditorView.baseTheme({
+  '&light .cm-selectionBackground, &dark .cm-selectionBackground': {
+    backgroundColor: 'var(--an-selection)',
+  },
+  '&light.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, &dark.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground':
+    {
+      backgroundColor: 'var(--an-selection)',
+    },
+});
 
 const editorTheme = EditorView.theme({
   '&': {
@@ -177,10 +216,6 @@ const editorTheme = EditorView.theme({
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
     backgroundColor: 'var(--an-selection)',
   },
-  '.cm-content ::selection': {
-    backgroundColor: 'var(--an-selection)',
-    color: 'var(--an-text-primary)',
-  },
   '.cm-placeholder': {
     color: 'var(--an-text-tertiary)',
   },
@@ -197,6 +232,10 @@ const editorTheme = EditorView.theme({
     cursor: 'pointer',
     textDecoration: 'underline',
   },
+  '& .cm-selection-text, & .cm-selection-text *, & .cm-wikilink .cm-selection-text, & .cm-selection-text .cm-wikilink':
+    {
+      color: 'var(--an-text-primary)',
+    },
 });
 
 function browserPlatform(): string {
@@ -270,9 +309,11 @@ export function MarkdownEditor({
         extensions: [
           history(),
           drawSelection(),
+          selectionTheme,
           bracketMatching(),
           markdown(),
           syntaxHighlighting(highlightStyle),
+          selectionTextColor,
           wikiLinks,
           codeBlockLines,
           EditorView.lineWrapping,

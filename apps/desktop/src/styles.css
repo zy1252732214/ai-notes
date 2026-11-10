@@ -193,7 +193,7 @@ button:disabled {
 
 .command-button kbd {
   padding: 0 var(--an-space-1);
-  border: 1px solid var(--an-border-subtle);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-sm);
   background: var(--an-bg-subtle);
   font-family: var(--an-font-ui);
