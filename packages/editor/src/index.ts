@@ -6,4 +6,5 @@ export const packageId = '@ai-notes/editor' as const;
 export const workspaceDependencies = [corePackageId] as const;
 
 export { MarkdownEditor } from './MarkdownEditor.js';
-export type { EditorCursor, MarkdownEditorProps } from './MarkdownEditor.js';
+export type { EditorCursor, EditorReveal, MarkdownEditorProps } from './MarkdownEditor.js';
+export { wikilinkAt } from './wikilink.js';

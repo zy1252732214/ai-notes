@@ -1,117 +1,100 @@
-import type { Backlink } from '@ai-notes/indexer';
 import { IFRAME_SANDBOX } from '@ai-notes/plugin-host';
-import { Sparkles } from 'lucide-react';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { IconButton } from '@ai-notes/ui';
+import { Settings, Sparkles } from 'lucide-react';
+import { useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
-import { getNoteIndex } from '../search/client';
 import { useAppStore } from '../store';
+import { AskPane } from './AskPane';
+import { LinksPane } from './LinksPane';
 
 export function AiPanel() {
   const rightOpen = useAppStore((state) => state.rightOpen);
-  const activePath = useAppStore((state) => state.activePath);
-  const indexRevision = useAppStore((state) => state.indexRevision);
-  const openNote = useAppStore((state) => state.openNote);
+  const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
   const snapshot = useSyncExternalStore(pluginController.subscribe, pluginController.getSnapshot);
   const panels = snapshot.items.flatMap((item) =>
     item.panels.map((panel) => ({ ...panel, pluginName: item.name })),
   );
   const frames = snapshot.items.filter((item) => item.srcdoc);
-  const [tab, setTab] = useState('ai');
-  const [links, setLinks] = useState<Backlink[]>([]);
-  const active = tab === 'ai' || panels.some((panel) => panel.id === tab) ? tab : 'ai';
-
-  useEffect(() => {
-    const index = getNoteIndex();
-    if (!index || !activePath) {
-      setLinks([]);
-      return;
-    }
-    let cancelled = false;
-    void index
-      .backlinks(activePath)
-      .then((rows) => {
-        if (!cancelled) setLinks(rows);
-      })
-      .catch(() => {
-        if (!cancelled) setLinks([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [activePath, indexRevision]);
+  const [tab, setTab] = useState('ask');
+  const active =
+    tab === 'ask' || tab === 'links' || panels.some((panel) => panel.id === tab) ? tab : 'ask';
+  const pluginPanel = panels.find((panel) => panel.id === active) ?? null;
 
   return (
     <aside className="ai-panel" aria-label="AI 面板" inert={!rightOpen}>
-      <div className="ai-head ai-tabs" role="tablist" aria-label="右侧面板">
-        <button
-          className={active === 'ai' ? 'ai-tab active' : 'ai-tab'}
-          role="tab"
-          aria-selected={active === 'ai'}
-          onClick={() => setTab('ai')}
-        >
-          <Sparkles size={16} strokeWidth={1.5} />
-          <span>AI 助手</span>
-        </button>
-        {panels.map((panel) => (
+      <div className="ai-head">
+        <div className="ai-tabs" role="tablist" aria-label="右侧面板">
           <button
-            key={`${panel.pluginId}:${panel.id}`}
-            className={active === panel.id ? 'ai-tab active' : 'ai-tab'}
+            type="button"
+            className={active === 'ask' ? 'ai-tab active' : 'ai-tab'}
             role="tab"
-            aria-selected={active === panel.id}
-            onClick={() => setTab(panel.id)}
+            id="right-tab-ask"
+            aria-selected={active === 'ask'}
+            aria-controls="right-panel-ask"
+            onClick={() => setTab('ask')}
           >
-            {panel.title}
+            <Sparkles size={16} strokeWidth={1.5} />
+            <span>问答</span>
           </button>
-        ))}
-      </div>
-      {active === 'ai' ? (
-        <>
-          <div className="ai-body">
-            <p>这一栏会用来向当前笔记提问。回答会附上可以点开的引用。</p>
-            <p className="hint">命令面板可以全文搜索当前笔记库。</p>
-            <p>反向链接</p>
-            {activePath && links.length > 0 ? (
-              <ul className="backlinks">
-                {links.map((link) => (
-                  <li key={`${link.path}:${link.kind}`}>
-                    <button type="button" onClick={() => void openNote(link.path)}>
-                      {link.title || link.path}
-                    </button>
-                    <span className="hint">{link.path}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="hint">
-                {activePath ? '还没有笔记指向这里。' : '打开一篇笔记后显示反向链接。'}
-              </p>
-            )}
-          </div>
-          <form
-            className="ai-composer"
-            onSubmit={(event) => {
-              event.preventDefault();
-            }}
+          <button
+            type="button"
+            className={active === 'links' ? 'ai-tab active' : 'ai-tab'}
+            role="tab"
+            id="right-tab-links"
+            aria-selected={active === 'links'}
+            aria-controls="right-panel-links"
+            onClick={() => setTab('links')}
           >
-            <textarea placeholder="向这篇笔记提问" disabled rows={3} />
-            <button className="button" type="submit" disabled>
-              发送
+            链接
+          </button>
+          {panels.map((panel) => (
+            <button
+              key={`${panel.pluginId}:${panel.id}`}
+              type="button"
+              className={active === panel.id ? 'ai-tab active' : 'ai-tab'}
+              role="tab"
+              aria-selected={active === panel.id}
+              onClick={() => setTab(panel.id)}
+            >
+              {panel.title}
             </button>
-          </form>
-        </>
-      ) : (
-        <div className="ai-body">
-          <p>{panels.find((panel) => panel.id === active)?.pluginName}</p>
+          ))}
         </div>
-      )}
-      <div className={active === 'ai' ? 'plugin-stage parked' : 'plugin-stage'}>
+        <IconButton label="模型设置" size="sm" onClick={() => setSettingsOpen(true)}>
+          <Settings size={16} strokeWidth={1.5} />
+        </IconButton>
+      </div>
+      <div className="ai-panel-body" hidden={pluginPanel !== null}>
+        <div
+          role="tabpanel"
+          id="right-panel-ask"
+          aria-labelledby="right-tab-ask"
+          className="an-tabs__panel"
+          hidden={active !== 'ask'}
+        >
+          <AskPane />
+        </div>
+        <div
+          role="tabpanel"
+          id="right-panel-links"
+          aria-labelledby="right-tab-links"
+          className="an-tabs__panel"
+          hidden={active !== 'links'}
+        >
+          <LinksPane />
+        </div>
+      </div>
+      {pluginPanel ? (
+        <div className="ai-body">
+          <p>{pluginPanel.pluginName}</p>
+        </div>
+      ) : null}
+      <div className={pluginPanel ? 'plugin-stage' : 'plugin-stage parked'}>
         {frames.map((item) => (
           <iframe
             key={item.id}
             className={
-              panels.some((panel) => panel.pluginId === item.id && panel.id === active)
-                ? 'plugin-frame'
-                : 'plugin-frame is-hidden'
+              pluginPanel?.pluginId === item.id ? 'plugin-frame' : 'plugin-frame is-hidden'
             }
             sandbox={IFRAME_SANDBOX}
             srcDoc={item.srcdoc ?? ''}

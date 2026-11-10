@@ -2,9 +2,16 @@ import { isMarkdownPath, type Vault } from '@ai-notes/core';
 import { MemoryIndex, type Backlink, type SearchHit } from '@ai-notes/indexer';
 import { isTauri } from '../fs/runtime';
 
-export interface DesktopIndex {
+/**
+ * 界面依赖的检索面，对齐 `@ai-notes/indexer` 的 `search` 与 `backlinks`。
+ * 桌面壳打开真实文件夹时走 Tauri 命令；浏览器和示例库用 `MemoryIndex`。
+ */
+export interface NoteQuery {
   search(query: string, limit?: number): Promise<SearchHit[]>;
   backlinks(path: string): Promise<Backlink[]>;
+}
+
+export interface DesktopIndex extends NoteQuery {
   reindex(): Promise<void>;
   noteSaved(path: string, content: string): Promise<void>;
   noteDeleted(path: string): Promise<void>;

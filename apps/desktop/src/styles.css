@@ -316,6 +316,142 @@ button:disabled {
   border-color: var(--an-accent);
 }
 
+.lookup-dialog {
+  width: min(100%, var(--an-command-palette-width));
+  max-height: min(70vh, 640px);
+  display: flex;
+  flex-direction: column;
+}
+
+.lookup-results {
+  list-style: none;
+  margin: 0;
+  padding: var(--an-space-1);
+  overflow: auto;
+}
+
+.lookup-results .an-result mark {
+  background: color-mix(in srgb, var(--an-warning) 40%, transparent);
+  color: inherit;
+  border-radius: var(--an-radius-sm);
+}
+
+.ai-head .ai-tabs {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.ai-panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.ai-panel-body[hidden] {
+  display: none;
+}
+
+.ai-panel .an-tabs {
+  flex: 1;
+  min-height: 0;
+}
+
+.ai-panel .an-tabs__panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ai-panel .an-tabs__panel[hidden] {
+  display: none;
+}
+
+.ask-pane,
+.links-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.ai-log,
+.links-pane {
+  gap: var(--an-space-3);
+  padding: var(--an-space-3);
+  overflow: auto;
+}
+
+.ai-log .an-chat__content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ai-answer-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-2);
+}
+
+.ai-citation {
+  border-radius: var(--an-radius-lg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ai-citation:hover .an-chat--citation,
+.ai-citation:focus-visible .an-chat--citation {
+  background: color-mix(in srgb, var(--an-ai) 18%, var(--an-ai-subtle));
+}
+
+.wiki-jump {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--an-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ai-error {
+  margin: 0;
+  color: var(--an-danger);
+}
+
+.ai-hint {
+  margin: 0;
+  color: var(--an-text-tertiary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+}
+
+.ai-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--an-space-2);
+}
+
+.ai-composer .an-field,
+.ai-settings .an-field,
+.ai-settings .an-settings__control {
+  width: 100%;
+}
+
+.ai-settings .an-settings {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.link-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-1);
+}
+
 .tree {
   overflow: auto;
   min-height: 0;

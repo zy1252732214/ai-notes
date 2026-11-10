@@ -136,6 +136,27 @@ describe('Tabs', () => {
     fireEvent.keyDown(screen.getByRole('tab', { name: '编辑' }), { key: 'ArrowRight' });
     expect(screen.getByRole('tab', { name: '外观' }).getAttribute('aria-selected')).toBe('true');
   });
+
+  it('keeps inactive panels mounted when asked', () => {
+    render(
+      <Tabs
+        label="预览"
+        keepMounted
+        tabs={[
+          { id: 'one', label: '问答', content: <input aria-label="问题" defaultValue="草稿" /> },
+          { id: 'two', label: '链接', content: '链接面板' },
+        ]}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole('textbox', { name: '问题' }), {
+      target: { value: '还在' },
+    });
+    fireEvent.click(screen.getByRole('tab', { name: '链接' }));
+    expect(screen.getByRole('tabpanel').textContent).toContain('链接面板');
+    fireEvent.click(screen.getByRole('tab', { name: '问答' }));
+    expect((screen.getByRole('textbox', { name: '问题' }) as HTMLInputElement).value).toBe('还在');
+  });
 });
 
 describe('Tooltip', () => {

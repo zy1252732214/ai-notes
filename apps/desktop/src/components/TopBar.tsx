@@ -1,4 +1,13 @@
-import { Blocks, Moon, PanelLeft, PanelRight, Search, Sun } from 'lucide-react';
+import {
+  Blocks,
+  FileSearch,
+  Moon,
+  PanelLeft,
+  PanelRight,
+  Search,
+  Sun,
+  TextSearch,
+} from 'lucide-react';
 import { noteTitle, useAppStore } from '../store';
 import { resolveTheme } from '../theme';
 
@@ -12,6 +21,8 @@ export function TopBar() {
   const toggleLeft = useAppStore((state) => state.toggleLeft);
   const toggleRight = useAppStore((state) => state.toggleRight);
   const setCommandOpen = useAppStore((state) => state.setCommandOpen);
+  const setSearchOpen = useAppStore((state) => state.setSearchOpen);
+  const setSwitcherOpen = useAppStore((state) => state.setSwitcherOpen);
   const setPluginsOpen = useAppStore((state) => state.setPluginsOpen);
   const setThemeMode = useAppStore((state) => state.setThemeMode);
   const openNote = useAppStore((state) => state.openNote);
@@ -74,6 +85,12 @@ export function TopBar() {
           <Search size={16} strokeWidth={1.5} />
           <span>搜索或跳转</span>
           <kbd>Ctrl K</kbd>
+        </button>
+        <button className="icon-button" aria-label="全文搜索" onClick={() => setSearchOpen(true)}>
+          <TextSearch size={16} strokeWidth={1.5} />
+        </button>
+        <button className="icon-button" aria-label="快速切换" onClick={() => setSwitcherOpen(true)}>
+          <FileSearch size={16} strokeWidth={1.5} />
         </button>
         <button
           className="icon-button"
