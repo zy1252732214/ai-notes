@@ -319,7 +319,7 @@
   list-style: none;
   max-height: calc(var(--an-space-8) * 8);
   overflow: auto;
-  border: 1px solid var(--an-border-subtle);
+  border: 1px solid var(--an-border-control);
   border-radius: var(--an-radius-md);
   background: var(--an-bg-elevated);
 }

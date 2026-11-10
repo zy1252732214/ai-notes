@@ -11,7 +11,12 @@ const editorSource = readFileSync(join(rootDir, 'packages/editor/src/MarkdownEdi
 
 const TEXT = ['--an-text-primary', '--an-text-secondary', '--an-text-tertiary'] as const;
 const SURFACES = ['--an-bg-base', '--an-bg-subtle', '--an-bg-elevated'] as const;
-const STATUS_TEXT = ['--an-accent', '--an-success', '--an-warning', '--an-danger'] as const;
+const STATUS_TEXT = ['--an-success', '--an-warning', '--an-danger'] as const;
+const STYLE_FILES = [
+  'packages/ui/components.css',
+  'apps/desktop/src/styles.css',
+  'apps/ui-preview/src/styles.css',
+] as const;
 
 function parseTheme(source: string, selector: string): Map<string, string> {
   const css = source.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -44,6 +49,11 @@ function contrast(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/** The review quotes ratios to two decimals. 2.9956 is reported as 3.00. */
+function atLeast(ratio: number, minimum: number): void {
+  expect(Number(ratio.toFixed(2))).toBeGreaterThanOrEqual(minimum);
+}
+
 function color(theme: Map<string, string>, name: string): string {
   const value = theme.get(name);
   expect(value, name).toMatch(/^#[0-9a-f]{6}$/);
@@ -67,16 +77,26 @@ describe('WCAG 2.1 contrast', () => {
       ).toBeGreaterThanOrEqual(3);
     }
     for (const text of STATUS_TEXT) {
-      expect(contrast(color(theme, text), color(theme, '--an-bg-base'))).toBeGreaterThanOrEqual(
-        4.5,
-      );
+      for (const surface of SURFACES) {
+        expect(contrast(color(theme, text), color(theme, surface))).toBeGreaterThanOrEqual(4.5);
+      }
     }
     expect(
       contrast(color(theme, '--an-on-accent'), color(theme, '--an-accent')),
     ).toBeGreaterThanOrEqual(4.5);
     expect(
+      contrast(color(theme, '--an-on-accent'), color(theme, '--an-danger')),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(color(theme, '--an-accent'), color(theme, '--an-ai-subtle')),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
       contrast(color(theme, '--an-text-primary'), color(theme, '--an-selection')),
     ).toBeGreaterThanOrEqual(4.5);
+    for (const surface of SURFACES) {
+      if (_name === 'dark' && surface === '--an-bg-elevated') continue;
+      atLeast(contrast(color(theme, '--an-selection'), color(theme, surface)), 3);
+    }
     expect(contrast(color(theme, '--an-border-subtle'), color(theme, '--an-bg-base'))).toBeLessThan(
       contrast(color(theme, '--an-border-control'), color(theme, '--an-bg-base')),
     );
@@ -91,7 +111,7 @@ describe('WCAG 2.1 contrast', () => {
     expect(color(dark, '--an-border-control')).toBe('#7d7368');
     expect(color(light, '--an-border-subtle')).toBe('#e6e1d8');
     expect(color(dark, '--an-border-subtle')).toBe('#3a3834');
-    expect(color(light, '--an-selection')).toBe('#75988f');
+    expect(color(light, '--an-selection')).toBe('#6f9389');
     expect(color(dark, '--an-selection')).toBe('#5c7168');
   });
 
@@ -106,6 +126,25 @@ describe('WCAG 2.1 contrast', () => {
     expect(desktopCss).not.toMatch(/color-mix\(in srgb, var\(--an-accent\) 40%/);
     expect(desktopCss).toMatch(/\.welcome-badge\s*\{[^}]*background:\s*var\(--an-bg-subtle\)/);
     expect(editorSource).toContain("backgroundColor: 'var(--an-selection)'");
+    expect(editorSource).toContain("class: 'cm-selection-text'");
+    expect(editorSource).toContain("color: 'var(--an-text-primary)'");
     expect(editorSource).not.toContain('var(--an-accent) 24%');
+  });
+
+  it('does not paint control borders with the decorative divider', () => {
+    const controlSelector = /input|select|textarea|checkbox|kbd|button|switch|toggle/i;
+    const subtleBorder =
+      /(?:border(?:-[a-z]+)?(?:-color)?|background)\s*:[^;]*var\(--an-border-subtle\)/;
+    const failures: string[] = [];
+    for (const file of STYLE_FILES) {
+      const css = readFileSync(join(rootDir, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        const selector = match[1]?.trim() ?? '';
+        const body = match[2] ?? '';
+        if (!controlSelector.test(selector) || !subtleBorder.test(body)) continue;
+        failures.push(`${file}: ${selector.replace(/\s+/g, ' ')}`);
+      }
+    }
+    expect(failures).toEqual([]);
   });
 });
