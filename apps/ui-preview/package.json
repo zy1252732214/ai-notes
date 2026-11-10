@@ -3,6 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "description": "Vite page that previews @ai-notes/ui in light and dark themes.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "apps/ui-preview"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "design-system",
+    "preview"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

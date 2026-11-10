@@ -2,7 +2,23 @@
   "name": "@ai-notes/plugin-sdk",
   "version": "0.0.0",
   "private": true,
-  "description": "ai-notes 插件 API（preview v1）：类型定义、manifest JSON Schema 与沙箱 RPC 信封。",
+  "description": "Plugin API preview v1: types, manifest schema, and the sandbox RPC envelope.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes/tree/main/docs/plugins",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "plugin",
+    "sandbox",
+    "rpc"
+  ],
   "type": "module",
   "exports": {
     ".": {

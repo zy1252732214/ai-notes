@@ -1,0 +1,38 @@
+name: Feature / 功能请求
+description: A change to the notebook itself, not a plugin idea.
+title: 'feat: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Plugin ideas belong on the [plugin proposal form](https://github.com/zy1252732214/ai-notes/issues/new?template=plugin.yml).
+
+        插件想法请用插件提议表单，不要填在这里。
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 要解决的问题
+      description: Who hits this, and what they do today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / 建议
+      description: What the app should do. Note if notes must stay plain Markdown.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / 别的做法
+      description: Other approaches you considered, including doing this as a plugin.
+  - type: checkboxes
+    id: local
+    attributes:
+      label: Local-first check
+      options:
+        - label: This still works with the network off, or it is clearly optional
+          required: false
+        - label: Markdown files remain the source of truth
+          required: false

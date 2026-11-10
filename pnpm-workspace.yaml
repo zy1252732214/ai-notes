@@ -1,8 +1,10 @@
 # Official plugins join the workspace automatically once plugins/<id>/package.json exists.
+# templates/* is the copyable starter. It is a real package so CI typechecks it.
 packages:
   - 'apps/*'
   - 'packages/*'
   - 'plugins/*'
+  - 'templates/*'
   - 'server'
 
 catalog:

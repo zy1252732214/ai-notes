@@ -1,0 +1,45 @@
+{
+  "name": "@ai-notes/plugin-daily-notes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Create a dated Markdown note under 日记/ and show recent days in a sidebar.",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://github.com/zy1252732214/ai-notes/tree/main/plugins/daily-notes",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "plugins/daily-notes"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "plugin",
+    "daily-notes",
+    "markdown"
+  ],
+  "files": [
+    "dist",
+    "manifest.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/emit-plugin-main.mjs",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --root ."
+  },
+  "dependencies": {
+    "@ai-notes/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@ai-notes/plugin-host": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

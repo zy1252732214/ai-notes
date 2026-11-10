@@ -1,8 +1,13 @@
 [package]
 name = "ai-notes"
 version = "0.1.0"
-description = "ai-notes desktop shell"
-authors = ["ai-notes"]
+description = "Local-first Markdown notes with cited answers and memory cards"
+authors = ["zy1252732214", "ai-notes contributors"]
+license = "MIT"
+repository = "https://github.com/zy1252732214/ai-notes"
+homepage = "https://github.com/zy1252732214/ai-notes"
+keywords = ["notes", "markdown", "tauri", "local-first", "rag"]
+categories = ["gui"]
 edition = "2021"
 
 [lib]

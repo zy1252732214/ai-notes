@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security / 安全问题
+    url: https://github.com/zy1252732214/ai-notes/security/advisories/new
+    about: Private report for sandbox escapes, permission bypasses, and key leaks. See SECURITY.md. Do not open a public issue.
+  - name: Plugin guide / 插件文档
+    url: https://github.com/zy1252732214/ai-notes/blob/main/docs/plugins/README.md
+    about: Manifest, permissions, and the preview v1 API.

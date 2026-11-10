@@ -1,0 +1,24 @@
+{
+  "manifestVersion": 1,
+  "apiVersion": "preview-v1",
+  "id": "daily-notes",
+  "name": "每日笔记",
+  "version": "0.1.0",
+  "minAppVersion": "0.1.0",
+  "author": "ai-notes",
+  "description": "按本地日期在「日记」文件夹创建今日笔记，并在侧栏列出最近几天。",
+  "main": "dist/main.js",
+  "permissions": [
+    { "id": "vault:read" },
+    { "id": "vault:write" },
+    { "id": "clipboard" },
+    { "id": "ui:panel" }
+  ],
+  "contributes": {
+    "commands": [
+      { "id": "daily-notes.create", "name": "创建今日笔记", "hotkey": "Mod+Alt+D" },
+      { "id": "daily-notes.copy-link", "name": "复制今日笔记链接" }
+    ],
+    "views": [{ "id": "daily-notes.panel", "name": "今日", "type": "sidebar" }]
+  }
+}

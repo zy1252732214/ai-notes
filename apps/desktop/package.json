@@ -2,7 +2,23 @@
   "name": "@ai-notes/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Tauri 2 desktop shell for ai-notes.",
+  "description": "Tauri 2 desktop app for local-first AI notes.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "apps/desktop"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "tauri",
+    "markdown",
+    "notes"
+  ],
   "type": "module",
   "scripts": {
     "dev": "tauri dev",

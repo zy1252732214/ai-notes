@@ -98,7 +98,7 @@ UI 调用 Core 和插件宿主。Core 读写文件并增量更新索引。插件
 
 插件入口是一个 `Plugin` 子类，或者 `definePlugin({ onload, onunload })`。宿主的顺序是：检查 `minAppVersion` 和权限，创建沙箱，构造插件，调用 `onload`；禁用或卸载时调用 `onunload`，再释放 `ctx.subscriptions`。
 
-v1 的分发方式和 Obsidian 早期一样：一个 GitHub 仓库维护插件索引 JSON，客户端按 release 安装。P2 再做带审核和评分的市场。官方插件的候选是每日笔记、网页剪藏、模板和 AI 摘要，P1 先做其中三个。
+v1 的分发方式和 Obsidian 早期一样：一个 GitHub 仓库维护插件索引 JSON，客户端按 release 安装。这个索引还没做，现在是把插件目录复制进 `<vault>/.ainotes/plugins/<id>/`。P2 再做带审核和评分的市场。仓库里已有的示例是 `plugins/word-count`、`plugins/daily-notes`，以及打开库时写入的 `hello-notes`。网页剪藏、模板和 AI 摘要还没有做。写法见 `docs/plugins/`。
 
 ## 数据模型
 
