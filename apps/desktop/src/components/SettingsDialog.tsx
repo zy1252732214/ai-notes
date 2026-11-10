@@ -5,6 +5,7 @@ import {
   loadAiSettings,
   normalizeAiSettings,
   saveAiSettings,
+  secretsInKeychain,
   type AiProviderId,
   type AiSettings,
   type ProviderSettings,
@@ -24,6 +25,7 @@ export function SettingsDialog() {
   }, [open]);
 
   const active = draft.provider === 'ollama' ? draft.ollama : draft.openai;
+  const secure = secretsInKeychain();
 
   const updateActive = (patch: Partial<ProviderSettings>) => {
     setDraft((current) => {
@@ -38,19 +40,25 @@ export function SettingsDialog() {
       open={open}
       onClose={() => setSettingsOpen(false)}
       title="模型设置"
-      description="密钥只保存在这台设备的本地存储里，不会写进笔记库。"
+      description={
+        secure
+          ? 'API Key 存在系统钥匙串里，其他设置存在这台设备本地，都不会写进笔记库。'
+          : '密钥只保存在这台设备的本地存储里，不会写进笔记库。'
+      }
       footer={
         <>
           <Button onClick={() => setSettingsOpen(false)}>取消</Button>
           <Button
             variant="primary"
             onClick={() => {
-              try {
-                saveAiSettings(normalizeAiSettings(draft));
-                setSettingsOpen(false);
-              } catch (caught) {
-                setError(caught instanceof Error ? caught.message : '无法保存');
-              }
+              void (async () => {
+                try {
+                  await saveAiSettings(normalizeAiSettings(draft));
+                  setSettingsOpen(false);
+                } catch (caught) {
+                  setError(caught instanceof Error ? caught.message : '无法保存');
+                }
+              })();
             }}
           >
             保存
@@ -102,7 +110,13 @@ export function SettingsDialog() {
         <SettingsRow
           label="API Key"
           htmlFor="ai-api-key"
-          description={draft.provider === 'ollama' ? '本机 Ollama 通常不需要。' : '只存在本地。'}
+          description={
+            draft.provider === 'ollama'
+              ? '本机 Ollama 通常不需要。'
+              : secure
+                ? '存在系统钥匙串里。'
+                : '只存在本地。'
+          }
         >
           <Input
             id="ai-api-key"
