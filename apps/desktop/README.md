@@ -1,6 +1,6 @@
 # `@ai-notes/desktop`
 
-Tauri 2 + Vite + React 桌面壳。笔记是 Vault 文件夹里的 `.md` 文件。
+Tauri 2 + Vite + React 桌面壳。笔记是 Vault 文件夹里的 `.md` 文件。产品说明在仓库根目录的 [README.md](../../README.md)，插件在 [docs/plugins](../../docs/plugins/README.md)。
 
 ## 脚本
 

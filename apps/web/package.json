@@ -2,7 +2,21 @@
   "name": "@ai-notes/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder for the web entry. Not a Vite app yet.",
+  "description": "Placeholder for a future web entry. Not a Vite app yet.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "apps/web"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "placeholder"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -2,7 +2,24 @@
   "name": "@ai-notes/indexer",
   "version": "0.0.0",
   "private": true,
-  "description": "Markdown chunking and a SQLite FTS5 index for an ai-notes vault.",
+  "description": "Markdown chunking, FTS5, and sqlite-vec hybrid search for an ai-notes vault.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "packages/indexer"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "sqlite",
+    "fts5",
+    "sqlite-vec",
+    "search"
+  ],
   "type": "module",
   "exports": {
     ".": {

@@ -2,7 +2,24 @@
   "name": "@ai-notes/ai",
   "version": "0.0.0",
   "private": true,
-  "description": "Model router for chat, streaming, and embeddings (OpenAI-compatible and Ollama).",
+  "description": "Model router, cited RAG helpers, and SM-2 memory cards.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "packages/ai"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "ollama",
+    "openai",
+    "rag",
+    "sm-2"
+  ],
   "type": "module",
   "exports": {
     ".": {

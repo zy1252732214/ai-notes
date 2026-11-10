@@ -1,0 +1,67 @@
+name: Bug / 缺陷
+description: Something in the app, the index, or a bundled example plugin behaves wrong.
+title: 'bug: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security reports (sandbox escape, permission bypass, leaked API key) go to a [private advisory](https://github.com/zy1252732214/ai-notes/security/advisories/new), not here.
+
+        安全问题（沙箱逃逸、权限绕过、密钥泄漏）请走私人通告，不要写在这里。
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / 发生了什么
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps / 步骤
+      description: A short list is enough. Mention the note contents only if they matter, and redact private text.
+      placeholder: |
+        1. Open the sample vault
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / 版本
+      description: App version from the release, or the commit you built.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where / 在哪里
+      options:
+        - Desktop app
+        - Browser preview (vite)
+        - Tests or CI
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Not OS-specific
+    validations:
+      required: true
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin id
+      description: Leave empty if this is not a plugin. Example plugins are hello-notes, word-count, and daily-notes.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Console or terminal output. Remove API keys and note text.
+      render: text

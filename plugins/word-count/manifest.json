@@ -1,0 +1,20 @@
+{
+  "manifestVersion": 1,
+  "apiVersion": "preview-v1",
+  "id": "word-count",
+  "name": "字数统计",
+  "version": "0.1.0",
+  "minAppVersion": "0.1.0",
+  "author": "ai-notes",
+  "description": "在侧栏显示当前笔记的字数、词数和阅读时间，并可以复制一段摘要。",
+  "main": "dist/main.js",
+  "permissions": [{ "id": "vault:read" }, { "id": "clipboard" }, { "id": "ui:panel" }],
+  "contributes": {
+    "commands": [
+      { "id": "word-count.show", "name": "统计当前笔记字数", "hotkey": "Mod+Alt+W" },
+      { "id": "word-count.copy", "name": "复制字数统计" }
+    ],
+    "views": [{ "id": "word-count.panel", "name": "字数", "type": "sidebar" }],
+    "events": ["note:opened", "note:modified"]
+  }
+}

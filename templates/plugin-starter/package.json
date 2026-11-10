@@ -1,0 +1,44 @@
+{
+  "name": "@ai-notes/plugin-starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Copyable ai-notes plugin template. Counts notes and shows the total in a sidebar.",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://github.com/zy1252732214/ai-notes/tree/main/templates/plugin-starter",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "templates/plugin-starter"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "plugin",
+    "template"
+  ],
+  "files": [
+    "dist",
+    "manifest.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/emit-plugin-main.mjs",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --root ."
+  },
+  "dependencies": {
+    "@ai-notes/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@ai-notes/plugin-host": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

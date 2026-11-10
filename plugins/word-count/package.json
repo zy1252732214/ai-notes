@@ -1,0 +1,45 @@
+{
+  "name": "@ai-notes/plugin-word-count",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sidebar word count, reading time, and a copyable summary for the open note.",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://github.com/zy1252732214/ai-notes/tree/main/plugins/word-count",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "plugins/word-count"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "plugin",
+    "word-count",
+    "markdown"
+  ],
+  "files": [
+    "dist",
+    "manifest.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/emit-plugin-main.mjs",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --root ."
+  },
+  "dependencies": {
+    "@ai-notes/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@ai-notes/plugin-host": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

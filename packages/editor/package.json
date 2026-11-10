@@ -2,7 +2,23 @@
   "name": "@ai-notes/editor",
   "version": "0.0.0",
   "private": true,
-  "description": "CodeMirror 6 extensions for Markdown editing.",
+  "description": "CodeMirror 6 Markdown editor with wikilinks.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "packages/editor"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "codemirror",
+    "markdown",
+    "wikilinks"
+  ],
   "type": "module",
   "exports": {
     ".": {

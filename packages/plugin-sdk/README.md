@@ -1,5 +1,7 @@
 # @ai-notes/plugin-sdk
 
+面向贡献者的说明在 [`docs/plugins`](../../docs/plugins/README.md)（入门、清单、API 参考、调试）。这一页是同一份契约的短版。
+
 ai-notes 插件 API，**preview v1**（`apiVersion = "preview-v1"`）。1.0 之前类型还可以调整，宿主和插件要一起升级。
 
 这个包只有类型、清单的 JSON Schema，以及沙箱和宿主之间的 RPC 信封。它不读文件，也不打开数据库。宿主的实现放在 `packages/plugin-host`。

@@ -2,7 +2,22 @@
   "name": "@ai-notes/core",
   "version": "0.0.0",
   "private": true,
-  "description": "Vault, document model, event bus, and command system.",
+  "description": "Vault filesystem, path rules, and the in-memory sample notebook.",
+  "license": "MIT",
+  "homepage": "https://github.com/zy1252732214/ai-notes#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zy1252732214/ai-notes.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/zy1252732214/ai-notes/issues"
+  },
+  "keywords": [
+    "ai-notes",
+    "vault",
+    "markdown"
+  ],
   "type": "module",
   "exports": {
     ".": {

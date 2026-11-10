@@ -1,0 +1,53 @@
+name: Plugin proposal / 插件提议
+description: An idea for a sandboxed plugin. The API is preview v1.
+title: 'plugin: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read [docs/plugins](https://github.com/zy1252732214/ai-notes/blob/main/docs/plugins/README.md) first. Some typed APIs are not wired in the desktop shell yet; the debugging page lists them.
+
+        先看插件文档。有些类型已经导出，但桌面端还没接上，调试页里有清单。
+  - type: input
+    id: name
+    attributes:
+      label: Name and id
+      description: id is lowercase letters, digits, dots, and hyphens. Example `daily-notes`.
+      placeholder: daily-notes
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: What it does / 它做什么
+      description: The user-facing behavior, and why it should be a plugin rather than core.
+    validations:
+      required: true
+  - type: dropdown
+    id: permissions
+    attributes:
+      label: Permissions / 权限
+      description: Pick the widest one you need. Add the others in the details.
+      multiple: true
+      options:
+        - vault:read
+        - vault:write
+        - ai:invoke
+        - network
+        - ui:panel
+        - clipboard
+        - none
+    validations:
+      required: true
+  - type: textarea
+    id: surface
+    attributes:
+      label: Commands, views, and events
+      description: Which extension points you would register. There is no API yet to open a note in the editor.
+    validations:
+      required: true
+  - type: textarea
+    id: network
+    attributes:
+      label: Network hosts
+      description: If you need `network`, list the hostnames (`api.example.com` or `*.example.com`). No scheme, port, or path.

@@ -1,17 +1,21 @@
-## 摘要 / Summary
+## Summary
 
-<!-- 做了什么、为什么。What changed and why. -->
+<!-- What changed and why. 做了什么、为什么。 -->
 
-## 影响面 / Scope
+## Scope
 
-<!-- 涉及的 app、package 或流水线。Apps, packages, or workflows touched. -->
+<!-- Apps, packages, docs, or workflows. 涉及的 app、package、文档或流水线。 -->
 
-## 测试计划 / Test plan
+## Test plan
 
-- [ ] `pnpm turbo run lint typecheck test`
-- [ ] `pnpm build`
-- [ ] <!-- 补上这次改动特有的检查 -->
+- [ ] `pnpm turbo run lint typecheck test build`
+- [ ] `pnpm format:check`
+- [ ] <!-- A check that is specific to this change. 这次改动特有的检查。 -->
 
-## 关联 / Links
+## Notes
+
+<!-- User-facing claims match the code. No new dependency upgrades unless this PR is the Dependabot one. API keys and signing material stay out of the diff. -->
+
+## Links
 
 <!-- Closes #123 -->
