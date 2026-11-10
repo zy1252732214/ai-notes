@@ -2,12 +2,14 @@ import { MarkdownEditor } from '@ai-notes/editor';
 import { VaultError } from '@ai-notes/core';
 import { useAppStore } from '../store';
 import { openFolderVault } from '../fs/openVault';
+import { ReviewView } from './ReviewView';
 
 export function EditorPane() {
   const vault = useAppStore((state) => state.vault);
   const tabs = useAppStore((state) => state.tabs);
   const activePath = useAppStore((state) => state.activePath);
   const banner = useAppStore((state) => state.banner);
+  const bannerTone = useAppStore((state) => state.bannerTone);
   const active = tabs.find((tab) => tab.path === activePath) ?? null;
   const updateContent = useAppStore((state) => state.updateContent);
   const saveActive = useAppStore((state) => state.saveActive);
@@ -18,6 +20,9 @@ export function EditorPane() {
   const setBanner = useAppStore((state) => state.setBanner);
   const reveal = useAppStore((state) => state.reveal);
   const openLink = useAppStore((state) => state.openLink);
+  const reviewOpen = useAppStore((state) => state.reviewOpen);
+  const vaultEpoch = useAppStore((state) => state.vaultEpoch);
+  const setEditorSelection = useAppStore((state) => state.setEditorSelection);
   const jump = reveal && active && reveal.path === active.path ? reveal : null;
 
   const openFolder = async () => {
@@ -34,22 +39,24 @@ export function EditorPane() {
   return (
     <main className="editor-pane">
       {banner ? (
-        <div className="banner" role="status">
+        <div className={bannerTone === 'info' ? 'banner info' : 'banner'} role="status">
           <span>{banner}</span>
           <button onClick={() => setBanner(null)}>关闭</button>
         </div>
       ) : null}
-      {active ? (
+      {vault ? <ReviewView key={vaultEpoch} /> : null}
+      {reviewOpen ? null : active ? (
         <MarkdownEditor
           path={active.path}
           value={active.content}
           onChange={(content) => updateContent(active.path, content)}
           onSave={() => void saveActive()}
           onCursorChange={setCursor}
+          onSelectionChange={setEditorSelection}
           reveal={jump}
           onOpenLink={(target) => void openLink(target)}
         />
-      ) : (
+      ) : reviewOpen ? null : (
         <div className="empty-state">
           <h1>{vault ? vault.name : '打开一个笔记库'}</h1>
           {vault ? (

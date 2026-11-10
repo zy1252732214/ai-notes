@@ -1,5 +1,6 @@
 import {
   Blocks,
+  BookOpenCheck,
   FileSearch,
   Moon,
   PanelLeft,
@@ -25,6 +26,8 @@ export function TopBar() {
   const setSwitcherOpen = useAppStore((state) => state.setSwitcherOpen);
   const setPluginsOpen = useAppStore((state) => state.setPluginsOpen);
   const setThemeMode = useAppStore((state) => state.setThemeMode);
+  const dueCount = useAppStore((state) => state.dueCount);
+  const setReviewOpen = useAppStore((state) => state.setReviewOpen);
   const openNote = useAppStore((state) => state.openNote);
   const closeTab = useAppStore((state) => state.closeTab);
   const openDialog = useAppStore((state) => state.openDialog);
@@ -78,6 +81,19 @@ export function TopBar() {
         ) : null}
       </div>
       <div className="topbar-side topbar-end">
+        {vault ? (
+          <button
+            className="review-launch"
+            aria-label={`开始复习，今日 ${dueCount} 张`}
+            onClick={() => setReviewOpen(true)}
+          >
+            <BookOpenCheck size={16} strokeWidth={1.5} />
+            <span>复习</span>
+            <span className={dueCount > 0 ? 'review-count' : 'review-count is-idle'}>
+              {dueCount}
+            </span>
+          </button>
+        ) : null}
         <button className="icon-button" aria-label="插件" onClick={() => setPluginsOpen(true)}>
           <Blocks size={16} strokeWidth={1.5} />
         </button>

@@ -1,3 +1,4 @@
+import { isCardPath, serializeCard, todayIso } from '@ai-notes/ai';
 import {
   VaultError,
   assertEntryName,
@@ -15,6 +16,13 @@ import {
 import { MemoryPluginStorage, type PluginStorage } from '@ai-notes/plugin-host';
 import type { NoteEvent } from '@ai-notes/plugin-sdk';
 import { create } from 'zustand';
+import type { ComposerRequest } from './cards/actions';
+import {
+  countDueCards,
+  remapCardSources,
+  syncAllHandwritten,
+  syncHandwritten,
+} from './cards/library';
 import { cursorFromOffset } from './editor/position';
 import { pluginController } from './plugins/controller';
 import { ensureHelloNotes } from './plugins/example';
@@ -61,6 +69,7 @@ interface AppState {
   pluginsOpen: boolean;
   dialog: DialogRequest | null;
   banner: string | null;
+  bannerTone: 'danger' | 'info';
   vault: Vault | null;
   tree: VaultNode[];
   expanded: Record<string, boolean>;
@@ -73,6 +82,10 @@ interface AppState {
   indexRevision: number;
   vaultEpoch: number;
   reveal: NoteReveal | null;
+  reviewOpen: boolean;
+  composer: ComposerRequest | null;
+  editorSelection: { path: string; from: number; to: number } | null;
+  dueCount: number;
   setThemeMode: (mode: ThemeMode) => void;
   toggleLeft: () => void;
   toggleRight: () => void;
@@ -85,7 +98,7 @@ interface AppState {
   setPluginsOpen: (open: boolean) => void;
   setFilter: (filter: string) => void;
   setCursor: (cursor: { line: number; column: number }) => void;
-  setBanner: (banner: string | null) => void;
+  setBanner: (banner: string | null, tone?: 'danger' | 'info') => void;
   openDialog: (dialog: DialogRequest) => void;
   closeDialog: () => void;
   openVault: (vault: Vault, plugins?: PluginStorage) => Promise<void>;
@@ -93,6 +106,10 @@ interface AppState {
   refreshTree: () => Promise<void>;
   toggleExpanded: (path: string) => void;
   selectDirectory: (path: string) => void;
+  setReviewOpen: (open: boolean) => void;
+  setComposer: (composer: ComposerRequest | null) => void;
+  setEditorSelection: (selection: { from: number; to: number } | null) => void;
+  refreshDueCount: () => Promise<void>;
   openNote: (path: string, at?: NoteJump) => Promise<void>;
   openLink: (target: string) => Promise<void>;
   closeTab: (path: string) => Promise<void>;
@@ -190,6 +207,20 @@ async function persist(path: string, content: string): Promise<void> {
   if (!vault) return;
   try {
     await vault.writeNote(path, content);
+    if (!isCardPath(path)) {
+      try {
+        const plan = await syncHandwritten(vault, [{ path, content }], todayIso());
+        if (plan.upserts.length > 0 || plan.removals.length > 0) {
+          adoptCleanTabs(
+            plan.upserts.map((card) => ({ path: card.path, content: serializeCard(card) })),
+          );
+          dropRemovedTabs(plan.removals);
+          void useAppStore.getState().refreshTree();
+        }
+      } catch {
+        // 笔记已经落盘。手写卡片没能同步时，收集命令还可以再跑一遍。
+      }
+    }
     await getNoteIndex()
       ?.noteSaved(path, content)
       .catch(() => undefined);
@@ -201,6 +232,7 @@ async function persist(path: string, content: string): Promise<void> {
       saveError: state.activePath === path ? null : state.saveError,
     }));
     pluginController.emit({ type: 'note:modified', path });
+    void useAppStore.getState().refreshDueCount();
   } catch (error) {
     const message = error instanceof Error ? error.message : '保存失败';
     useAppStore.setState({ saveError: message });
@@ -271,6 +303,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   pluginsOpen: false,
   dialog: null,
   banner: null,
+  bannerTone: 'danger',
   vault: null,
   tree: [],
   expanded: {},
@@ -283,6 +316,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   indexRevision: 0,
   vaultEpoch: 0,
   reveal: null,
+  reviewOpen: false,
+  composer: null,
+  editorSelection: null,
+  dueCount: 0,
 
   setThemeMode: (themeMode) => {
     rememberTheme(themeMode);
@@ -354,7 +391,48 @@ export const useAppStore = create<AppState>((set, get) => ({
     ),
   setFilter: (filter) => set({ filter }),
   setCursor: (cursor) => set({ cursor }),
-  setBanner: (banner) => set({ banner }),
+  setBanner: (banner, tone = 'danger') => set({ banner, bannerTone: banner ? tone : 'danger' }),
+  setReviewOpen: (reviewOpen) =>
+    set((state) => ({
+      reviewOpen,
+      commandOpen: reviewOpen ? false : state.commandOpen,
+      composer: reviewOpen ? null : state.composer,
+    })),
+  setComposer: (composer) =>
+    set(
+      composer
+        ? {
+            composer,
+            commandOpen: false,
+            searchOpen: false,
+            switcherOpen: false,
+            settingsOpen: false,
+            pluginsOpen: false,
+          }
+        : { composer: null },
+    ),
+  setEditorSelection: (selection) => {
+    const path = get().activePath;
+    if (!path || !selection || selection.from === selection.to) {
+      set({ editorSelection: null });
+      return;
+    }
+    set({ editorSelection: { path, from: selection.from, to: selection.to } });
+  },
+  refreshDueCount: async () => {
+    const vault = get().vault;
+    if (!vault) {
+      set({ dueCount: 0 });
+      return;
+    }
+    try {
+      const dueCount = await countDueCards(vault);
+      if (get().vault !== vault) return;
+      set({ dueCount });
+    } catch {
+      // 保持上一次的数字。下一次保存或打开库时会再算。
+    }
+  },
   openDialog: (dialog) => set({ dialog, commandOpen: false }),
   closeDialog: () => set({ dialog: null }),
 
@@ -375,6 +453,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       filter: '',
       saveError: null,
       banner: null,
+      bannerTone: 'danger',
       cursor: { line: 1, column: 1 },
       dialog: null,
       commandOpen: false,
@@ -383,6 +462,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       settingsOpen: false,
       pluginsOpen: false,
       reveal: null,
+      reviewOpen: false,
+      composer: null,
+      editorSelection: null,
+      dueCount: 0,
       vaultEpoch: get().vaultEpoch + 1,
     });
     await get().refreshTree();
@@ -391,7 +474,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       set((state) => ({ indexRevision: state.indexRevision + 1 }));
     } catch (error) {
       const message = error instanceof Error ? error.message : '索引失败';
-      set({ banner: message });
+      set({ banner: message, bannerTone: 'danger' });
+    }
+    try {
+      await syncAllHandwritten(vault, todayIso());
+      await get().refreshTree();
+      await get().refreshDueCount();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '记忆卡片同步失败';
+      set({ banner: message, bannerTone: 'danger' });
     }
     attachWatch(vault);
     if (plugins) {
@@ -461,6 +552,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         selectedDirectory: parentVaultPath(path),
         saveError: null,
         reveal: revealFor((state.reveal?.nonce ?? 0) + 1),
+        editorSelection: null,
         cursor: at ? cursorFromOffset(existing.content, at.from) : { line: 1, column: 1 },
       }));
       pluginController.emit({ type: 'note:opened', path });
@@ -473,6 +565,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedDirectory: parentVaultPath(path),
       saveError: null,
       reveal: revealFor((state.reveal?.nonce ?? 0) + 1),
+      editorSelection: null,
       cursor: at ? cursorFromOffset(content, at.from) : { line: 1, column: 1 },
     }));
     pluginController.emit({ type: 'note:opened', path });
@@ -481,7 +574,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   openLink: async (target) => {
     const path = resolveNoteLink(target, listNoteFiles(get().tree));
     if (!path) {
-      set({ banner: `找不到笔记「${linkLabel(target, null)}」` });
+      set({ banner: `找不到笔记「${linkLabel(target, null)}」`, bannerTone: 'danger' });
       return;
     }
     await get().openNote(path);
@@ -584,6 +677,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     await getNoteIndex()
       ?.noteRenamed(path, target)
       .catch(() => undefined);
+    try {
+      const changed = await remapCardSources(vault, path, target);
+      adoptCleanTabs(changed.map((card) => ({ path: card.path, content: serializeCard(card) })));
+    } catch {
+      // 来源路径没能改写时，卡片仍指向旧路径，复习页会显示来源不在库里。
+    }
     set((state) => ({ indexRevision: state.indexRevision + 1 }));
     dropSavers(affected);
     set((state) => ({
@@ -598,6 +697,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       expanded: remapExpanded(state.expanded, path, target),
     }));
     await get().refreshTree();
+    await get().refreshDueCount();
   },
 
   deleteEntry: async (path) => {
@@ -628,8 +728,33 @@ export const useAppStore = create<AppState>((set, get) => ({
       };
     });
     await get().refreshTree();
+    await get().refreshDueCount();
   },
 }));
+
+export function adoptCleanTabs(writes: readonly { path: string; content: string }[]): void {
+  if (writes.length === 0) return;
+  useAppStore.setState((state) => ({
+    tabs: state.tabs.map((tab) => {
+      const next = writes.find((item) => item.path === tab.path);
+      if (!next || tab.dirty) return tab;
+      return { ...tab, content: next.content, savedContent: next.content, dirty: false };
+    }),
+  }));
+}
+
+export function dropRemovedTabs(paths: readonly string[]): void {
+  if (paths.length === 0) return;
+  const removed = new Set(paths);
+  useAppStore.setState((state) => {
+    const tabs = state.tabs.filter((tab) => !removed.has(tab.path));
+    const activeGone = state.activePath != null && removed.has(state.activePath);
+    return {
+      tabs,
+      activePath: activeGone ? (tabs.at(-1)?.path ?? null) : state.activePath,
+    };
+  });
+}
 
 function vaultServices() {
   return createVaultPluginServices({
