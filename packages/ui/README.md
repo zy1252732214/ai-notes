@@ -74,15 +74,17 @@ pnpm --filter @ai-notes/ui-preview dev
 | `--an-bg-elevated`    | 弹窗、浮条、命令面板           | `#fffcf9` | `#2c2b28` |
 | `--an-text-primary`   | 正文、标题                     | `#1c1917` | `#f4f1ea` |
 | `--an-text-secondary` | 次要说明                       | `#57534e` | `#c4bfb4` |
-| `--an-text-tertiary`  | 占位符、时间戳                 | `#8a847c` | `#8d877c` |
-| `--an-border-default` | 分割线、输入框边框             | `#e6e1d8` | `#3a3834` |
+| `--an-text-tertiary`  | 占位符、时间戳                 | `#736d61` | `#9b917f` |
+| `--an-border-subtle`  | 分隔线、卡片轮廓               | `#e6e1d8` | `#3a3834` |
+| `--an-border-control` | 输入框、开关、复选框           | `#948a7f` | `#7d7368` |
 | `--an-accent`         | 主按钮、链接、焦点             | `#3c6e62` | `#9dc7b8` |
 | `--an-on-accent`      | 主按钮上的文字                 | `#fbfaf8` | `#14201c` |
 | `--an-ai`             | 与强调色相同，问答不另做品牌色 | `#3c6e62` | `#9dc7b8` |
 | `--an-ai-subtle`      | 引用和回答的浅底               | `#eef3f1` | `#24302c` |
-| `--an-success`        | 同步成功、保存成功             | `#2f7d4a` | `#7dcea0` |
-| `--an-warning`        | 需要注意                       | `#a16207` | `#e0b15a` |
+| `--an-success`        | 同步成功、保存成功             | `#2c7c4a` | `#7dcea0` |
+| `--an-warning`        | 需要注意                       | `#9c6005` | `#e0b15a` |
 | `--an-danger`         | 删除、错误、危险权限           | `#b42318` | `#f0a097` |
+| `--an-selection`      | 编辑器选区                     | `#75988f` | `#5c7168` |
 
 ## 字体
 

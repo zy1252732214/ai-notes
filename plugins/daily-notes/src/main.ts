@@ -139,7 +139,7 @@ body {
 .excerpt { margin: 12px 0 0; white-space: pre-wrap; }
 ol { margin: 12px 0 0; padding-left: 18px; }
 li { margin: 4px 0; }
-.hint { margin: 12px 0 0; color: #8a847c; font-size: 12px; }
+.hint { margin: 12px 0 0; color: #736d61; font-size: 12px; }
 @media (prefers-color-scheme: dark) {
   body { color: #f4f1ea; }
   .card { background: #1c1b19; border-color: #3a3834; }

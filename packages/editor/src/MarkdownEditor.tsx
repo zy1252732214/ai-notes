@@ -175,7 +175,11 @@ const editorTheme = EditorView.theme({
     borderLeftColor: 'var(--an-accent)',
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'color-mix(in srgb, var(--an-accent) 24%, transparent)',
+    backgroundColor: 'var(--an-selection)',
+  },
+  '.cm-content ::selection': {
+    backgroundColor: 'var(--an-selection)',
+    color: 'var(--an-text-primary)',
   },
   '.cm-placeholder': {
     color: 'var(--an-text-tertiary)',
