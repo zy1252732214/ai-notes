@@ -28,14 +28,14 @@
   },
   "dependencies": {
     "@ai-notes/ui": "workspace:*",
-    "lucide-react": "^0.544.0",
+    "lucide-react": "^1.70.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.3.0",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
