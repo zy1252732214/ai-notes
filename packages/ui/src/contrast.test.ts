@@ -49,11 +49,6 @@ function contrast(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** The review quotes ratios to two decimals. 2.9956 is reported as 3.00. */
-function atLeast(ratio: number, minimum: number): void {
-  expect(Number(ratio.toFixed(2))).toBeGreaterThanOrEqual(minimum);
-}
-
 function color(theme: Map<string, string>, name: string): string {
   const value = theme.get(name);
   expect(value, name).toMatch(/^#[0-9a-f]{6}$/);
@@ -95,7 +90,9 @@ describe('WCAG 2.1 contrast', () => {
     ).toBeGreaterThanOrEqual(4.5);
     for (const surface of SURFACES) {
       if (_name === 'dark' && surface === '--an-bg-elevated') continue;
-      atLeast(contrast(color(theme, '--an-selection'), color(theme, surface)), 3);
+      expect(
+        contrast(color(theme, '--an-selection'), color(theme, surface)),
+      ).toBeGreaterThanOrEqual(3);
     }
     expect(contrast(color(theme, '--an-border-subtle'), color(theme, '--an-bg-base'))).toBeLessThan(
       contrast(color(theme, '--an-border-control'), color(theme, '--an-bg-base')),
@@ -111,7 +108,7 @@ describe('WCAG 2.1 contrast', () => {
     expect(color(dark, '--an-border-control')).toBe('#7d7368');
     expect(color(light, '--an-border-subtle')).toBe('#e6e1d8');
     expect(color(dark, '--an-border-subtle')).toBe('#3a3834');
-    expect(color(light, '--an-selection')).toBe('#6f9389');
+    expect(color(light, '--an-selection')).toBe('#6e9389');
     expect(color(dark, '--an-selection')).toBe('#5c7168');
   });
 

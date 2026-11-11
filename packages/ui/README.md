@@ -84,7 +84,7 @@ pnpm --filter @ai-notes/ui-preview dev
 | `--an-success`        | 同步成功、保存成功             | `#2c7c4a` | `#7dcea0` |
 | `--an-warning`        | 需要注意                       | `#9c6005` | `#e0b15a` |
 | `--an-danger`         | 删除、错误、危险权限           | `#b42318` | `#f0a097` |
-| `--an-selection`      | 编辑器选区                     | `#6f9389` | `#5c7168` |
+| `--an-selection`      | 编辑器选区                     | `#6e9389` | `#5c7168` |
 
 ## 字体
 

@@ -45,7 +45,7 @@ export const colors = {
     warning: '#9c6005',
     danger: '#b42318',
     onAccent: '#fbfaf8',
-    selection: '#6f9389',
+    selection: '#6e9389',
   },
   dark: {
     bgBase: '#1c1b19',
