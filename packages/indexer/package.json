@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@ai-notes/core": "workspace:*",
-    "sqlite-vec": "0.1.6"
+    "sqlite-vec": "0.1.9"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
