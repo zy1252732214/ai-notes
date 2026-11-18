@@ -1,4 +1,5 @@
 import { countVisibleCharacters } from '@ai-notes/core';
+import { saveStatusLabel } from '../notices';
 import { useAppStore } from '../store';
 
 export function StatusBar() {
@@ -8,13 +9,11 @@ export function StatusBar() {
   const cursor = useAppStore((state) => state.cursor);
   const active = tabs.find((tab) => tab.path === activePath) ?? null;
   const count = active ? countVisibleCharacters(active.content) : 0;
-  const label = !active
-    ? '未打开笔记'
-    : saveError
-      ? '保存失败'
-      : active.dirty
-        ? '未保存'
-        : '已保存';
+  const label = saveStatusLabel({
+    hasNote: active !== null,
+    dirty: active?.dirty ?? false,
+    saveError,
+  });
   const tone = saveError ? 'danger' : active?.dirty ? 'warning' : active ? 'success' : '';
 
   return (

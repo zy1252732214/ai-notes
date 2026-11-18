@@ -48,9 +48,14 @@ export function EditorPane() {
   return (
     <main className="editor-pane">
       {banner ? (
-        <div className={bannerTone === 'info' ? 'banner info' : 'banner'} role="status">
+        <div
+          className={bannerTone === 'info' ? 'banner info' : 'banner'}
+          role={bannerTone === 'danger' ? 'alert' : 'status'}
+        >
           <span>{banner}</span>
-          <button onClick={() => setBanner(null)}>关闭</button>
+          <button type="button" aria-label="关闭提示" onClick={() => setBanner(null)}>
+            关闭
+          </button>
         </div>
       ) : null}
       {vault ? <ReviewView key={vaultEpoch} /> : null}

@@ -82,7 +82,7 @@ export class PluginController {
   private services: PluginServices | null = null;
   private discovered: DiscoveredPlugin[] = [];
   private disabled = new Set<string>();
-  private onLog: (message: string) => void = () => undefined;
+  private onLog: (message: string, level: 'info' | 'warn' | 'error') => void = () => undefined;
 
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -94,7 +94,7 @@ export class PluginController {
   async attach(
     storage: PluginStorage,
     services: PluginServices,
-    hooks?: { onLog?: (message: string) => void },
+    hooks?: { onLog?: (message: string, level: 'info' | 'warn' | 'error') => void },
   ): Promise<void> {
     this.detach();
     this.storage = storage;
@@ -136,9 +136,10 @@ export class PluginController {
     if (!plugin) return;
     if (isRpcEnvelope(message) && message.pluginId === pluginId) {
       if (message.kind === 'event' && message.method === 'lifecycle:log') {
-        const params = message.params as { message?: unknown };
-        if (typeof params.message === 'string' && params.message.length > 0)
-          this.onLog(params.message);
+        const params = message.params as { message?: unknown; level?: unknown };
+        const level = params.level === 'error' || params.level === 'warn' ? params.level : 'info';
+        if (typeof params.message === 'string' && params.message.trim().length > 0)
+          this.onLog(params.message, level);
         return;
       }
       if (message.kind === 'event' && message.method === 'lifecycle:ready') {
