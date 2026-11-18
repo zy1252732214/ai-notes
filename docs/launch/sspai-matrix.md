@@ -44,7 +44,7 @@
 
 只在第一次、而且尚未保存模型设置时探测 `http://127.0.0.1:11434` 的 `GET /api/tags`。选一个已安装的聊天模型，优先 llama3.2、llama3.1 或 Qwen 这一类，不用嵌入模型冒充聊天模型。装了 `nomic-embed-text` 只做建议，字段留空。不会执行 `ollama pull`。
 
-浏览器预览需要 `OLLAMA_ORIGINS`（`http://localhost:1420`）。安装包里的页面来源是 `http://tauri.localhost`。云端是同一个设置框里的 OpenAI 兼容接口。密钥：桌面端进钥匙串，浏览器预览进 `localStorage`。
+浏览器预览的地址是配置里的 `http://localhost:1420`（`vite.config.ts` 的端口，`tauri.conf.json` 的 `devUrl`）。要连 Ollama，把这个来源写进 `OLLAMA_ORIGINS`。README 另外写了安装包页面来源 `http://tauri.localhost`，但 `tauri.conf.json` 里没有这个字段，而且现在没有公开的安装包，正文不要写成已经能下载。云端是同一个设置框里的 OpenAI 兼容接口。密钥：桌面端进钥匙串，浏览器预览进 `localStorage`。
 
 这一节用一张设置说明就够了，不必截一张填着真 Key 的图。
 
@@ -64,7 +64,7 @@
 
 - 没有图谱、移动端、同步、插件市场、编辑器里的划词改写
 - `apps/web` 和 `server` 是占位
-- 安装包默认未签名。macOS 在没有 Apple 证书时是 ad-hoc 签名且没有公证，可能提示已损坏。Windows 没有 Authenticode 时 SmartScreen 会拦截。命令和点击见 README。不要建议关掉 Gatekeeper 或 SmartScreen
+- 现在没有公开的安装包。不要写成已经可以下载。将来如果 Release 公开且没有签名证书，再说明 macOS 是 ad-hoc、没有公证，Windows 没有 Authenticode。优先写「仍要打开」。`xattr` 只用于核对过来源的那一份官方下载，并且要写明它移除的是这个 app 的隔离标记。不要建议关掉 Gatekeeper 或 SmartScreen
 - 没有自动更新
 - 界面是中文
 
@@ -84,7 +84,7 @@
 
 ## 结尾
 
-给仓库链接，MIT，以及源码预览的三行命令（Node.js 26.13.0，pnpm 12.16.1，`pnpm --filter @ai-notes/desktop exec vite`，然后打开 `http://localhost:1420`）。请读者反馈引用是否真的能回到笔记，而不是征求功能投票。
+给仓库链接，MIT，以及源码预览的命令。Node.js 用 `.nvmrc` 里的 26.13.0，pnpm 用根目录 `packageManager` 里的 12.16.1，然后 `pnpm --filter @ai-notes/desktop exec vite`，打开 `http://localhost:1420`。请读者说说引用有没有回到他们期望的笔记。
 
 ## 投稿前再对一遍
 

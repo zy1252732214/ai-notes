@@ -31,7 +31,7 @@ Memory cards are Markdown in a 记忆/ folder, reviewed with SM-2. You can write
 ## 5
 
 ```text
-v0.1.0 has no graph, no sync, no mobile app, no plugin marketplace. The UI is Chinese. The installers are unsigned. MIT.
+v0.1.0 has no graph, no sync, no mobile app, no plugin marketplace. The UI is Chinese. No installer is published yet. MIT.
 ```
 
 ## 6

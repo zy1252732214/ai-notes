@@ -37,7 +37,7 @@ The ask panel sends the open note and retrieved chunks. The reply streams. Paths
 
 Ollama at http://127.0.0.1:11434 is detected on a first launch with no saved settings. The app lists local models and does not download one. An OpenAI-compatible endpoint works too. Desktop API keys go to the OS keychain. The browser preview has no keychain, so the key stays in localStorage. The vault never stores it.
 
-v0.1.0 is missing a graph, sync, mobile, a plugin marketplace, and inline edits. The UI is Chinese. Installers are unsigned: macOS may say the app is damaged, and Windows SmartScreen will warn. Leave both checks on. The README has the steps. The sample vault runs in memory with no key.
+v0.1.0 is missing a graph, sync, mobile, a plugin marketplace, and inline edits. The UI is Chinese. No desktop installer is published yet. The sample vault runs in the browser preview with no key. When a release exists, the README asks people to use Open Anyway on the official download, and not to turn Gatekeeper or SmartScreen off.
 
 https://github.com/zy1252732214/ai-notes
 ```

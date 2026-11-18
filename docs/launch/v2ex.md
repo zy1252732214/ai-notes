@@ -1,8 +1,6 @@
 # V2EX 分享创造
 
-节点用「分享创造」。标题不要加感叹号，正文第一句写明是自己做的。不要把 README 整篇贴进来。安装包未签名写在前面，不然评论会先卡在这里。
-
-Release 还是 draft 时不要发。
+节点用「分享创造」。标题不要加感叹号，正文第一句写明是自己做的。不要把 README 整篇贴进来。现在没有公开的安装包，正文不要写成已经可以下载。有人问起以后的未签名包时，再说明优先点「仍要打开」，xattr 只去掉这一份官方下载的隔离标记。
 
 ## 标题
 
@@ -27,18 +25,16 @@ Ollama：第一次打开、而且你还没保存过模型设置时，如果本�
 
 这一版没有：图谱、移动端、同步、插件市场、编辑器里划词改写。apps/web 和 server 是占位。界面是中文。没有自动更新，也没有做遥测客户端。
 
-安装包是打 v* tag 之后上传到 GitHub Release 的 draft，要自己点公开。没有配置签名证书时：macOS 是 ad-hoc 签名、没有公证，系统可能说「已损坏」；Windows 没有 Authenticode，SmartScreen 会拦截。README 里写了「仍要打开」和 xattr 命令。不要关掉 Gatekeeper 或 SmartScreen。
-
-不想装未签名包的话，示例库在内存里，不需要 Key：
+现在没有 tag，也没有 GitHub Release，所以没有可以下载的安装包。示例库在内存里，不需要 Key：
 
 Node.js 26.13.0，pnpm 12.16.1
 pnpm install
 pnpm --filter @ai-notes/desktop exec vite
 打开 http://localhost:1420
 
-浏览器要连 Ollama 的话，OLLAMA_ORIGINS 里加上 http://localhost:1420。安装包里的页面来源是 http://tauri.localhost。
+浏览器预览的地址是 http://localhost:1420，这是 Vite 的端口，也是 Tauri 的 devUrl。要连 Ollama 的话，把这个来源加进 OLLAMA_ORIGINS。README 还写了将来安装包页面的来源 http://tauri.localhost，现在用不到。
 
 https://github.com/zy1252732214/ai-notes
 
-想听的是引用在你的笔记上好不好用。没有性能数字，先别问跑分。
+如果引用对不上你手里的笔记，告诉我是哪一种情况就很有帮助。我没有速度或质量方面的测试数字。
 ```

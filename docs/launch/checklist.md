@@ -1,6 +1,6 @@
 # Launch-day checklist
 
-Do this in order. The drafts in this folder assume the release is already public. This checklist does not publish anything.
+Do this only after you decide to publish. None of it has happened: there is no tag and no GitHub Release. This checklist does not publish anything. The social drafts must not say an installer already exists.
 
 ## Before anyone can download
 
@@ -9,6 +9,7 @@ Do this in order. The drafts in this folder assume the release is already public
 3. Click the published release once from a machine that did not build it. macOS and Windows should show the warnings in [Unsigned installers](#unsigned-installers). If the file is missing, do not send people to the page yet.
 4. Confirm `main` shows `docs/assets/demo.gif` at the top of both READMEs, with the mp4 link still under it.
 5. Upload the social image yourself. GitHub does not take it from the repo. Settings → General → Social preview → upload `docs/assets/social-preview.png` (1280×640).
+6. After the release is actually public, replace the README badge `release-not published yet` with the dynamic Shields badge `https://img.shields.io/github/v/release/zy1252732214/ai-notes`, still linking to the Releases page. Until then the static badge is the accurate one. A dynamic badge today says "no releases or repo not found", which is not a published version, but it also looks like the repository is missing.
 
 ## Clocks
 
@@ -46,7 +47,7 @@ One person cannot usefully talk on every site in the same hour. Suggested order:
 - Answer the first hour yourself. A late correction is fine. A missing author is not.
 - If you were wrong, say what is wrong and point at the README. Do not edit the limitation out of the story.
 - Gatekeeper or SmartScreen: paste the FAQ below. Do not tell anyone to turn either feature off.
-- "Why not Obsidian?": they are different tools. Point at the table in the README. MIT, files on disk, cited answers in the app. Then stop.
+- "Why not Obsidian?": they are different tools. Point at the table in the README. MIT, files on disk, cited answers in the app. No need to argue past that.
 - Benchmarks, user counts, "how fast", "how accurate": there are no published numbers. Say that.
 - A bug: ask for the OS, whether it was the sample vault or a real folder, and whether a model was configured. Issues: https://github.com/zy1252732214/ai-notes/issues
 - Do not ask for stars, upvotes, or follows in the replies.
@@ -57,22 +58,26 @@ One person cannot usefully talk on every site in the same hour. Suggested order:
 
 Paste the English block on HN, Reddit, X, and Product Hunt. Paste the Chinese block on V2EX, 即刻, and 微博.
 
-The facts: with no Apple certificate, the release workflow ad-hoc signs the macOS build (`signingIdentity` `-`) and does not notarize it. CONTRIBUTING notes that an unsigned macOS download can be reported as damaged. With no Windows certificate, the NSIS and MSI builds have no Authenticode signature. The app name in the bundle is `ai-notes`.
+Do not paste this until a release is public. It applies only to a file attached to https://github.com/zy1252732214/ai-notes/releases after the reader has checked that source.
 
-The fix is per-app. It is not "turn off Gatekeeper" or "turn off SmartScreen".
+The workflow facts, for that future build: with no Apple certificate, macOS is ad-hoc signed (`signingIdentity` `-`) and not notarized. CONTRIBUTING notes that an unsigned macOS download can be reported as damaged. With no Windows certificate, the NSIS and MSI builds have no Authenticode signature. The app name in the bundle is `ai-notes`.
+
+Prefer Open Anyway. The `xattr` command is a fallback for that one app. It removes the quarantine flag from that app. It is not a way to turn security off.
 
 ### English
 
 ```text
-v0.1.0 is unsigned unless you add your own signing secrets. That is Gatekeeper and SmartScreen doing what they do with an unknown developer, not a corrupt download. Leave both enabled.
+This is only for the app you downloaded from the ai-notes GitHub Release, after you have checked the file is attached there. There is no other official download.
 
-macOS: the dmg is ad-hoc signed and not notarized. The message is usually that the app is damaged, or that Apple cannot check it for malicious software. Open the app once so macOS records the block, then System Settings → Privacy & Security → Open Anyway. If it still says damaged, the quarantine flag is still on the copy you installed. In Terminal:
+Prefer Open Anyway. Open that app once, then System Settings → Privacy & Security → Open Anyway. Leave Gatekeeper on.
+
+Only if macOS still says that this app is damaged, the command below removes the quarantine flag (com.apple.quarantine) from that app and nothing else:
 
 xattr -dr com.apple.quarantine /Applications/ai-notes.app
 
-Use the path you actually copied the app to.
+Use the path of the copy you installed from the release. Do not run it on other apps, and do not turn Gatekeeper off.
 
-Windows: SmartScreen says "Windows protected your PC" because there is no Authenticode signature. More info → Run anyway. Install the NSIS .exe or the MSI from the GitHub Release, not from anywhere else.
+Windows, for that same official installer: SmartScreen may say "Windows protected your PC" because there is no Authenticode signature. More info → Run anyway. Do not turn SmartScreen off.
 
 There is no auto-update in this version.
 ```
@@ -80,15 +85,17 @@ There is no auto-update in this version.
 ### 中文
 
 ```text
-v0.1.0 在没有配置你自己的签名证书时是未签名的。这是系统对未知开发者的拦截，不是安装包下坏了。不要关掉 Gatekeeper 或 SmartScreen。
+这段只适用于你从 ai-notes 的 GitHub Release 下载、并且核对过附件确实来自那里的那一份。没有别的官方下载地址。
 
-macOS：没有 Apple 证书时，dmg 是 ad-hoc 签名，没有公证。常见提示是「已损坏」，或无法验证是否包含恶意软件。先打开一次，让系统记下这次拦截，再到「系统设置 → 隐私与安全性」点「仍要打开」。如果仍然说已损坏，多半是下载隔离属性还在。终端执行：
+请优先点「仍要打开」。先打开这一份，再到「系统设置 → 隐私与安全性」点「仍要打开」。Gatekeeper 保持开着。
+
+只有系统仍然说这一份已损坏时，才用下面的命令。它会移除这个 app 的隔离标记（com.apple.quarantine），不影响其他应用：
 
 xattr -dr com.apple.quarantine /Applications/ai-notes.app
 
-路径改成你拷进去的位置。
+路径改成你从 Release 安装的那一份。不要对别的 app 运行，也不要关掉 Gatekeeper。
 
-Windows：没有 Authenticode 签名时，SmartScreen 会说「Windows 已保护你的电脑」。点「更多信息」，再点「仍要运行」。请装 GitHub Release 上的 NSIS（.exe）或 MSI，不要用别的地址。
+Windows 上，对同一份官方安装包：没有 Authenticode 签名时，SmartScreen 可能会说「Windows 已保护你的电脑」。点「更多信息」，再点「仍要运行」。不要关掉 SmartScreen。
 
 这一版没有自动更新。
 ```

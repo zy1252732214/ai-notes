@@ -37,11 +37,11 @@ Ollama: if it is already running at 127.0.0.1:11434 and you have not saved model
 
 Cards are ordinary Markdown in a 记忆/ folder, reviewed with SM-2. You can write them by hand. Plugins run in an iframe sandbox and declare permissions. That API is still preview v1.
 
-Not in this version: a graph, mobile apps, a plugin marketplace, inline edits in the editor. The UI is Chinese. The installers are unsigned. macOS may say the app is damaged; Windows SmartScreen will warn. Leave Gatekeeper and SmartScreen on. The README has the exact clicks.
+Not in this version: a graph, mobile apps, a plugin marketplace, inline edits in the editor. The UI is Chinese. No desktop installer is published yet. When one is, the README asks you to use Open Anyway for the official download, and not to turn Gatekeeper or SmartScreen off.
 
 Sample vault needs no key. It lives in memory.
 
 https://github.com/zy1252732214/ai-notes
 
-If you try it, I want to know where the citations fail you, not a feature wishlist for a graph.
+If you try the sample vault, I would like to hear where a citation does not match the note you expected.
 ```

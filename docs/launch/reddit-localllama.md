@@ -21,13 +21,13 @@ It is a desktop notebook. Notes are Markdown files on disk. Questions go to a mo
 
 Ollama detection is narrow on purpose. On a first launch, and only if you have not saved model settings, the welcome screen requests GET /api/tags at http://127.0.0.1:11434. The probe only accepts a loopback host (127.0.0.1, localhost, or ::1). It does not follow a redirect to another machine, and it does not run ollama pull. From the models already installed it picks a chat model, preferring smaller common ones such as llama3.2, llama3.1, or Qwen. When two of those share the same preference, it picks the smaller parameter size. An embedding model is never chosen as the chat model. If nomic-embed-text is installed, the UI suggests it for embeddings and leaves the field empty, so search stays FTS5-only until you opt in.
 
-The packaged page origin is http://tauri.localhost. The browser preview is http://localhost:1420. If Ollama refuses the browser, set OLLAMA_ORIGINS to the origin it logged. A star value works on your own machine and should not be left on a shared one.
+The browser preview is http://localhost:1420, which is the Vite port and the Tauri devUrl. If Ollama refuses the browser, set OLLAMA_ORIGINS to the origin it logged. The README documents http://tauri.localhost as the packaged page origin; no desktop build is published, so that origin is not something you need today. A star value for OLLAMA_ORIGINS works on your own machine and should not be left on a shared one.
 
 Search without an embedding model is SQLite FTS5. sqlite-vec is used on the desktop only after you set an embedding model. The vector table is created at 768 dimensions, which is nomic-embed-text. Changing embedding model means dropping that table and rebuilding it. That is the schema, not a benchmark.
 
 An OpenAI-compatible endpoint also works, including a local one such as LM Studio or Ollama's /v1. On the desktop the key is stored in the OS keychain, not in the notes. There is no account, and v0.1.0 has no telemetry client.
 
-The UI is Chinese. v0.1.0 has no graph, sync, or mobile app. Installers are unsigned. Handwritten cards, search, and the editor do not need a model. Only ask, and optional card generation, do.
+The UI is Chinese. v0.1.0 has no graph, sync, or mobile app, and no installer is published yet. Handwritten cards, search, and the editor do not need a model. Only ask, and optional card generation, do.
 
 https://github.com/zy1252732214/ai-notes
 

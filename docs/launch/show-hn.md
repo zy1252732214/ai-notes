@@ -27,7 +27,7 @@ Plugins run in an iframe with no allow-same-origin. They declare permissions (va
 
 v0.1.0 does not have a graph, sync, mobile apps, a plugin marketplace, or inline edits in the editor. apps/web and server are placeholders. The UI is Chinese. There is no auto-update, and I did not add a telemetry client. Note text is sent only to the model URL you configure, or through a plugin whose network permission you granted for specific domains.
 
-The installers are unsigned unless you add your own signing secrets. The macOS dmg is ad-hoc signed and not notarized, so Gatekeeper may say the app is damaged. Windows SmartScreen will warn. Leave both enabled. The clicks, and the xattr command, are in the README. The release workflow uploads a draft GitHub Release; it is not public until that draft is published.
+No installer is published. There is no tag and no GitHub Release yet. Pushing a v* tag later uploads a draft release and does not publish it. Those future builds are unsigned unless signing secrets are set. The README says to use Open Anyway for an official download, and not to turn Gatekeeper or SmartScreen off. Until a release is public, the way to try this is the sample vault below.
 
 The sample vault is in memory: a welcome note, a weekly note with handwritten cards, and a plan note. No key required. From source you need Node.js 26.13.0 and pnpm 12.16.1:
 
@@ -36,7 +36,7 @@ cd ai-notes
 pnpm install
 pnpm --filter @ai-notes/desktop exec vite
 
-Then open http://localhost:1420. For the browser to reach Ollama, start it with OLLAMA_ORIGINS including http://localhost:1420. The packaged webview origin is http://tauri.localhost.
+Then open http://localhost:1420. That host and port are the Vite dev server and the Tauri devUrl. For the browser preview to reach Ollama, include http://localhost:1420 in OLLAMA_ORIGINS. The README also mentions http://tauri.localhost as the packaged page origin; that only matters after a desktop build exists, and none is published.
 
 https://github.com/zy1252732214/ai-notes
 MIT.

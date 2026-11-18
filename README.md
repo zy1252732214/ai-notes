@@ -5,7 +5,7 @@
 Local-first Markdown notes: the files stay in a folder you choose, and answers cite those notes.
 
 [![CI](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml)
-[![release](https://img.shields.io/badge/release-v0.1.0-3c6e62)](https://github.com/zy1252732214/ai-notes/releases)
+[![release](https://img.shields.io/badge/release-not%20published%20yet-lightgrey)](https://github.com/zy1252732214/ai-notes/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ![Open the sample vault, add a wikilink, search, and ask. The answer lists the notes it used.](docs/assets/demo.gif)
@@ -16,7 +16,7 @@ Local-first Markdown notes: the files stay in a folder you choose, and answers c
 - **Answers point at those notes.** The reply uses the open note and retrieved chunks. Paths in the answer are clickable, and the notes that were retrieved are listed when the reply finishes.
 - **Your model, no account here.** If [Ollama](https://ollama.com) is already running locally, the first launch can fill it in. A cloud model uses your key, stored in the system keychain on the desktop app.
 
-Desktop builds are on [Releases](https://github.com/zy1252732214/ai-notes/releases): an unsigned macOS dmg, Windows NSIS and MSI installers, and a Linux AppImage and deb. Until that draft release is published, use the [browser preview](#quick-start). It is the same UI.
+No desktop build is published yet. After a `v*` tag is pushed and that draft Release is published, [Releases](https://github.com/zy1252732214/ai-notes/releases) is where the macOS dmg, Windows NSIS and MSI installers, and Linux AppImage and deb will be. Until then, use the [browser preview](#quick-start). It is the same UI.
 
 If this is useful, a [star](https://github.com/zy1252732214/ai-notes) helps other people find it. An issue helps more.
 
@@ -57,7 +57,7 @@ These are different tools. The table is what each one is built around, not a ran
 
 ## Download
 
-Installers are built when a `v*` tag is pushed. The workflow uploads them to a **draft** GitHub Release and does not publish it for you. Builds are unsigned unless you add your own signing secrets.
+No release has been published. Installers are built when a `v*` tag is pushed. The workflow uploads them to a **draft** GitHub Release and does not publish it for you. Builds are unsigned unless you add your own signing secrets.
 
 [github.com/zy1252732214/ai-notes/releases](https://github.com/zy1252732214/ai-notes/releases)
 
@@ -67,7 +67,9 @@ Installers are built when a `v*` tag is pushed. The workflow uploads them to a *
 | Windows | NSIS (`.exe`) and MSI                   |
 | Linux   | AppImage and deb                        |
 
-The app version in this tree is `0.1.0`, so the matching tag is `v0.1.0`. There is no auto-update yet. With no Apple certificate the dmg is ad-hoc signed and not notarized. macOS may say the app is damaged, or that Apple cannot check it for malicious software. Open it once, then use System Settings → Privacy & Security → Open Anyway. If it still says damaged, clear the download quarantine: `xattr -dr com.apple.quarantine /Applications/ai-notes.app` (use the path you copied the app to). With no Authenticode certificate, Windows SmartScreen says it protected your PC: choose More info, then Run anyway. Leave Gatekeeper and SmartScreen enabled.
+The app version in this tree is `0.1.0`, so the matching tag will be `v0.1.0`. No tag has been pushed, and there is nothing to download yet. There is no auto-update.
+
+When a release is published, builds without signing secrets are ad-hoc signed on macOS (not notarized) and have no Authenticode signature on Windows. macOS may say the app is damaged, or that Apple cannot check it for malicious software. For the copy you downloaded from this repository's GitHub Release, after you have checked that file is the one attached there, prefer System Settings → Privacy & Security → Open Anyway. Only if that still says this app is damaged, `xattr -dr com.apple.quarantine /Applications/ai-notes.app` removes the quarantine flag from that app alone. Use the path of the copy you installed. Do not turn off Gatekeeper or SmartScreen. On Windows, for that same official installer, SmartScreen may say it protected your PC: More info, then Run anyway.
 
 Until a release is published, use the browser preview below. It is the same UI.
 
