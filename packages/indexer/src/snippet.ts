@@ -1,13 +1,24 @@
+import { scoreOverlap } from './segment.js';
+
 export function buildSnippet(
   text: string,
   headingPath: string,
   title: string,
   query: string,
 ): string {
-  if (includesFold(text, query)) return highlight(text, query);
-  if (includesFold(headingPath, query)) return highlight(headingPath, query);
-  if (includesFold(title, query)) return highlight(title, query);
+  const fromText = focusNeedle(text, query);
+  if (fromText) return highlight(text, fromText);
+  const fromHeading = focusNeedle(headingPath, query);
+  if (fromHeading) return highlight(headingPath, fromHeading);
+  const fromTitle = focusNeedle(title, query);
+  if (fromTitle) return highlight(title, fromTitle);
   return highlight(text, query);
+}
+
+function focusNeedle(value: string, query: string): string {
+  if (query && includesFold(value, query)) return query;
+  const overlap = scoreOverlap(query, value);
+  return overlap.span >= 2 ? overlap.needle : '';
 }
 
 export function countOccurrences(haystack: string, needle: string): number {

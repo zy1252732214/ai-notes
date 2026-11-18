@@ -2,7 +2,13 @@ import { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
 import { contentHash } from './hash.js';
 import { extractLinks, remapIndexPath, resolveDestination } from './links.js';
 import { chunkVecVirtualTableSql, SCHEMA_SQL } from './schema.js';
-import { segmentForSearch, toFtsQuery } from './segment.js';
+import {
+  overlapKeeps,
+  scoreOverlap,
+  segmentForSearch,
+  toFtsOverlapQuery,
+  toFtsQuery,
+} from './segment.js';
 import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   ChunkOptions,
@@ -257,13 +263,27 @@ export class VaultIndex {
     if (!trimmed) return [];
     const limit = readLimit(options.limit);
     const ftsQuery = toFtsQuery(trimmed);
+    let exact: SearchHit[] = [];
     if (ftsQuery) {
       try {
-        return this.searchFts(ftsQuery, trimmed, limit);
+        exact = this.searchFts(ftsQuery, trimmed, limit);
       } catch (error) {
         if (!isFtsError(error)) throw error;
       }
     }
+    const overlapQuery = toFtsOverlapQuery(trimmed);
+    if (overlapQuery) {
+      try {
+        // bm25 picks at most this many candidates before span ranking.
+        // Exact phrase hits are merged afterwards, so they are not part of this cap.
+        const pool = 100;
+        const rough = this.searchFts(overlapQuery, trimmed, pool);
+        return mergeExact(exact, rankOverlap(trimmed, rough), limit);
+      } catch (error) {
+        if (!isFtsError(error)) throw error;
+      }
+    }
+    if (exact.length > 0) return exact.slice(0, limit);
     return this.searchLike(trimmed, limit);
   }
 
@@ -896,6 +916,46 @@ function isFtsError(error: unknown): boolean {
 
 function isCount(value: number): boolean {
   return Number.isInteger(value) && value >= 0;
+}
+
+/** Exact phrase hits stay in bm25 order. Partial CJK matches follow them. */
+function mergeExact(
+  exact: readonly SearchHit[],
+  overlap: readonly SearchHit[],
+  limit: number,
+): SearchHit[] {
+  const seenChunks = new Set<number>();
+  const seenPaths = new Set<string>();
+  const merged: SearchHit[] = [];
+  for (const hit of [...exact, ...overlap]) {
+    if (seenChunks.has(hit.chunkId) || seenPaths.has(hit.path)) continue;
+    seenChunks.add(hit.chunkId);
+    seenPaths.add(hit.path);
+    merged.push(hit);
+  }
+  return merged.slice(0, limit);
+}
+
+function rankOverlap(query: string, hits: SearchHit[]): SearchHit[] {
+  return hits
+    .map((hit) => {
+      const relevance = scoreOverlap(query, `${hit.title}\n${hit.headingPath}\n${hit.text}`);
+      return { hit, relevance };
+    })
+    .filter((item) => overlapKeeps(query, item.relevance))
+    .sort(
+      (left, right) =>
+        right.relevance.span - left.relevance.span ||
+        right.relevance.bigrams - left.relevance.bigrams ||
+        right.relevance.words - left.relevance.words ||
+        right.hit.score - left.hit.score ||
+        left.hit.path.localeCompare(right.hit.path),
+    )
+    .map((item) => ({
+      ...item.hit,
+      score: item.relevance.span * 1000 + item.relevance.bigrams * 10 + item.relevance.words,
+      snippet: buildSnippet(item.hit.text, item.hit.headingPath, item.hit.title, query),
+    }));
 }
 
 function readLimit(limit: number | undefined): number {

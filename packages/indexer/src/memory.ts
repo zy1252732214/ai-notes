@@ -1,6 +1,7 @@
 import { chunkMarkdown, extractTitle } from './chunk.js';
 import { contentHash } from './hash.js';
 import { extractLinks, remapIndexPath, resolveDestination, type LinkNoteRef } from './links.js';
+import { overlapKeeps, scoreOverlap, toFtsOverlapQuery } from './segment.js';
 import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   Backlink,
@@ -190,9 +191,44 @@ export class MemoryIndex {
         });
       }
     }
-    return hits
+    const exact = hits.sort(
+      (left, right) => right.score - left.score || left.path.localeCompare(right.path),
+    );
+    if (!toFtsOverlapQuery(trimmed)) return exact.slice(0, limit);
+    const seen = new Set(exact.map((hit) => hit.chunkId));
+    const loose: SearchHit[] = [];
+    for (const note of this.notes.values()) {
+      for (const chunk of note.chunks) {
+        const relevance = scoreOverlap(
+          trimmed,
+          `${note.title}\n${chunk.headingPath}\n${chunk.text}`,
+        );
+        if (!overlapKeeps(trimmed, relevance)) continue;
+        loose.push({
+          noteId: note.id,
+          path: note.path,
+          title: note.title,
+          chunkId: chunk.id,
+          headingPath: chunk.headingPath,
+          start: chunk.start,
+          end: chunk.end,
+          text: chunk.text,
+          snippet: buildSnippet(chunk.text, chunk.headingPath, note.title, trimmed),
+          score: relevance.span * 1000 + relevance.bigrams * 10 + relevance.words,
+        });
+      }
+    }
+    const partial = loose
       .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
-      .slice(0, limit);
+      .filter((hit) => !seen.has(hit.chunkId));
+    const seenPaths = new Set<string>();
+    const merged: SearchHit[] = [];
+    for (const hit of [...exact, ...partial]) {
+      if (seenPaths.has(hit.path)) continue;
+      seenPaths.add(hit.path);
+      merged.push(hit);
+    }
+    return merged.slice(0, limit);
   }
 
   /**
