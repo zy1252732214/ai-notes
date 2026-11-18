@@ -25,6 +25,7 @@ import {
 } from './cards/library';
 import { cursorFromOffset } from './editor/position';
 import { rememberVaultOpened } from './onboarding/guide';
+import { INFO_NOTICE_MS, nextNotice, toneForPluginLog } from './notices';
 import { pluginController } from './plugins/controller';
 import { ensureHelloNotes } from './plugins/example';
 import { createVaultPluginServices } from './plugins/services';
@@ -203,6 +204,8 @@ function remapExpanded(expanded: Record<string, boolean>, from: string, to: stri
   return next;
 }
 
+let saveFailureMessage: string | null = null;
+
 async function persist(path: string, content: string): Promise<void> {
   const vault = useAppStore.getState().vault;
   if (!vault) return;
@@ -225,18 +228,33 @@ async function persist(path: string, content: string): Promise<void> {
     await getNoteIndex()
       ?.noteSaved(path, content)
       .catch(() => undefined);
-    useAppStore.setState((state) => ({
-      indexRevision: state.indexRevision + 1,
-      tabs: state.tabs.map((tab) =>
-        tab.path === path ? { ...tab, savedContent: content, dirty: tab.content !== content } : tab,
-      ),
-      saveError: state.activePath === path ? null : state.saveError,
-    }));
+    const failure = saveFailureMessage;
+    useAppStore.setState((state) => {
+      const savedThisNote = state.activePath === path;
+      const clearErrorBanner =
+        savedThisNote &&
+        failure !== null &&
+        state.bannerTone === 'danger' &&
+        state.banner === failure;
+      if (savedThisNote) saveFailureMessage = null;
+      return {
+        indexRevision: state.indexRevision + 1,
+        tabs: state.tabs.map((tab) =>
+          tab.path === path
+            ? { ...tab, savedContent: content, dirty: tab.content !== content }
+            : tab,
+        ),
+        saveError: savedThisNote ? null : state.saveError,
+        ...(clearErrorBanner ? { banner: null, bannerTone: 'danger' as const } : {}),
+      };
+    });
     pluginController.emit({ type: 'note:modified', path });
     void useAppStore.getState().refreshDueCount();
   } catch (error) {
     const message = error instanceof Error ? error.message : '保存失败';
+    saveFailureMessage = message;
     useAppStore.setState({ saveError: message });
+    publishNotice(message, 'danger');
     throw error;
   }
 }
@@ -442,6 +460,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     stopWatch?.();
     stopWatch = null;
     disposeSavers();
+    saveFailureMessage = null;
     pluginController.detach();
     closeNoteIndex();
     if (refreshTimer) clearTimeout(refreshTimer);
@@ -490,7 +509,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (plugins) {
       await ensureHelloNotes(plugins);
       await pluginController.attach(plugins, vaultServices(), {
-        onLog: (message) => useAppStore.getState().setBanner(message),
+        onLog: (message, level) => publishNotice(message, toneForPluginLog(level)),
       });
     }
     const tree = get().tree;
@@ -781,6 +800,25 @@ function appendToActive(text: string) {
   const tab = state.tabs.find((item) => item.path === state.activePath);
   if (!tab) return;
   state.updateContent(state.activePath, `${tab.content}${text}`);
+}
+
+let noticeToken = 0;
+
+/** 插件的普通日志是短暂提示。真正的错误留在横幅里，直到关闭或这次保存成功。 */
+export function publishNotice(message: string | null, tone: 'danger' | 'info' = 'danger'): void {
+  const state = useAppStore.getState();
+  const next = nextNotice(state, message, tone);
+  const unchanged = next.banner === state.banner && next.bannerTone === state.bannerTone;
+  if (unchanged && !(message && tone === 'info')) return;
+  noticeToken += 1;
+  const token = noticeToken;
+  if (!unchanged) state.setBanner(next.banner, next.bannerTone);
+  if (!next.banner || next.bannerTone !== 'info') return;
+  setTimeout(() => {
+    if (token !== noticeToken) return;
+    const current = useAppStore.getState();
+    if (current.banner === next.banner && current.bannerTone === 'info') current.setBanner(null);
+  }, INFO_NOTICE_MS);
 }
 
 export function noteTitle(path: string): string {

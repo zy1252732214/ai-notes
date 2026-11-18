@@ -54,14 +54,21 @@ export async function boot(plugin, manifest) {
   const commands = new Map();
   const eventHandlers = new Map();
   const disposables = [];
-  const log = console.log.bind(console);
-  console.log = (...args) => {
-    log(...args);
+  function report(level, original, args) {
+    original(...args);
+    const message = args.map((item) => String(item)).join(' ').trim();
+    if (!message) return;
     post(pluginId, envelope(pluginId, 'log-' + Math.random().toString(36).slice(2), 'event', {
       method: 'lifecycle:log',
-      params: { message: args.map((item) => String(item)).join(' ') },
+      params: { level, message },
     }));
-  };
+  }
+  const log = console.log.bind(console);
+  const warn = console.warn.bind(console);
+  const error = console.error.bind(console);
+  console.log = (...args) => report('info', log, args);
+  console.warn = (...args) => report('warn', warn, args);
+  console.error = (...args) => report('error', error, args);
 
   window.addEventListener('message', (event) => {
     const data = event.data;
