@@ -4,13 +4,17 @@ import {
   answerAfterStream,
   answerLabels,
   answerParts,
+  answerWithoutSources,
   buildAskMessages,
   citationsFromAnswer,
   explainAiError,
   isAbortError,
+  markLines,
+  shouldAskModel,
   sourceFromHit,
   sourceFromNote,
   streamAnswer,
+  type AnswerChecks,
   type CitationSource,
 } from '../ai/ask';
 import { loadAiSettings } from '../ai/settings';
@@ -24,8 +28,9 @@ interface Turn {
   role: 'user' | 'assistant' | 'error';
   content: string;
   citations: CitationSource[];
-  status?: 'streaming' | 'complete' | 'incomplete';
+  status?: 'streaming' | 'complete' | 'incomplete' | 'withheld';
   error?: string;
+  checks?: AnswerChecks;
 }
 
 export function AskPane() {
@@ -83,6 +88,22 @@ export function AskPane() {
     const userId = crypto.randomUUID();
     const assistantId = crypto.randomUUID();
     setDraft('');
+    if (!shouldAskModel(note, retrieved)) {
+      const shown = answerWithoutSources();
+      setTurns((current) => [
+        ...current,
+        { id: userId, role: 'user', content: question, citations: [] },
+        {
+          id: assistantId,
+          role: 'assistant',
+          content: shown.text,
+          citations: [],
+          status: 'withheld',
+          checks: shown.checks,
+        },
+      ]);
+      return;
+    }
     setBusy(true);
     setTurns((current) => [
       ...current,
@@ -138,6 +159,7 @@ export function AskPane() {
               status: shown.status,
               content: shown.text,
               citations: shown.citations,
+              checks: shown.checks,
               error: shown.error,
             }
           : turn,
@@ -169,16 +191,23 @@ export function AskPane() {
             );
           }
           const statusLabel =
-            turn.status === 'incomplete'
-              ? answerLabels.incomplete
-              : turn.status === 'complete'
-                ? answerLabels.complete
-                : answerLabels.streaming;
+            turn.status === 'withheld'
+              ? answerLabels.withheld
+              : turn.status === 'incomplete'
+                ? answerLabels.incomplete
+                : turn.status === 'complete'
+                  ? answerLabels.complete
+                  : answerLabels.streaming;
+          const lines = turn.status === 'streaming' || !turn.checks ? [] : markLines(turn.checks);
           return (
             <div key={turn.id} className="ai-answer-block">
               <p
                 className={
-                  turn.status === 'incomplete' ? 'ai-answer-status incomplete' : 'ai-answer-status'
+                  turn.status === 'incomplete'
+                    ? 'ai-answer-status incomplete'
+                    : turn.status === 'withheld'
+                      ? 'ai-answer-status withheld'
+                      : 'ai-answer-status'
                 }
                 role="status"
               >
@@ -198,6 +227,13 @@ export function AskPane() {
                   />
                 </div>
               </article>
+              {lines.length > 0 ? (
+                <div className="ai-mark-check">
+                  {lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              ) : null}
               {turn.citations.length > 0 ? (
                 <p className="ai-citation-note">{answerLabels.citation}</p>
               ) : null}
@@ -214,6 +250,11 @@ export function AskPane() {
                     void openCitation(citation);
                   }}
                 >
+                  {citation.verbatim !== undefined ? (
+                    <p className="ai-citation-note">
+                      {citation.verbatim ? answerLabels.verbatim : answerLabels.pathOnly}
+                    </p>
+                  ) : null}
                   <ChatMessage
                     role="citation"
                     citation={{

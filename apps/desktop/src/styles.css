@@ -456,6 +456,24 @@ button:disabled {
   color: var(--an-warning);
 }
 
+.ai-answer-status.withheld {
+  color: var(--an-text-secondary);
+}
+
+.ai-mark-check {
+  display: flex;
+  flex-direction: column;
+  gap: var(--an-space-1);
+  margin: 0;
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+}
+
+.ai-mark-check p {
+  margin: 0;
+}
+
 .ai-citation {
   border-radius: var(--an-radius-lg);
   cursor: pointer;
