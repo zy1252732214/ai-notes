@@ -2,16 +2,25 @@
 
 [English](README.md)
 
-ai-notes 是本地优先的笔记应用：数据是你自己的 Markdown，自带 AI（带引用的 RAG 问答，以及 SM-2 记忆卡片），插件跑在安全沙箱里，也可以完全离线使用 [Ollama](https://ollama.com)。
+本地优先的 Markdown 笔记：文件在你选的文件夹里，问答会引用这些笔记。
 
 [![CI](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml)
+[![release](https://img.shields.io/badge/release-v0.1.0-3c6e62)](https://github.com/zy1252732214/ai-notes/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![示例库打开在 ai-notes 里：文件树、Markdown 编辑器和问答面板](docs/assets/sample-vault.png)
+![打开示例库、写入双链、搜索，并向问答要一条带引用的回答。回答会列出用到的笔记。](docs/assets/demo.gif)
 
-[演示：打开示例库、写入双链、搜索，并向问答要一条带引用的回答](docs/assets/demo.mp4)
+[同一段演示的视频](docs/assets/demo.mp4)
 
-界面目前是中文。截图来自浏览器预览里的内存示例库。
+- **笔记还是文件。** 一个 Markdown 文件夹，别的编辑器也能打开。删掉 `<vault>/.ainotes/` 之后，SQLite 索引可以重建。
+- **回答指向这些笔记。** 问答用当前笔记和检索到的片段。回答里的路径可以点开；生成结束时，检索到的笔记仍会列出来。
+- **模型是你自己的，没有我们的账号。** 本机已经跑着 [Ollama](https://ollama.com) 时，第一次打开可以替你填好。用云端模型时，桌面端把 API Key 放进系统钥匙串。
+
+桌面安装包在 [Releases](https://github.com/zy1252732214/ai-notes/releases)：未签名的 macOS dmg、Windows NSIS 和 MSI、Linux AppImage 和 deb。Release 还是 draft 的时候，用下面的[浏览器预览](#快速开始)，界面是同一套。
+
+如果这个项目对你有用，可以给[仓库加一颗星](https://github.com/zy1252732214/ai-notes)。比星标更有用的是 Issue。
+
+界面目前是中文。动图是浏览器预览里的内存示例库。
 
 ## 特性
 
@@ -58,7 +67,7 @@ ai-notes 是本地优先的笔记应用：数据是你自己的 Markdown，自�
 | Windows | NSIS（`.exe`）和 MSI           |
 | Linux   | AppImage 和 deb                |
 
-这个树里的版本号是 `0.1.0`，对应的 tag 是 `v0.1.0`。macOS 可能会拦住未签名的下载，需要在系统设置里允许。还没有自动更新。
+这个树里的版本号是 `0.1.0`，对应的 tag 是 `v0.1.0`。还没有自动更新。没有配置 Apple 证书时，dmg 是 ad-hoc 签名，也没有公证。macOS 可能会说应用已损坏，或说无法验证是否包含恶意软件。先打开一次，再到「系统设置 → 隐私与安全性」里点「仍要打开」。如果仍然提示已损坏，清掉下载隔离属性：`xattr -dr com.apple.quarantine /Applications/ai-notes.app`（路径改成你拷进去的位置）。没有 Authenticode 证书时，Windows SmartScreen 会说它已保护你的电脑：点「更多信息」，再点「仍要运行」。不要关掉 Gatekeeper 或 SmartScreen。
 
 Release 还没公开时，用下面的浏览器预览。界面是同一套。
 

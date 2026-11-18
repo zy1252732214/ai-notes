@@ -2,16 +2,25 @@
 
 [中文](README.zh-CN.md)
 
-ai-notes is a local-first notebook: the notes are Markdown files you own, with built-in AI (RAG answers that cite those notes, plus SM-2 memory cards), a sandboxed plugin system, and fully offline [Ollama](https://ollama.com).
+Local-first Markdown notes: the files stay in a folder you choose, and answers cite those notes.
 
 [![CI](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml)
+[![release](https://img.shields.io/badge/release-v0.1.0-3c6e62)](https://github.com/zy1252732214/ai-notes/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![The sample vault open in ai-notes: file tree, Markdown editor, and the ask panel](docs/assets/sample-vault.png)
+![Open the sample vault, add a wikilink, search, and ask. The answer lists the notes it used.](docs/assets/demo.gif)
 
-[Demo: open the sample vault, add a wikilink, search, and ask with citations](docs/assets/demo.mp4)
+[Same demo as video](docs/assets/demo.mp4)
 
-The interface is in Chinese today. Screenshots are the in-memory sample vault, opened from the browser preview.
+- **The notes stay files.** A folder of Markdown you can open in anything else. Delete `<vault>/.ainotes/` and the SQLite index can be rebuilt.
+- **Answers point at those notes.** The reply uses the open note and retrieved chunks. Paths in the answer are clickable, and the notes that were retrieved are listed when the reply finishes.
+- **Your model, no account here.** If [Ollama](https://ollama.com) is already running locally, the first launch can fill it in. A cloud model uses your key, stored in the system keychain on the desktop app.
+
+Desktop builds are on [Releases](https://github.com/zy1252732214/ai-notes/releases): an unsigned macOS dmg, Windows NSIS and MSI installers, and a Linux AppImage and deb. Until that draft release is published, use the [browser preview](#quick-start). It is the same UI.
+
+If this is useful, a [star](https://github.com/zy1252732214/ai-notes) helps other people find it. An issue helps more.
+
+The interface is in Chinese today. The GIF is the in-memory sample vault in the browser preview.
 
 ## Features
 
@@ -58,7 +67,7 @@ Installers are built when a `v*` tag is pushed. The workflow uploads them to a *
 | Windows | NSIS (`.exe`) and MSI                   |
 | Linux   | AppImage and deb                        |
 
-The app version in this tree is `0.1.0`, so the matching tag is `v0.1.0`. macOS may refuse an unsigned download until you allow it in System Settings. There is no auto-update yet.
+The app version in this tree is `0.1.0`, so the matching tag is `v0.1.0`. There is no auto-update yet. With no Apple certificate the dmg is ad-hoc signed and not notarized. macOS may say the app is damaged, or that Apple cannot check it for malicious software. Open it once, then use System Settings → Privacy & Security → Open Anyway. If it still says damaged, clear the download quarantine: `xattr -dr com.apple.quarantine /Applications/ai-notes.app` (use the path you copied the app to). With no Authenticode certificate, Windows SmartScreen says it protected your PC: choose More info, then Run anyway. Leave Gatekeeper and SmartScreen enabled.
 
 Until a release is published, use the browser preview below. It is the same UI.
 
