@@ -164,19 +164,7 @@ export function AskPane() {
   return (
     <div className={turns.length === 0 ? 'ask-pane is-empty' : 'ask-pane'}>
       <div className="ai-log" ref={logRef}>
-        {turns.length === 0 ? (
-          <p className="ask-empty">
-            <span
-              className="ask-empty-note"
-              data-settings={settingsOpen}
-              data-index={indexRevision}
-            >
-              {retrievalLabel()}
-            </span>
-            向当前笔记提问。回答会附上可以点开的引用。模型提供方和 API Key
-            在设置里，只存在这台设备上。
-          </p>
-        ) : (
+        {turns.length === 0 ? null : (
           <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
             {retrievalLabel()}
           </p>
@@ -305,7 +293,7 @@ function openCitation(citation: CitationSource): Promise<void> {
   });
 }
 
-function retrievalLabel(): string {
+export function retrievalLabel(): string {
   const error = getEmbedError();
   if (error) return `嵌入失败，已改用全文检索：${error}`;
   if (!loadAiSettings().embedModel.trim()) return '未配置嵌入模型，检索只用全文。';

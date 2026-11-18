@@ -339,11 +339,21 @@ button:disabled {
 }
 
 .ai-head {
+  flex-wrap: wrap;
   justify-content: flex-start;
   align-items: flex-end;
   padding: var(--an-space-4) var(--an-space-4) 0;
   color: var(--an-text-primary);
   border-bottom: 0;
+}
+
+.ai-status-line {
+  flex: 1 0 100%;
+  margin: 0;
+  padding: 0 var(--an-space-2) var(--an-space-2);
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
 }
 
 .ai-body {
@@ -640,10 +650,16 @@ button:disabled {
   color: var(--an-text-primary);
 }
 
+.tree-row.is-inventory {
+  min-height: var(--an-line-small);
+}
+
 .tree-row.is-inventory .tree-label {
   color: var(--an-text-secondary);
-  font-family: var(--an-font-code);
+  font-family: var(--an-font-ui);
   font-size: var(--an-font-size-small);
+  font-weight: var(--an-font-weight-ui);
+  line-height: var(--an-line-small);
 }
 
 .tree-row:hover {
@@ -1545,12 +1561,17 @@ button:disabled {
 }
 
 .sidebar .search-field input {
+  height: var(--an-space-8);
   border: 0;
-  border-bottom: 1px solid var(--an-border-control);
+  border-bottom: 1px solid var(--an-text-secondary);
   border-radius: 0;
-  background: var(--an-bg-base);
-  padding-left: var(--an-space-2);
-  padding-right: var(--an-space-2);
+  background: transparent;
+  padding: 0;
+  color: var(--an-text-primary);
+}
+
+.sidebar .search-field input::placeholder {
+  color: var(--an-text-secondary);
 }
 
 .editor-pane {
@@ -1558,30 +1579,49 @@ button:disabled {
 }
 
 .ask-pane.is-empty {
+  flex: 1;
   justify-content: flex-start;
 }
 
-.ask-pane.is-empty .ai-composer {
-  order: 0;
-  margin-top: 0;
-}
-
 .ask-pane.is-empty .ai-log {
-  order: 1;
-  flex: 0 0 auto;
-  overflow: visible;
+  display: none;
 }
 
-.ask-empty {
-  margin: 0;
-  color: var(--an-text-secondary);
-  font-size: var(--an-font-size-small);
-  line-height: var(--an-line-ui);
+.ask-pane.is-empty .ai-composer {
+  flex: 1;
+  margin-top: 0;
+  border-top: 0;
+}
+
+.ask-pane.is-empty .an-field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ask-pane.is-empty .an-textarea {
+  flex: 1;
+  min-height: 280px;
+}
+
+.ai-tab.is-current:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .ask-empty-note {
-  display: block;
-  margin-bottom: var(--an-space-1);
+  margin: var(--an-space-2) 0 0;
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
 }
 
 .ai-composer .an-button--ghost {

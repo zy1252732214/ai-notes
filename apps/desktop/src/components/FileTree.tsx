@@ -66,7 +66,7 @@ export function FileTree() {
         <span className="sr-only">筛选笔记</span>
         <input
           value={filter}
-          placeholder="筛选笔记"
+          placeholder="筛选"
           onChange={(event) => setFilter(event.target.value)}
           disabled={!vault}
         />
@@ -125,7 +125,9 @@ function TreeNode({
         ]
           .filter(Boolean)
           .join(' ')}
-        style={{ paddingLeft: `calc(var(--an-space-2) + ${depth} * var(--an-space-4))` }}
+        style={{
+          paddingLeft: `calc(var(--an-space-2) + ${depth} * var(--an-space-4)${inventory ? ' + var(--an-space-4)' : ''})`,
+        }}
       >
         {directory ? (
           <button

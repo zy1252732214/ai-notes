@@ -2,7 +2,7 @@ import { IFRAME_SANDBOX } from '@ai-notes/plugin-host';
 import { useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
 import { useAppStore } from '../store';
-import { AskPane } from './AskPane';
+import { AskPane, retrievalLabel } from './AskPane';
 import { LinksPane } from './LinksPane';
 
 export function AiPanel() {
@@ -24,14 +24,15 @@ export function AiPanel() {
         <div className="ai-tabs" role="tablist" aria-label="右侧面板">
           <button
             type="button"
-            className={active === 'ask' ? 'ai-tab active' : 'ai-tab'}
+            className={active === 'ask' ? 'ai-tab active is-current' : 'ai-tab'}
             role="tab"
             id="right-tab-ask"
+            aria-label="问答"
             aria-selected={active === 'ask'}
             aria-controls="right-panel-ask"
             onClick={() => setTab('ask')}
           >
-            问答
+            {active === 'ask' ? <span className="sr-only">问答</span> : '提问'}
           </button>
           <button
             type="button"
@@ -65,6 +66,7 @@ export function AiPanel() {
         >
           设置
         </button>
+        {active === 'ask' ? <p className="ai-status-line">{retrievalLabel()}</p> : null}
       </div>
       <div className="ai-panel-body" hidden={pluginPanel !== null}>
         <div
