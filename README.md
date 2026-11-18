@@ -2,16 +2,25 @@
 
 [中文](README.zh-CN.md)
 
-ai-notes is a local-first notebook: the notes are Markdown files you own, with built-in AI (RAG answers that cite those notes, plus SM-2 memory cards), a sandboxed plugin system, and fully offline [Ollama](https://ollama.com).
+Local-first Markdown notes: the files stay in a folder you choose, and answers cite those notes.
 
 [![CI](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml/badge.svg)](https://github.com/zy1252732214/ai-notes/actions/workflows/ci.yml)
+[![release](https://img.shields.io/badge/release-not%20published%20yet-lightgrey)](https://github.com/zy1252732214/ai-notes/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![The sample vault open in ai-notes: file tree, Markdown editor, and the ask panel](docs/assets/sample-vault.png)
+![Open the sample vault, add a wikilink, search, and ask. The answer lists the notes it used.](docs/assets/demo.gif)
 
-[Demo: open the sample vault, add a wikilink, search, and ask with citations](docs/assets/demo.mp4)
+[Same demo as video](docs/assets/demo.mp4)
 
-The interface is in Chinese today. Screenshots are the in-memory sample vault, opened from the browser preview.
+- **The notes stay files.** A folder of Markdown you can open in anything else. Delete `<vault>/.ainotes/` and the SQLite index can be rebuilt.
+- **Answers point at those notes.** The reply uses the open note and retrieved chunks. Paths in the answer are clickable, and the notes that were retrieved are listed when the reply finishes.
+- **Your model, no account here.** If [Ollama](https://ollama.com) is already running locally, the first launch can fill it in. A cloud model uses your key, stored in the system keychain on the desktop app.
+
+No desktop build is published yet. After a `v*` tag is pushed and that draft Release is published, [Releases](https://github.com/zy1252732214/ai-notes/releases) is where the macOS dmg, Windows NSIS and MSI installers, and Linux AppImage and deb will be. Until then, use the [browser preview](#quick-start). It is the same UI.
+
+If this is useful, a [star](https://github.com/zy1252732214/ai-notes) helps other people find it. An issue helps more.
+
+The interface is in Chinese today. The GIF is the in-memory sample vault in the browser preview.
 
 ## Features
 
@@ -48,7 +57,7 @@ These are different tools. The table is what each one is built around, not a ran
 
 ## Download
 
-Installers are built when a `v*` tag is pushed. The workflow uploads them to a **draft** GitHub Release and does not publish it for you. Builds are unsigned unless you add your own signing secrets.
+No release has been published. Installers are built when a `v*` tag is pushed. The workflow uploads them to a **draft** GitHub Release and does not publish it for you. Builds are unsigned unless you add your own signing secrets.
 
 [github.com/zy1252732214/ai-notes/releases](https://github.com/zy1252732214/ai-notes/releases)
 
@@ -58,7 +67,9 @@ Installers are built when a `v*` tag is pushed. The workflow uploads them to a *
 | Windows | NSIS (`.exe`) and MSI                   |
 | Linux   | AppImage and deb                        |
 
-The app version in this tree is `0.1.0`, so the matching tag is `v0.1.0`. macOS may refuse an unsigned download until you allow it in System Settings. There is no auto-update yet.
+The app version in this tree is `0.1.0`, so the matching tag will be `v0.1.0`. No tag has been pushed, and there is nothing to download yet. There is no auto-update.
+
+When a release is published, builds without signing secrets are ad-hoc signed on macOS (not notarized) and have no Authenticode signature on Windows. macOS may say the app is damaged, or that Apple cannot check it for malicious software. For the copy you downloaded from this repository's GitHub Release, after you have checked that file is the one attached there, prefer System Settings → Privacy & Security → Open Anyway. Only if that still says this app is damaged, `xattr -dr com.apple.quarantine /Applications/ai-notes.app` removes the quarantine flag from that app alone. Use the path of the copy you installed. Do not turn off Gatekeeper or SmartScreen. On Windows, for that same official installer, SmartScreen may say it protected your PC: More info, then Run anyway.
 
 Until a release is published, use the browser preview below. It is the same UI.
 
