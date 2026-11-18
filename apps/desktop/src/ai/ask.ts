@@ -52,7 +52,7 @@ export function buildAskMessages(
   sources: readonly CitationSource[],
 ): ChatMessage[] {
   const current = active
-    ? `正在查看的页面，不能当作问题的依据：\n${noteBlock(active)}`
+    ? `正在查看的笔记（不一定包含答案）：\n${noteBlock(active)}`
     : '当前没有打开笔记。';
   const blocks =
     sources.length === 0
@@ -77,7 +77,31 @@ export function buildAskMessages(
 }
 
 function noteBlock(source: CitationSource): string {
-  return JSON.stringify({ path: source.path, text: source.excerpt });
+  const path = source.path.replaceAll('"', '').replaceAll('<', '');
+  return `<note path="${path}">\n${source.excerpt.replaceAll('</note', '< /note')}\n</note>`;
+}
+
+export const answerLabels = {
+  streaming: '正在生成',
+  complete: 'AI 生成，可能有误',
+  incomplete: '回答未完成',
+  citation: '来源原文，未经核实',
+} as const;
+
+export type AnswerOutcome = 'complete' | 'cancel' | 'error';
+
+/** Keep the model text. Cards only name paths that this answer wrote and this call supplied. */
+export function showModelAnswer(
+  modelText: string,
+  sources: readonly CitationSource[],
+  files: readonly NoteName[],
+  outcome: AnswerOutcome,
+): { text: string; citations: CitationSource[]; status: 'complete' | 'incomplete' } {
+  return {
+    text: modelText,
+    citations: citationsFromAnswer(modelText, sources, files, true),
+    status: outcome === 'complete' ? 'complete' : 'incomplete',
+  };
 }
 
 export function citationsFromAnswer(
@@ -101,9 +125,10 @@ export function citationsFromAnswer(
       answer,
       sources.map((source) => source.path),
     )) {
-      if (seen.has(path)) continue;
+      const source = byPath.get(path);
+      if (!source || seen.has(path)) continue;
       seen.add(path);
-      found.push(byPath.get(path) ?? placeholder(path));
+      found.push(source);
     }
   }
   return found;
@@ -201,10 +226,6 @@ export function explainAiError(error: unknown): string {
   if (error instanceof TypeError) return '无法连接模型服务';
   if (error instanceof Error && error.message) return error.message;
   return '回答失败';
-}
-
-function placeholder(path: string): CitationSource {
-  return { path, title: fileTitle(path), excerpt: '', start: 0 };
 }
 
 function fileTitle(path: string): string {

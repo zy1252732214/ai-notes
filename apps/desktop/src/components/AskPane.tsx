@@ -1,17 +1,18 @@
 import { Button, ChatMessage, Textarea } from '@ai-notes/ui';
 import { useEffect, useRef, useState } from 'react';
 import {
+  answerLabels,
   answerParts,
   buildAskMessages,
   citationsFromAnswer,
   explainAiError,
   isAbortError,
+  showModelAnswer,
   sourceFromHit,
   sourceFromNote,
   streamAnswer,
   type CitationSource,
 } from '../ai/ask';
-import { settleAnswer } from '../ai/ground';
 import { loadAiSettings } from '../ai/settings';
 import { getEmbedError, getNoteIndex, retrieveNotes } from '../search/client';
 import { listNoteFiles } from '../search/files';
@@ -23,7 +24,8 @@ interface Turn {
   role: 'user' | 'assistant' | 'error';
   content: string;
   citations: CitationSource[];
-  pending?: boolean;
+  status?: 'streaming' | 'complete' | 'incomplete';
+  error?: string;
 }
 
 export function AskPane() {
@@ -70,13 +72,13 @@ export function AskPane() {
     if (index) {
       try {
         const hits = await retrieveNotes(question, 5);
-        retrieved = hits.map(sourceFromHit);
+        retrieved = hits.map(sourceFromHit).filter((source) => source.path !== note?.path);
       } catch {
         retrieved = [];
       }
     }
     const messages = buildAskMessages(question, note, retrieved);
-    const evidence = retrieved;
+    const supplied = note ? [note, ...retrieved] : retrieved;
     const epochAtSend = epochRef.current;
     const userId = crypto.randomUUID();
     const assistantId = crypto.randomUUID();
@@ -85,7 +87,7 @@ export function AskPane() {
     setTurns((current) => [
       ...current,
       { id: userId, role: 'user', content: question, citations: [] },
-      { id: assistantId, role: 'assistant', content: '', citations: [], pending: true },
+      { id: assistantId, role: 'assistant', content: '', citations: [], status: 'streaming' },
     ]);
     const controller = new AbortController();
     abortRef.current?.abort();
@@ -102,21 +104,22 @@ export function AskPane() {
               ? {
                   ...turn,
                   content: next,
-                  citations: citationsFromAnswer(next, evidence, files, false),
+                  status: 'streaming',
+                  citations: citationsFromAnswer(next, supplied, files, false),
                 }
               : turn,
           ),
         );
       }
-      const settled = settleAnswer(question, evidence, text);
+      const shown = showModelAnswer(text, supplied, files, 'complete');
       setTurns((current) =>
         current.map((turn) =>
           turn.id === assistantId
             ? {
                 ...turn,
-                pending: false,
-                content: settled.text,
-                citations: settled.citations,
+                status: shown.status,
+                content: shown.text,
+                citations: shown.citations,
               }
             : turn,
         ),
@@ -124,22 +127,29 @@ export function AskPane() {
     } catch (error) {
       if (epochRef.current !== epochAtSend) return;
       const message = explainAiError(error);
+      const outcome = isAbortError(error) ? 'cancel' : 'error';
+      const shown = showModelAnswer(text, supplied, files, outcome);
       setTurns((current) =>
         current.map((turn) => {
           if (turn.id !== assistantId) return turn;
-          if (isAbortError(error) && turn.content) return { ...turn, pending: false };
-          if (turn.content) {
-            return { ...turn, pending: false };
+          if (!shown.text) {
+            return {
+              ...turn,
+              role: 'error',
+              status: 'incomplete',
+              content: message,
+              citations: [],
+            };
           }
-          return { ...turn, role: 'error', pending: false, content: message };
+          return {
+            ...turn,
+            status: 'incomplete',
+            content: shown.text,
+            citations: shown.citations,
+            error: outcome === 'error' ? message : undefined,
+          };
         }),
       );
-      if (!isAbortError(error) && text) {
-        setTurns((current) => [
-          ...current,
-          { id: crypto.randomUUID(), role: 'error', content: message, citations: [] },
-        ]);
-      }
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       if (epochRef.current === epochAtSend) setBusy(false);
@@ -169,12 +179,26 @@ export function AskPane() {
               </p>
             );
           }
+          const statusLabel =
+            turn.status === 'incomplete'
+              ? answerLabels.incomplete
+              : turn.status === 'complete'
+                ? answerLabels.complete
+                : answerLabels.streaming;
           return (
             <div key={turn.id} className="ai-answer-block">
+              <p
+                className={
+                  turn.status === 'incomplete' ? 'ai-answer-status incomplete' : 'ai-answer-status'
+                }
+                role="status"
+              >
+                {statusLabel}
+              </p>
               <article className="an-chat an-chat--assistant" aria-label="回答">
                 <p className="an-chat__role">回答</p>
                 <div className="an-chat__content">
-                  {turn.pending && !turn.content ? '正在回答…' : null}
+                  {turn.status === 'streaming' && !turn.content ? '正在回答…' : null}
                   <AnswerText
                     text={turn.content}
                     onOpen={(target) => {
@@ -185,6 +209,9 @@ export function AskPane() {
                   />
                 </div>
               </article>
+              {turn.citations.length > 0 ? (
+                <p className="ai-citation-note">{answerLabels.citation}</p>
+              ) : null}
               {turn.citations.map((citation) => (
                 <div
                   key={`${turn.id}:${citation.path}:${citation.start}`}
@@ -203,11 +230,16 @@ export function AskPane() {
                     citation={{
                       title: citation.title,
                       source: citation.path,
-                      excerpt: citation.excerpt || '打开这篇笔记',
+                      excerpt: citation.excerpt,
                     }}
                   />
                 </div>
               ))}
+              {turn.error ? (
+                <p className="ai-error" role="alert">
+                  {turn.error}
+                </p>
+              ) : null}
             </div>
           );
         })}

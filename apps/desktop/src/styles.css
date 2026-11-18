@@ -444,6 +444,18 @@ button:disabled {
   gap: var(--an-space-2);
 }
 
+.ai-answer-status,
+.ai-citation-note {
+  margin: 0;
+  color: var(--an-text-tertiary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+}
+
+.ai-answer-status.incomplete {
+  color: var(--an-warning);
+}
+
 .ai-citation {
   border-radius: var(--an-radius-lg);
   cursor: pointer;
