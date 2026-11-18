@@ -2,6 +2,7 @@ import type { FetchLike } from '@ai-notes/ai';
 import { describe, expect, it } from 'vitest';
 import { defaultAiSettings, type AiSettings } from './settings.js';
 import {
+  answerAfterStream,
   answerLabels,
   buildAskMessages,
   citationsFromAnswer,
@@ -217,6 +218,52 @@ describe('ask', () => {
     expect(answerLabels.complete).toBe('AI 生成，可能有误');
     expect(answerLabels.incomplete).toBe('回答未完成');
     expect(answerLabels.citation).toBe('来源原文，未经核实');
+  });
+
+  it('marks a stream that ends without a protocol done marker as incomplete', () => {
+    const finished = answerAfterStream({
+      text: '灯塔备',
+      sources: [lighthouse],
+      files: [{ path: lighthouse.path, name: lighthouse.path }],
+      sawProtocolDone: true,
+      failure: null,
+    });
+    expect(finished.status).toBe('complete');
+    expect(finished.text).toBe('灯塔备');
+    expect(finished.error).toBeUndefined();
+
+    const cut = answerAfterStream({
+      text: '灯塔备',
+      sources: [lighthouse],
+      files: [{ path: lighthouse.path, name: lighthouse.path }],
+      sawProtocolDone: false,
+      failure: null,
+    });
+    expect(cut.status).toBe('incomplete');
+    expect(cut.text).toBe('灯塔备');
+    expect(cut.error).toBe('模型连接中断');
+
+    const cancelled = answerAfterStream({
+      text: '灯塔备',
+      sources: [lighthouse],
+      files: [{ path: lighthouse.path, name: lighthouse.path }],
+      sawProtocolDone: false,
+      failure: { abort: true, message: '已停止生成' },
+    });
+    expect(cancelled.status).toBe('incomplete');
+    expect(cancelled.text).toBe('灯塔备');
+    expect(cancelled.error).toBeUndefined();
+
+    const failed = answerAfterStream({
+      text: '灯塔备',
+      sources: [lighthouse],
+      files: [{ path: lighthouse.path, name: lighthouse.path }],
+      sawProtocolDone: false,
+      failure: { abort: false, message: '无法连接模型服务' },
+    });
+    expect(failed.status).toBe('incomplete');
+    expect(failed.text).toBe('灯塔备');
+    expect(failed.error).toBe('无法连接模型服务');
   });
 
   it('streams router deltas from an OpenAI-compatible response', async () => {

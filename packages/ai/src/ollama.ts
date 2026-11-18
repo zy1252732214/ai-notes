@@ -78,13 +78,11 @@ export class OllamaProvider implements ModelProvider {
     );
     let resolvedModel = model;
     let accumulated = '';
-    let last: Record<string, unknown> | undefined;
     for await (const line of iterateLines(response.body)) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       const json = parseJson(trimmed, url);
       if (!isRecord(json)) continue;
-      last = json;
       if (typeof json.model === 'string' && json.model) resolvedModel = json.model;
       const delta = messageContent(json.message);
       if (delta) {
@@ -102,13 +100,9 @@ export class OllamaProvider implements ModelProvider {
         return;
       }
     }
-    yield {
-      delta: '',
-      model: resolvedModel,
-      done: true,
-      finishReason: null,
-      usage: ollamaUsage(last ?? {}, this.id, resolvedModel, request, accumulated),
-    };
+    // A killed server closes the body without the NDJSON done marker. That is not a finished answer.
+    if (signal?.aborted) throw abortError();
+    throw new Error('模型连接中断');
   }
 
   async embed(request: EmbedRequest, signal?: AbortSignal): Promise<EmbedResult> {
@@ -149,6 +143,12 @@ export class OllamaProvider implements ModelProvider {
       ...this.extraHeaders,
     };
   }
+}
+
+function abortError(): Error {
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
+  return error;
 }
 
 function requiredModel(requestModel: string | undefined, fallback: string | undefined): string {

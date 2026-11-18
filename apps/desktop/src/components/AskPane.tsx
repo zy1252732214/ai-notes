@@ -1,13 +1,13 @@
 import { Button, ChatMessage, Textarea } from '@ai-notes/ui';
 import { useEffect, useRef, useState } from 'react';
 import {
+  answerAfterStream,
   answerLabels,
   answerParts,
   buildAskMessages,
   citationsFromAnswer,
   explainAiError,
   isAbortError,
-  showModelAnswer,
   sourceFromHit,
   sourceFromNote,
   streamAnswer,
@@ -93,10 +93,13 @@ export function AskPane() {
     abortRef.current?.abort();
     abortRef.current = controller;
     let text = '';
+    let sawProtocolDone = false;
+    let failure: { abort: boolean; message: string } | null = null;
     try {
       for await (const event of streamAnswer(settings, messages, undefined, controller.signal)) {
         if (epochRef.current !== epochAtSend) return;
-        text += event.delta;
+        if (event.delta) text += event.delta;
+        if (event.done) sawProtocolDone = true;
         const next = text;
         setTurns((current) =>
           current.map((turn) =>
@@ -111,49 +114,35 @@ export function AskPane() {
           ),
         );
       }
-      const shown = showModelAnswer(text, supplied, files, 'complete');
-      setTurns((current) =>
-        current.map((turn) =>
-          turn.id === assistantId
-            ? {
-                ...turn,
-                status: shown.status,
-                content: shown.text,
-                citations: shown.citations,
-              }
-            : turn,
-        ),
-      );
     } catch (error) {
       if (epochRef.current !== epochAtSend) return;
-      const message = explainAiError(error);
-      const outcome = isAbortError(error) ? 'cancel' : 'error';
-      const shown = showModelAnswer(text, supplied, files, outcome);
-      setTurns((current) =>
-        current.map((turn) => {
-          if (turn.id !== assistantId) return turn;
-          if (!shown.text) {
-            return {
-              ...turn,
-              role: 'error',
-              status: 'incomplete',
-              content: message,
-              citations: [],
-            };
-          }
-          return {
-            ...turn,
-            status: 'incomplete',
-            content: shown.text,
-            citations: shown.citations,
-            error: outcome === 'error' ? message : undefined,
-          };
-        }),
-      );
+      failure = { abort: isAbortError(error), message: explainAiError(error) };
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       if (epochRef.current === epochAtSend) setBusy(false);
     }
+    if (epochRef.current !== epochAtSend) return;
+    const shown = answerAfterStream({
+      text,
+      sources: supplied,
+      files,
+      sawProtocolDone,
+      failure,
+    });
+    setTurns((current) =>
+      current.map((turn) =>
+        turn.id === assistantId
+          ? {
+              ...turn,
+              role: shown.role,
+              status: shown.status,
+              content: shown.text,
+              citations: shown.citations,
+              error: shown.error,
+            }
+          : turn,
+      ),
+    );
   };
 
   return (

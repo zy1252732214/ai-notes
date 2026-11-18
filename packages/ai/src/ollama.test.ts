@@ -70,6 +70,82 @@ describe('OllamaProvider', () => {
     expect(events.at(-1)?.usage).toMatchObject({ tokensIn: 6, tokensOut: 2, estimated: false });
   });
 
+  it('accepts a done marker split across packets and a final line without a newline', async () => {
+    const provider = new OllamaProvider({
+      fetch: mockFetch(async () =>
+        streamResponse(
+          [
+            '{"message":{"content":"灯"},"done":false}\n{"done":',
+            'true,"message":{"content":"塔备"}}',
+          ],
+          'application/x-ndjson',
+        ),
+      ),
+    });
+    const events = await collect(provider.stream({ model: 'qwen2.5', messages }));
+    expect(
+      events
+        .filter((event) => !event.done)
+        .map((event) => event.delta)
+        .join(''),
+    ).toBe('灯塔备');
+    expect(events.at(-1)).toMatchObject({ done: true, finishReason: 'stop' });
+  });
+
+  it('rejects a body that closes before the done marker and keeps earlier deltas', async () => {
+    const provider = new OllamaProvider({
+      fetch: mockFetch(async () =>
+        streamResponse(
+          [
+            '{"message":{"content":"灯塔"},"done":false}\n',
+            '{"message":{"content":"备"},"done":false}',
+          ],
+          'application/x-ndjson',
+        ),
+      ),
+    });
+    const events: Array<{ delta: string; done: boolean }> = [];
+    await expect(async () => {
+      for await (const event of provider.stream({ model: 'qwen2.5', messages })) {
+        events.push({ delta: event.delta, done: event.done });
+      }
+    }).rejects.toThrow('模型连接中断');
+    expect(events.map((event) => event.delta).join('')).toBe('灯塔备');
+    expect(events.some((event) => event.done)).toBe(false);
+  });
+
+  it('lets an abort stay an abort when the body fails', async () => {
+    const provider = new OllamaProvider({
+      fetch: mockFetch(async () => {
+        const encoder = new TextEncoder();
+        let pulls = 0;
+        const stream = new ReadableStream<Uint8Array>({
+          pull(controller) {
+            pulls += 1;
+            if (pulls === 1) {
+              controller.enqueue(encoder.encode('{"message":{"content":"灯塔"},"done":false}\n'));
+              return;
+            }
+            const error = new Error('The operation was aborted');
+            error.name = 'AbortError';
+            controller.error(error);
+          },
+        });
+        return new Response(stream, {
+          status: 200,
+          headers: { 'content-type': 'application/x-ndjson' },
+        });
+      }),
+    });
+    const events: string[] = [];
+    await expect(async () => {
+      for await (const event of provider.stream({ model: 'qwen2.5', messages })) {
+        if (event.delta) events.push(event.delta);
+      }
+    }).rejects.toMatchObject({ name: 'AbortError' });
+    expect(events.join('')).toBe('灯塔');
+  });
+
   it('embeds with /api/embed and accepts the legacy single vector', async () => {
     const provider = new OllamaProvider({
       apiKey: 'local-token',

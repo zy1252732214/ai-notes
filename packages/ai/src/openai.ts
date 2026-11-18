@@ -90,8 +90,12 @@ export class OpenAICompatibleProvider implements ModelProvider {
     let accumulated = '';
     let finishReason: string | null = null;
     let usage: TokenUsage | undefined;
+    let terminated = false;
     for await (const data of iterateSseData(response.body)) {
-      if (data === '[DONE]') break;
+      if (data === '[DONE]') {
+        terminated = true;
+        break;
+      }
       const json = parseJson(data, url);
       if (!isRecord(json)) continue;
       if (typeof json.model === 'string' && json.model) resolvedModel = json.model;
@@ -101,9 +105,16 @@ export class OpenAICompatibleProvider implements ModelProvider {
         accumulated += delta;
         yield { delta, model: resolvedModel, done: false };
       }
-      if (choice && typeof choice.finish_reason === 'string') finishReason = choice.finish_reason;
+      if (choice && typeof choice.finish_reason === 'string') {
+        finishReason = choice.finish_reason;
+        terminated = true;
+      }
       const parsedUsage = readUsage(json.usage, this.id, resolvedModel, request, accumulated);
       if (parsedUsage) usage = parsedUsage;
+    }
+    if (!terminated) {
+      if (signal?.aborted) throw abortError();
+      throw new Error('模型连接中断');
     }
     yield {
       delta: '',
@@ -177,6 +188,12 @@ export class OpenAICompatibleProvider implements ModelProvider {
       ...this.extraHeaders,
     };
   }
+}
+
+function abortError(): Error {
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
+  return error;
 }
 
 function requiredModel(requestModel: string | undefined, fallback: string | undefined): string {

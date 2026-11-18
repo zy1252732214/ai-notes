@@ -104,6 +104,57 @@ export function showModelAnswer(
   };
 }
 
+export interface StreamFinish {
+  text: string;
+  citations: CitationSource[];
+  status: 'complete' | 'incomplete';
+  role: 'assistant' | 'error';
+  error?: string;
+}
+
+/** A stream is complete only after the provider reports a protocol end. */
+export function answerAfterStream(input: {
+  text: string;
+  sources: readonly CitationSource[];
+  files: readonly NoteName[];
+  sawProtocolDone: boolean;
+  failure: { abort: boolean; message: string } | null;
+}): StreamFinish {
+  if (input.failure?.abort) {
+    if (!input.text) {
+      return {
+        role: 'error',
+        text: input.failure.message,
+        citations: [],
+        status: 'incomplete',
+      };
+    }
+    const shown = showModelAnswer(input.text, input.sources, input.files, 'cancel');
+    return {
+      role: 'assistant',
+      text: shown.text,
+      citations: shown.citations,
+      status: 'incomplete',
+    };
+  }
+  if (input.failure || !input.sawProtocolDone) {
+    const message = input.failure?.message || '模型连接中断';
+    if (!input.text) {
+      return { role: 'error', text: message, citations: [], status: 'incomplete' };
+    }
+    const shown = showModelAnswer(input.text, input.sources, input.files, 'error');
+    return {
+      role: 'assistant',
+      text: shown.text,
+      citations: shown.citations,
+      status: 'incomplete',
+      error: message,
+    };
+  }
+  const shown = showModelAnswer(input.text, input.sources, input.files, 'complete');
+  return { role: 'assistant', text: shown.text, citations: shown.citations, status: 'complete' };
+}
+
 export function citationsFromAnswer(
   answer: string,
   sources: readonly CitationSource[],
