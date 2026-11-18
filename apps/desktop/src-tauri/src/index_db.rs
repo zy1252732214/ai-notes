@@ -1,7 +1,7 @@
 use regex::Regex;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, Once};
@@ -333,40 +333,17 @@ fn search_notes(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Search
     }
     let limit = limit.clamp(1, 100);
     let fts = to_fts_query(query);
-    let sql = r#"
-      SELECT c.id, c.note_id, c.heading_path, c.start, c."end", c.text, n.path, n.title, -bm25(chunks_fts)
-      FROM chunks_fts
-      JOIN chunks c ON c.id = chunks_fts.rowid
-      JOIN notes n ON n.id = c.note_id
-      WHERE chunks_fts MATCH ?1
-      ORDER BY bm25(chunks_fts), c.ordinal
-      LIMIT ?2
-    "#;
-    let mut hits = Vec::new();
-    if let Ok(mut statement) = conn.prepare(sql) {
-        if let Ok(rows) = statement.query_map(params![fts, limit], |row| {
-            let text: String = row.get(5)?;
-            let heading: String = row.get(2)?;
-            let title: String = row.get(7)?;
-            Ok(SearchHit {
-                chunk_id: row.get(0)?,
-                note_id: row.get(1)?,
-                heading_path: heading.clone(),
-                start: row.get(3)?,
-                end: row.get(4)?,
-                text: text.clone(),
-                path: row.get(6)?,
-                title: title.clone(),
-                snippet: snippet(&text, &heading, &title, query),
-                score: row.get(8)?,
-            })
-        }) {
-            for hit in rows.flatten() {
-                hits.push(hit);
-            }
-            if !hits.is_empty() {
-                return Ok(hits);
-            }
+    if let Some(hits) = fts_hits(conn, &fts, query, limit) {
+        if !hits.is_empty() {
+            return Ok(hits);
+        }
+    }
+    // A question is not one contiguous phrase: 备用灯塔口令 does not contain the 的 in 备用灯塔的口令.
+    // Overlapping bigrams stay on the FTS index and are capped, then re-ranked by the longest shared span.
+    if let Some(overlap) = to_overlap_query(query) {
+        let pool = (limit.saturating_mul(8)).clamp(limit, 100);
+        if let Some(hits) = fts_hits(conn, &overlap, query, pool) {
+            return Ok(rank_overlap(query, hits, limit));
         }
     }
     let pattern = format!("%{}%", query.replace('%', "").replace('_', ""));
@@ -852,15 +829,247 @@ fn is_cjk(ch: char) -> bool {
     )
 }
 
+fn fts_hits(conn: &Connection, fts: &str, query: &str, limit: u32) -> Option<Vec<SearchHit>> {
+    let sql = r#"
+      SELECT c.id, c.note_id, c.heading_path, c.start, c."end", c.text, n.path, n.title, -bm25(chunks_fts)
+      FROM chunks_fts
+      JOIN chunks c ON c.id = chunks_fts.rowid
+      JOIN notes n ON n.id = c.note_id
+      WHERE chunks_fts MATCH ?1
+      ORDER BY bm25(chunks_fts), c.ordinal
+      LIMIT ?2
+    "#;
+    let mut statement = conn.prepare(sql).ok()?;
+    let rows = statement
+        .query_map(params![fts, limit], |row| {
+            let text: String = row.get(5)?;
+            let heading: String = row.get(2)?;
+            let title: String = row.get(7)?;
+            Ok(SearchHit {
+                chunk_id: row.get(0)?,
+                note_id: row.get(1)?,
+                heading_path: heading.clone(),
+                start: row.get(3)?,
+                end: row.get(4)?,
+                text: text.clone(),
+                path: row.get(6)?,
+                title: title.clone(),
+                snippet: snippet(&text, &heading, &title, query),
+                score: row.get(8)?,
+            })
+        })
+        .ok()?;
+    Some(rows.filter_map(Result::ok).collect())
+}
+
+fn quote_fts(token: &str) -> String {
+    format!("\"{}\"", token.replace('"', "\"\""))
+}
+
+fn cjk_runs(query: &str) -> Vec<String> {
+    let mut runs = Vec::new();
+    let mut run = String::new();
+    for ch in query.chars() {
+        if is_cjk(ch) {
+            run.push(ch);
+        } else if !run.is_empty() {
+            runs.push(std::mem::take(&mut run));
+        }
+    }
+    if !run.is_empty() {
+        runs.push(run);
+    }
+    runs
+}
+
+fn ascii_words(query: &str) -> Vec<String> {
+    let mut words = Vec::new();
+    let mut word = String::new();
+    for ch in query.chars() {
+        if ch.is_ascii_alphanumeric() || ch == '_' {
+            word.push(ch);
+        } else if !word.is_empty() {
+            words.push(std::mem::take(&mut word));
+        }
+    }
+    if !word.is_empty() {
+        words.push(word);
+    }
+    words
+}
+
+/// Quoted CJK bigrams OR'd with quoted ASCII words. None when the query has no CJK pair.
+fn to_overlap_query(query: &str) -> Option<String> {
+    const LIMIT: usize = 48;
+    let mut terms = Vec::new();
+    let mut seen_words = HashSet::new();
+    for word in ascii_words(query) {
+        if word.chars().count() < 2 || !seen_words.insert(word.clone()) {
+            continue;
+        }
+        terms.push(quote_fts(&word));
+        if terms.len() == 16 {
+            break;
+        }
+    }
+    let mut seen_bigrams = HashSet::new();
+    for run in cjk_runs(query) {
+        let chars: Vec<char> = run.chars().collect();
+        for index in 0..chars.len().saturating_sub(1) {
+            if terms.len() >= LIMIT {
+                break;
+            }
+            let pair = format!("{} {}", chars[index], chars[index + 1]);
+            if !seen_bigrams.insert(pair.clone()) {
+                continue;
+            }
+            terms.push(quote_fts(&pair));
+        }
+    }
+    if seen_bigrams.is_empty() {
+        None
+    } else {
+        Some(terms.join(" OR "))
+    }
+}
+
+fn longest_cjk_span<'a>(query: &str, text: &'a str) -> &'a str {
+    let hay = text.to_lowercase();
+    let mut best: &str = "";
+    for run in cjk_runs(query) {
+        let chars: Vec<char> = run.chars().collect();
+        let max = chars.len();
+        let mut length = max;
+        while length >= 2 && length > best.chars().count() {
+            let mut found = false;
+            for index in 0..=max - length {
+                let piece: String = chars[index..index + length].iter().collect();
+                let folded = piece.to_lowercase();
+                if let Some(at) = hay.find(&folded) {
+                    let end = at + folded.len();
+                    if text.is_char_boundary(at) && text.is_char_boundary(end) {
+                        best = &text[at..end];
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if found {
+                break;
+            }
+            length -= 1;
+        }
+    }
+    best
+}
+
+fn matched_bigrams(query: &str, text: &str) -> usize {
+    let hay = text.to_lowercase();
+    let mut seen = HashSet::new();
+    let mut count = 0;
+    for run in cjk_runs(query) {
+        let chars: Vec<char> = run.chars().collect();
+        for index in 0..chars.len().saturating_sub(1) {
+            let pair: String = chars[index..index + 2].iter().collect();
+            if !seen.insert(pair.clone()) {
+                continue;
+            }
+            if hay.contains(&pair.to_lowercase()) {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
+fn matched_words(query: &str, text: &str) -> usize {
+    let hay = text.to_lowercase();
+    let mut seen = HashSet::new();
+    let mut count = 0;
+    for word in ascii_words(query) {
+        if word.chars().count() < 2 {
+            continue;
+        }
+        let folded = word.to_lowercase();
+        if !seen.insert(folded.clone()) {
+            continue;
+        }
+        if hay.contains(&folded) {
+            count += 1;
+        }
+    }
+    count
+}
+
+fn overlap_keeps(query: &str, span: &str, words: usize) -> bool {
+    if words > 0 || span.chars().count() >= 3 {
+        return true;
+    }
+    if span.chars().count() < 2 {
+        return false;
+    }
+    cjk_runs(query).iter().any(|run| run.starts_with(span))
+}
+
+fn rank_overlap(query: &str, hits: Vec<SearchHit>, limit: u32) -> Vec<SearchHit> {
+    let mut ranked: Vec<SearchHit> = hits
+        .into_iter()
+        .filter_map(|mut hit| {
+            let blob = format!("{}\n{}\n{}", hit.title, hit.heading_path, hit.text);
+            let span_text = longest_cjk_span(query, &blob);
+            let span = span_text.chars().count();
+            let bigrams = matched_bigrams(query, &blob);
+            let words = matched_words(query, &blob);
+            if !overlap_keeps(query, span_text, words) {
+                return None;
+            }
+            hit.score = span as f64 * 1000.0 + bigrams as f64 * 10.0 + words as f64;
+            hit.snippet = snippet(&hit.text, &hit.heading_path, &hit.title, query);
+            Some(hit)
+        })
+        .collect();
+    ranked.sort_by(|left, right| {
+        right
+            .score
+            .partial_cmp(&left.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(left.chunk_id.cmp(&right.chunk_id))
+    });
+    ranked.truncate(limit as usize);
+    ranked
+}
+
 fn to_fts_query(query: &str) -> String {
     let segmented = segment(query);
     format!("\"{}\"", segmented.replace('"', "\"\""))
 }
 
+fn focus_needle<'a>(query: &str, text: &'a str) -> Option<&'a str> {
+    if query.is_empty() {
+        return None;
+    }
+    let folded_query = query.to_lowercase();
+    let folded_text = text.to_lowercase();
+    if let Some(at) = folded_text.find(&folded_query) {
+        let end = at + folded_query.len();
+        if text.is_char_boundary(at) && text.is_char_boundary(end) {
+            return Some(&text[at..end]);
+        }
+    }
+    let span = longest_cjk_span(query, text);
+    if span.chars().count() >= 2 {
+        Some(span)
+    } else {
+        None
+    }
+}
+
 fn snippet(text: &str, heading: &str, title: &str, query: &str) -> String {
     for source in [text, heading, title] {
-        if let Some(hit) = highlight(source, query) {
-            return hit;
+        if let Some(needle) = focus_needle(query, source) {
+            if let Some(hit) = highlight(source, needle) {
+                return hit;
+            }
         }
     }
     highlight(text, query).unwrap_or_else(|| text.chars().take(64).collect())
@@ -1336,5 +1545,41 @@ mod tests {
             .any(|chunk| chunk.path == "fruit.md"));
         delete_path(&conn, "b.md");
         assert!(search_notes(&conn, "检索", 5).unwrap().is_empty());
+    }
+
+    #[test]
+    fn chinese_question_reaches_another_note_without_embeddings() {
+        let conn = memory();
+        upsert(
+            &conn,
+            "灯塔备忘.md",
+            "# 灯塔备忘\n\n港口备用灯塔的口令是 BLUE-HERON-4417。这个口令只写在这篇笔记里。\n",
+            1,
+        )
+        .unwrap();
+        upsert(
+            &conn,
+            "提问稿.md",
+            "# 提问稿\n\n这是提问用的空笔记，里面没有口令。\n",
+            1,
+        )
+        .unwrap();
+        upsert(&conn, "园艺.md", "# 园艺\n\n今天浇水。\n", 1).unwrap();
+        let question = "备用灯塔口令是什么？请用笔记路径引用。";
+        let hits = search_hybrid_notes(&conn, question, None, 5, None).unwrap();
+        assert_eq!(hits[0].path, "灯塔备忘.md");
+        assert!(hits[0].text.contains("BLUE-HERON-4417"));
+        assert!(hits[0].snippet.contains("<b>备用灯塔</b>"));
+        assert!(hits.iter().all(|hit| hit.path != "园艺.md"));
+        assert!(hits[0].score > hits.get(1).map(|hit| hit.score).unwrap_or(0.0));
+        assert_eq!(
+            search_notes(&conn, "BLUE-HERON-4417", 5).unwrap()[0].path,
+            "灯塔备忘.md"
+        );
+        assert!(search_notes(&conn, "火星基地发射窗口", 5).unwrap().is_empty());
+        assert!(search_notes(&conn, "用备", 5).unwrap().is_empty());
+        let _ = search_notes(&conn, "备用灯塔\" OR \"a", 5).unwrap();
+        let _ = search_notes(&conn, "'); DROP TABLE notes;--", 5).unwrap();
+        assert_eq!(search_notes(&conn, "今天浇水", 5).unwrap()[0].path, "园艺.md");
     }
 }

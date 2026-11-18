@@ -1,6 +1,7 @@
 import { chunkMarkdown, extractTitle } from './chunk.js';
 import { contentHash } from './hash.js';
 import { extractLinks, remapIndexPath, resolveDestination, type LinkNoteRef } from './links.js';
+import { overlapKeeps, scoreOverlap, toFtsOverlapQuery } from './segment.js';
 import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   Backlink,
@@ -190,7 +191,35 @@ export class MemoryIndex {
         });
       }
     }
-    return hits
+    if (hits.length > 0) {
+      return hits
+        .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
+        .slice(0, limit);
+    }
+    if (!toFtsOverlapQuery(trimmed)) return [];
+    const loose: SearchHit[] = [];
+    for (const note of this.notes.values()) {
+      for (const chunk of note.chunks) {
+        const relevance = scoreOverlap(
+          trimmed,
+          `${note.title}\n${chunk.headingPath}\n${chunk.text}`,
+        );
+        if (!overlapKeeps(trimmed, relevance)) continue;
+        loose.push({
+          noteId: note.id,
+          path: note.path,
+          title: note.title,
+          chunkId: chunk.id,
+          headingPath: chunk.headingPath,
+          start: chunk.start,
+          end: chunk.end,
+          text: chunk.text,
+          snippet: buildSnippet(chunk.text, chunk.headingPath, note.title, trimmed),
+          score: relevance.span * 1000 + relevance.bigrams * 10 + relevance.words,
+        });
+      }
+    }
+    return loose
       .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
       .slice(0, limit);
   }

@@ -2,7 +2,13 @@ import { chunkMarkdown, extractTitle, parseFrontmatter } from './chunk.js';
 import { contentHash } from './hash.js';
 import { extractLinks, remapIndexPath, resolveDestination } from './links.js';
 import { chunkVecVirtualTableSql, SCHEMA_SQL } from './schema.js';
-import { segmentForSearch, toFtsQuery } from './segment.js';
+import {
+  overlapKeeps,
+  scoreOverlap,
+  segmentForSearch,
+  toFtsOverlapQuery,
+  toFtsQuery,
+} from './segment.js';
 import { buildSnippet, countOccurrences } from './snippet.js';
 import type {
   ChunkOptions,
@@ -259,7 +265,18 @@ export class VaultIndex {
     const ftsQuery = toFtsQuery(trimmed);
     if (ftsQuery) {
       try {
-        return this.searchFts(ftsQuery, trimmed, limit);
+        const exact = this.searchFts(ftsQuery, trimmed, limit);
+        if (exact.length > 0) return exact;
+      } catch (error) {
+        if (!isFtsError(error)) throw error;
+      }
+    }
+    const overlapQuery = toFtsOverlapQuery(trimmed);
+    if (overlapQuery) {
+      try {
+        const pool = Math.min(100, Math.max(limit * 8, limit));
+        const rough = this.searchFts(overlapQuery, trimmed, pool);
+        return rankOverlap(trimmed, rough).slice(0, limit);
       } catch (error) {
         if (!isFtsError(error)) throw error;
       }
@@ -896,6 +913,28 @@ function isFtsError(error: unknown): boolean {
 
 function isCount(value: number): boolean {
   return Number.isInteger(value) && value >= 0;
+}
+
+function rankOverlap(query: string, hits: SearchHit[]): SearchHit[] {
+  return hits
+    .map((hit) => {
+      const relevance = scoreOverlap(query, `${hit.title}\n${hit.headingPath}\n${hit.text}`);
+      return { hit, relevance };
+    })
+    .filter((item) => overlapKeeps(query, item.relevance))
+    .sort(
+      (left, right) =>
+        right.relevance.span - left.relevance.span ||
+        right.relevance.bigrams - left.relevance.bigrams ||
+        right.relevance.words - left.relevance.words ||
+        right.hit.score - left.hit.score ||
+        left.hit.path.localeCompare(right.hit.path),
+    )
+    .map((item) => ({
+      ...item.hit,
+      score: item.relevance.span * 1000 + item.relevance.bigrams * 10 + item.relevance.words,
+      snippet: buildSnippet(item.hit.text, item.hit.headingPath, item.hit.title, query),
+    }));
 }
 
 function readLimit(limit: number | undefined): number {
