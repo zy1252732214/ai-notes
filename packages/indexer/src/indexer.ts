@@ -263,10 +263,10 @@ export class VaultIndex {
     if (!trimmed) return [];
     const limit = readLimit(options.limit);
     const ftsQuery = toFtsQuery(trimmed);
+    let exact: SearchHit[] = [];
     if (ftsQuery) {
       try {
-        const exact = this.searchFts(ftsQuery, trimmed, limit);
-        if (exact.length > 0) return exact;
+        exact = this.searchFts(ftsQuery, trimmed, limit);
       } catch (error) {
         if (!isFtsError(error)) throw error;
       }
@@ -274,13 +274,16 @@ export class VaultIndex {
     const overlapQuery = toFtsOverlapQuery(trimmed);
     if (overlapQuery) {
       try {
-        const pool = Math.min(100, Math.max(limit * 8, limit));
+        // bm25 picks at most this many candidates before span ranking.
+        // Exact phrase hits are merged afterwards, so they are not part of this cap.
+        const pool = 100;
         const rough = this.searchFts(overlapQuery, trimmed, pool);
-        return rankOverlap(trimmed, rough).slice(0, limit);
+        return mergeExact(exact, rankOverlap(trimmed, rough), limit);
       } catch (error) {
         if (!isFtsError(error)) throw error;
       }
     }
+    if (exact.length > 0) return exact.slice(0, limit);
     return this.searchLike(trimmed, limit);
   }
 
@@ -913,6 +916,24 @@ function isFtsError(error: unknown): boolean {
 
 function isCount(value: number): boolean {
   return Number.isInteger(value) && value >= 0;
+}
+
+/** Exact phrase hits stay in bm25 order. Partial CJK matches follow them. */
+function mergeExact(
+  exact: readonly SearchHit[],
+  overlap: readonly SearchHit[],
+  limit: number,
+): SearchHit[] {
+  const seenChunks = new Set<number>();
+  const seenPaths = new Set<string>();
+  const merged: SearchHit[] = [];
+  for (const hit of [...exact, ...overlap]) {
+    if (seenChunks.has(hit.chunkId) || seenPaths.has(hit.path)) continue;
+    seenChunks.add(hit.chunkId);
+    seenPaths.add(hit.path);
+    merged.push(hit);
+  }
+  return merged.slice(0, limit);
 }
 
 function rankOverlap(query: string, hits: SearchHit[]): SearchHit[] {

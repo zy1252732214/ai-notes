@@ -333,18 +333,19 @@ fn search_notes(conn: &Connection, query: &str, limit: u32) -> Result<Vec<Search
     }
     let limit = limit.clamp(1, 100);
     let fts = to_fts_query(query);
-    if let Some(hits) = fts_hits(conn, &fts, query, limit) {
-        if !hits.is_empty() {
-            return Ok(hits);
+    let exact = fts_hits(conn, &fts, query, limit).unwrap_or_default();
+    // A copied question is an exact phrase, but the answer often is not: 备用灯塔口令 vs 备用灯塔的口令.
+    // Phrase hits stay first. Bigram candidates are capped, then ranked by the longest shared span.
+    if let Some(overlap) = to_overlap_query(query) {
+        let pool = 100u32;
+        if let Some(hits) = fts_hits(conn, &overlap, query, pool) {
+            return Ok(merge_exact(exact, rank_overlap(query, hits, pool), limit));
         }
     }
-    // A question is not one contiguous phrase: 备用灯塔口令 does not contain the 的 in 备用灯塔的口令.
-    // Overlapping bigrams stay on the FTS index and are capped, then re-ranked by the longest shared span.
-    if let Some(overlap) = to_overlap_query(query) {
-        let pool = (limit.saturating_mul(8)).clamp(limit, 100);
-        if let Some(hits) = fts_hits(conn, &overlap, query, pool) {
-            return Ok(rank_overlap(query, hits, limit));
-        }
+    if !exact.is_empty() {
+        let mut exact = exact;
+        exact.truncate(limit as usize);
+        return Ok(exact);
     }
     let pattern = format!("%{}%", query.replace('%', "").replace('_', ""));
     let mut statement = conn
@@ -1011,6 +1012,20 @@ fn overlap_keeps(query: &str, span: &str, words: usize) -> bool {
     cjk_runs(query).iter().any(|run| run.starts_with(span))
 }
 
+fn merge_exact(exact: Vec<SearchHit>, overlap: Vec<SearchHit>, limit: u32) -> Vec<SearchHit> {
+    let mut seen_chunks = HashSet::new();
+    let mut seen_paths = HashSet::new();
+    let mut merged = Vec::new();
+    for hit in exact.into_iter().chain(overlap) {
+        if !seen_chunks.insert(hit.chunk_id) || !seen_paths.insert(hit.path.clone()) {
+            continue;
+        }
+        merged.push(hit);
+    }
+    merged.truncate(limit as usize);
+    merged
+}
+
 fn rank_overlap(query: &str, hits: Vec<SearchHit>, limit: u32) -> Vec<SearchHit> {
     let mut ranked: Vec<SearchHit> = hits
         .into_iter()
@@ -1581,5 +1596,51 @@ mod tests {
         let _ = search_notes(&conn, "备用灯塔\" OR \"a", 5).unwrap();
         let _ = search_notes(&conn, "'); DROP TABLE notes;--", 5).unwrap();
         assert_eq!(search_notes(&conn, "今天浇水", 5).unwrap()[0].path, "园艺.md");
+    }
+
+    #[test]
+    fn copied_question_does_not_hide_the_answer() {
+        let conn = memory();
+        let question = "备用灯塔口令是什么？请用笔记路径引用。";
+        upsert(&conn, "抄问句.md", &format!("# 抄问句\n\n{question}\n"), 1).unwrap();
+        upsert(
+            &conn,
+            "灯塔备忘.md",
+            "# 灯塔备忘\n\n港口备用灯塔的口令是 BLUE-HERON-4417。这个口令只写在这篇笔记里。\n",
+            1,
+        )
+        .unwrap();
+        upsert(
+            &conn,
+            "港口记录.md",
+            "# 港口记录\n\n另一处也写着备用灯塔的口令，是 RED-GULL-2201。\n",
+            1,
+        )
+        .unwrap();
+        upsert(&conn, "园艺.md", "# 园艺\n\n今天浇水。\n", 1).unwrap();
+        upsert(&conn, "天气.md", "# 天气\n\n明天有雨。\n", 1).unwrap();
+        let hits = search_notes(&conn, question, 5).unwrap();
+        let paths: Vec<&str> = hits.iter().map(|hit| hit.path.as_str()).collect();
+        assert_eq!(paths[0], "抄问句.md");
+        assert!(paths.contains(&"灯塔备忘.md"));
+        assert!(paths.contains(&"港口记录.md"));
+        let copy_at = paths.iter().position(|path| *path == "抄问句.md");
+        let light_at = paths.iter().position(|path| *path == "灯塔备忘.md");
+        assert!(copy_at < light_at);
+        assert!(hits
+            .iter()
+            .any(|hit| hit.path == "灯塔备忘.md" && hit.text.contains("BLUE-HERON-4417")));
+        assert!(hits
+            .iter()
+            .any(|hit| hit.path == "港口记录.md" && hit.text.contains("RED-GULL-2201")));
+        assert!(!paths.contains(&"园艺.md"));
+        assert!(!paths.contains(&"天气.md"));
+        assert!(search_hybrid_notes(&conn, question, None, 5, None)
+            .unwrap()
+            .iter()
+            .any(|hit| hit.path == "灯塔备忘.md"));
+        assert!(search_notes(&conn, "火星基地发射窗口", 5)
+            .unwrap()
+            .is_empty());
     }
 }

@@ -298,6 +298,42 @@ describe('VaultIndex', () => {
     index.close();
   });
 
+  it('keeps the answer when another note copies the whole question', () => {
+    const index = openIndex();
+    const question = '备用灯塔口令是什么？请用笔记路径引用。';
+    index.upsertNote({
+      path: '抄问句.md',
+      content: `# 抄问句\n\n${question}\n`,
+      mtime: 1,
+    });
+    index.upsertNote({
+      path: '灯塔备忘.md',
+      content: '# 灯塔备忘\n\n港口备用灯塔的口令是 BLUE-HERON-4417。这个口令只写在这篇笔记里。\n',
+      mtime: 1,
+    });
+    index.upsertNote({
+      path: '港口记录.md',
+      content: '# 港口记录\n\n另一处也写着备用灯塔的口令，是 RED-GULL-2201。\n',
+      mtime: 1,
+    });
+    index.upsertNote({ path: '园艺.md', content: '# 园艺\n\n今天浇水。\n', mtime: 1 });
+    index.upsertNote({ path: '天气.md', content: '# 天气\n\n明天有雨。\n', mtime: 1 });
+
+    const hits = index.search(question, { limit: 5 });
+    const paths = hits.map((hit) => hit.path);
+    expect(paths[0]).toBe('抄问句.md');
+    expect(paths).toContain('灯塔备忘.md');
+    expect(paths).toContain('港口记录.md');
+    expect(paths.indexOf('抄问句.md')).toBeLessThan(paths.indexOf('灯塔备忘.md'));
+    expect(paths.indexOf('抄问句.md')).toBeLessThan(paths.indexOf('港口记录.md'));
+    expect(hits.find((hit) => hit.path === '灯塔备忘.md')?.text).toContain('BLUE-HERON-4417');
+    expect(hits.find((hit) => hit.path === '港口记录.md')?.text).toContain('RED-GULL-2201');
+    expect(paths).not.toContain('园艺.md');
+    expect(paths).not.toContain('天气.md');
+    expect(index.search('火星基地发射窗口')).toEqual([]);
+    index.close();
+  });
+
   it('describes a future sqlite-vec table without requiring the extension', () => {
     expect(chunkVecVirtualTableSql(768)).toContain('vec0');
     expect(chunkVecVirtualTableSql(768)).toContain('float[768]');

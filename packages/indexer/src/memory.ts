@@ -191,12 +191,11 @@ export class MemoryIndex {
         });
       }
     }
-    if (hits.length > 0) {
-      return hits
-        .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
-        .slice(0, limit);
-    }
-    if (!toFtsOverlapQuery(trimmed)) return [];
+    const exact = hits.sort(
+      (left, right) => right.score - left.score || left.path.localeCompare(right.path),
+    );
+    if (!toFtsOverlapQuery(trimmed)) return exact.slice(0, limit);
+    const seen = new Set(exact.map((hit) => hit.chunkId));
     const loose: SearchHit[] = [];
     for (const note of this.notes.values()) {
       for (const chunk of note.chunks) {
@@ -219,9 +218,17 @@ export class MemoryIndex {
         });
       }
     }
-    return loose
+    const partial = loose
       .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
-      .slice(0, limit);
+      .filter((hit) => !seen.has(hit.chunkId));
+    const seenPaths = new Set<string>();
+    const merged: SearchHit[] = [];
+    for (const hit of [...exact, ...partial]) {
+      if (seenPaths.has(hit.path)) continue;
+      seenPaths.add(hit.path);
+      merged.push(hit);
+    }
+    return merged.slice(0, limit);
   }
 
   /**
