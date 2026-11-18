@@ -4,10 +4,12 @@ import {
   answerAfterStream,
   answerLabels,
   answerParts,
+  answerWithoutSources,
   buildAskMessages,
   citationsFromAnswer,
   explainAiError,
   isAbortError,
+  shouldAskModel,
   sourceFromHit,
   sourceFromNote,
   streamAnswer,
@@ -24,7 +26,7 @@ interface Turn {
   role: 'user' | 'assistant' | 'error';
   content: string;
   citations: CitationSource[];
-  status?: 'streaming' | 'complete' | 'incomplete';
+  status?: 'streaming' | 'complete' | 'incomplete' | 'withheld';
   error?: string;
 }
 
@@ -83,6 +85,21 @@ export function AskPane() {
     const userId = crypto.randomUUID();
     const assistantId = crypto.randomUUID();
     setDraft('');
+    if (!shouldAskModel(note, retrieved)) {
+      const shown = answerWithoutSources();
+      setTurns((current) => [
+        ...current,
+        { id: userId, role: 'user', content: question, citations: [] },
+        {
+          id: assistantId,
+          role: 'assistant',
+          content: shown.text,
+          citations: [],
+          status: 'withheld',
+        },
+      ]);
+      return;
+    }
     setBusy(true);
     setTurns((current) => [
       ...current,
@@ -169,11 +186,13 @@ export function AskPane() {
             );
           }
           const statusLabel =
-            turn.status === 'incomplete'
-              ? answerLabels.incomplete
-              : turn.status === 'complete'
-                ? answerLabels.complete
-                : answerLabels.streaming;
+            turn.status === 'withheld'
+              ? answerLabels.withheld
+              : turn.status === 'incomplete'
+                ? answerLabels.incomplete
+                : turn.status === 'complete'
+                  ? answerLabels.complete
+                  : answerLabels.streaming;
           return (
             <div key={turn.id} className="ai-answer-block">
               <p

@@ -81,16 +81,27 @@ function noteBlock(source: CitationSource): string {
   return `<note path="${path}">\n${source.excerpt.replaceAll('</note', '< /note')}\n</note>`;
 }
 
+export const noEvidenceText = '笔记里没有找到依据。';
+
 export const answerLabels = {
   streaming: '正在生成',
   complete: 'AI 生成，可能有误',
   incomplete: '回答未完成',
+  withheld: '未检索到笔记，没有调用模型',
   citation: '来源原文，未经核实',
 } as const;
 
+/** An open note still counts as context. Only a fully empty call skips the model. */
+export function shouldAskModel(
+  active: CitationSource | null,
+  retrieved: readonly CitationSource[],
+): boolean {
+  return active !== null || retrieved.length > 0;
+}
+
 export type AnswerOutcome = 'complete' | 'cancel' | 'error';
 
-/** Keep the model text. Cards only name paths that this answer wrote and this call supplied. */
+/** Keep the model text. Cards only name paths this answer wrote that belong to this call. */
 export function showModelAnswer(
   modelText: string,
   sources: readonly CitationSource[],
@@ -107,9 +118,19 @@ export function showModelAnswer(
 export interface StreamFinish {
   text: string;
   citations: CitationSource[];
-  status: 'complete' | 'incomplete';
+  status: 'complete' | 'incomplete' | 'withheld';
   role: 'assistant' | 'error';
   error?: string;
+}
+
+/** No open note and no retrieved note: do not call the model. */
+export function answerWithoutSources(): StreamFinish {
+  return {
+    role: 'assistant',
+    text: noEvidenceText,
+    citations: [],
+    status: 'withheld',
+  };
 }
 
 /** A stream is complete only after the provider reports a protocol end. */
