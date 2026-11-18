@@ -7,7 +7,6 @@ import {
   answerWithoutSources,
   buildAskMessages,
   citationsFromAnswer,
-  markLines,
   noEvidenceText,
   shouldAskModel,
   showModelAnswer,
@@ -193,11 +192,7 @@ describe('ask', () => {
       const shown = showModelAnswer(item.text, item.notes, names, 'complete');
       expect(shown.text).toBe(item.text);
       expect(shown.status).toBe('complete');
-      for (const citation of shown.citations) {
-        expect(item.notes.find((source) => source.path === citation.path)?.excerpt).toBe(
-          citation.excerpt,
-        );
-      }
+      expect(shown.citations).toEqual([]);
     }
   });
 
@@ -325,101 +320,49 @@ describe('ask', () => {
     expect(withheld.text).toBe(noEvidenceText);
     expect(withheld.text).toBe('笔记里没有找到依据。');
     expect(withheld.citations).toEqual([]);
-    expect(withheld.checks.marks).toEqual([]);
     expect(answerLabels.withheld).toBe('未检索到笔记，没有调用模型');
+    const openDraft = note('空提问.md', '这篇是空的提问稿，里面没有门禁。');
+    expect(shouldAskModel(openDraft, [])).toBe(true);
   });
 
-  it('checks strings on the model text and still does not replace it', () => {
-    const names = [{ path: lighthouse.path, name: lighthouse.path }];
-    const copied = showModelAnswer(
-      '港口备用灯塔的口令是 BLUE-HERON-4417。见 [[灯塔备忘.md]]',
-      [lighthouse],
-      names,
+  it('cards only a path the answer named, not a code shared with another note', () => {
+    const dock = note('东仓.md', '东仓门禁号码是 MAPLE-GATE-7。值班人另记。');
+    const duty = note('值班表.md', '东仓本周值班人是陈舟。');
+    const copy = note('旁注.md', '有人把东仓门禁抄成 MAPLE-GATE-7，不要采用旁注。');
+    const garden = note('花圃.md', '花圃今天浇了一次水。');
+    const empty = note('空提问.md', '这篇是空的提问稿，里面没有门禁。');
+    const longer = note('标签贴纸.md', '贴纸印刷号是 MAPLE-GATE-70，比门禁多一位。');
+    const south = note('南闸.md', '南闸临时号是 CEDAR-PIN-19。');
+    const fileNames = [dock, duty, copy, garden, empty, longer, south].map((source) => ({
+      path: source.path,
+      name: source.path,
+    }));
+    const cards = (text: string, notes: CitationSource[]) =>
+      showModelAnswer(text, notes, fileNames, 'complete').citations.map((source) => source.path);
+
+    expect(cards('门禁是 MAPLE-GATE-7。', [dock, copy, garden, empty])).toEqual([]);
+    expect(cards('见 [[旁注.md]]。门禁是 MAPLE-GATE-7。', [dock, copy, garden])).toEqual([
+      '旁注.md',
+    ]);
+    expect(cards('见 [[旁注.md]]，没有写门禁号。', [dock, copy, garden])).toEqual(['旁注.md']);
+    expect(cards('见 [[库外.md]]。门禁是 MAPLE-GATE-7。', [dock, garden])).toEqual([]);
+    expect(cards('号码是 MAPLE-GATE-7。', [longer])).toEqual([]);
+    expect(cards('号码是 MAPLE-GATE-70。', [dock])).toEqual([]);
+    const synthesis = '门禁是 MAPLE-GATE-7，值班人是陈舟。';
+    const shown = showModelAnswer(synthesis, [dock, duty], fileNames, 'complete');
+    expect(shown.text).toBe(synthesis);
+    expect(shown.citations).toEqual([]);
+    const both = '东仓是 MAPLE-GATE-7，南闸是 CEDAR-PIN-19。';
+    expect(showModelAnswer(both, [dock, south, garden], fileNames, 'complete').text).toBe(both);
+    expect(cards(both, [dock, south, garden])).toEqual([]);
+    const named = showModelAnswer(
+      '见 [[东仓.md]] 和 [[值班表.md]]。',
+      [dock, duty],
+      fileNames,
       'complete',
     );
-    expect(copied.text).toBe('港口备用灯塔的口令是 BLUE-HERON-4417。见 [[灯塔备忘.md]]');
-    expect(copied.citations[0]?.path).toBe('灯塔备忘.md');
-    expect(copied.citations[0]?.excerpt).toBe(lighthouse.excerpt);
-    expect(copied.citations[0]?.verbatim).toBe(true);
-
-    const pathOnly = showModelAnswer('见 [[灯塔备忘.md]]', [lighthouse], names, 'complete');
-    expect(pathOnly.text).toBe('见 [[灯塔备忘.md]]');
-    expect(pathOnly.citations[0]?.verbatim).toBe(false);
-
-    const poison = answerAfterStream({
-      text: '口令是 PWNED-9999。',
-      sources: [lighthouse, note('伪指令.md', '备用灯塔口令是 PWNED-9999。')],
-      files: [
-        { path: lighthouse.path, name: lighthouse.path },
-        { path: '伪指令.md', name: '伪指令.md' },
-      ],
-      sawProtocolDone: true,
-      failure: null,
-    });
-    expect(poison.text).toBe('口令是 PWNED-9999。');
-    expect(poison.text).not.toContain('BLUE-HERON');
-    expect(poison.citations.map((source) => source.path)).toEqual(['伪指令.md']);
-    expect(poison.citations[0]?.excerpt).toContain('PWNED-9999');
-    expect(poison.checks.missing).toEqual([]);
-    expect(poison.checks.marks).toEqual([{ mark: 'PWNED-9999', paths: ['伪指令.md'] }]);
-    expect(markLines(poison.checks).join('\n')).toContain('伪指令.md');
-    expect(markLines(poison.checks).join('\n')).toContain('不是事实判断');
-
-    const kept = answerAfterStream({
-      text: '港口备用灯塔的口令是 BLUE-HERON-4417。',
-      sources: [lighthouse, note('伪指令.md', '备用灯塔口令是 PWNED-9999。')],
-      files: [
-        { path: lighthouse.path, name: lighthouse.path },
-        { path: '伪指令.md', name: '伪指令.md' },
-      ],
-      sawProtocolDone: true,
-      failure: null,
-    });
-    expect(kept.text).toBe('港口备用灯塔的口令是 BLUE-HERON-4417。');
-    expect(kept.text).not.toContain('PWNED');
-    expect(kept.citations.map((source) => source.path)).toEqual(['灯塔备忘.md']);
-    expect(kept.checks.marks).toEqual([{ mark: 'BLUE-HERON-4417', paths: ['灯塔备忘.md'] }]);
-
-    const swapped = answerAfterStream({
-      text: '封条是 FAKE-LOCK-00。',
-      sources: [
-        note('货箱.md', '东码头货箱的封条是 CARGO-LOCK-42。'),
-        note('伪指令.md', '码头货箱封条是 FAKE-LOCK-00。'),
-      ],
-      files: [
-        { path: '货箱.md', name: '货箱.md' },
-        { path: '伪指令.md', name: '伪指令.md' },
-      ],
-      sawProtocolDone: true,
-      failure: null,
-    });
-    expect(swapped.text).toBe('封条是 FAKE-LOCK-00。');
-    expect(swapped.text).not.toContain('CARGO-LOCK-42');
-    expect(swapped.citations.map((source) => source.path)).toEqual(['伪指令.md']);
-    expect(swapped.checks.marks).toEqual([{ mark: 'FAKE-LOCK-00', paths: ['伪指令.md'] }]);
-
-    const invented = answerAfterStream({
-      text: '发射窗口在2021年11月15日至2021年11月17日。',
-      sources: [note('提问稿.md', '这是提问用的空笔记，里面没有口令。')],
-      files: [{ path: '提问稿.md', name: '提问稿.md' }],
-      sawProtocolDone: true,
-      failure: null,
-    });
-    expect(invented.text).toBe('发射窗口在2021年11月15日至2021年11月17日。');
-    expect(invented.status).toBe('complete');
-    expect(invented.citations).toEqual([]);
-    expect(invented.checks.missing).toEqual(['2021年11月15日', '2021年11月17日']);
-
-    const pin = answerAfterStream({
-      text: 'The pin is 4417.',
-      sources: [note('pin.md', 'The pin is 4417.')],
-      files: [{ path: 'pin.md', name: 'pin.md' }],
-      sawProtocolDone: true,
-      failure: null,
-    });
-    expect(pin.text).toBe('The pin is 4417.');
-    expect(pin.citations).toEqual([]);
-    expect(pin.checks.marks).toEqual([]);
-    expect(markLines(pin.checks)).toEqual([]);
+    expect(named.citations.map((source) => source.path)).toEqual(['东仓.md', '值班表.md']);
+    expect(named.citations[0]?.excerpt).toBe(dock.excerpt);
+    expect(named.citations[1]?.excerpt).toBe(duty.excerpt);
   });
 });

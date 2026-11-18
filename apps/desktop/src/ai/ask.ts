@@ -12,9 +12,6 @@ import type { SearchHit } from '@ai-notes/indexer';
 import type { NoteName } from '../search/fuzzy.js';
 import { resolveNoteLink } from '../search/links.js';
 import { stripSnippet } from '../search/snippet.js';
-import { emptyChecks, excerptAppearsInAnswer, locateMarks, type AnswerChecks } from './marks.js';
-
-export type { AnswerChecks } from './marks.js';
 import { activeProvider, normalizeAiSettings, type AiSettings } from './settings.js';
 
 export interface CitationSource {
@@ -23,8 +20,6 @@ export interface CitationSource {
   excerpt: string;
   start: number;
   end?: number;
-  /** True when the answer contains a contiguous slice of this excerpt. */
-  verbatim?: boolean;
 }
 
 const NOTE_LIMIT = 4000;
@@ -94,14 +89,9 @@ export const answerLabels = {
   incomplete: '回答未完成',
   withheld: '未检索到笔记，没有调用模型',
   citation: '来源原文，未经核实',
-  missingMark: '这些记号未出现在本次资料原文中',
-  locatedMark: '这些记号能在资料原文中找到',
-  splitMarks: '这些记号分别写在不同笔记里，程序没有选择哪一条',
-  markScope: '只核对了字符串是否出现，不是事实判断',
-  verbatim: '回答含该笔记的连续原文',
-  pathOnly: '只核对了路径',
 } as const;
 
+/** An open note still counts as context. Only a fully empty call skips the model. */
 export function shouldAskModel(
   active: CitationSource | null,
   retrieved: readonly CitationSource[],
@@ -109,51 +99,18 @@ export function shouldAskModel(
   return active !== null || retrieved.length > 0;
 }
 
-export function markLines(checks: AnswerChecks): string[] {
-  const lines: string[] = [];
-  if (checks.missing.length > 0) {
-    lines.push(
-      `${answerLabels.missingMark}：${checks.missing.join('、')}。${answerLabels.markScope}`,
-    );
-  }
-  const located = checks.marks.filter((item) => item.paths.length > 0);
-  if (located.length > 0) {
-    const body = located.map((item) => `${item.mark}（${item.paths.join('、')}）`).join('；');
-    lines.push(`${answerLabels.locatedMark}：${body}。${answerLabels.markScope}`);
-  }
-  if (checks.splitAcrossNotes) {
-    lines.push(`${answerLabels.splitMarks}。${answerLabels.markScope}`);
-  }
-  return lines;
-}
-
 export type AnswerOutcome = 'complete' | 'cancel' | 'error';
 
-/** Keep the model text. Cards name paths written in the answer, and notes that contain a code or date the answer wrote. */
+/** Keep the model text. Cards only name paths this answer wrote that belong to this call. */
 export function showModelAnswer(
   modelText: string,
   sources: readonly CitationSource[],
   files: readonly NoteName[],
   outcome: AnswerOutcome,
 ): { text: string; citations: CitationSource[]; status: 'complete' | 'incomplete' } {
-  const named = citationsFromAnswer(modelText, sources, files, true);
-  const seen = new Set(named.map((source) => source.path));
-  const extra: CitationSource[] = [];
-  for (const hit of locateMarks(modelText, sources).marks) {
-    for (const path of hit.paths) {
-      if (seen.has(path)) continue;
-      const source = sources.find((item) => item.path === path);
-      if (!source) continue;
-      seen.add(path);
-      extra.push(source);
-    }
-  }
   return {
     text: modelText,
-    citations: [...named, ...extra].map((source) => ({
-      ...source,
-      verbatim: excerptAppearsInAnswer(modelText, source.excerpt),
-    })),
+    citations: citationsFromAnswer(modelText, sources, files, true),
     status: outcome === 'complete' ? 'complete' : 'incomplete',
   };
 }
@@ -164,7 +121,6 @@ export interface StreamFinish {
   status: 'complete' | 'incomplete' | 'withheld';
   role: 'assistant' | 'error';
   error?: string;
-  checks: AnswerChecks;
 }
 
 /** No open note and no retrieved note: do not call the model. */
@@ -174,7 +130,6 @@ export function answerWithoutSources(): StreamFinish {
     text: noEvidenceText,
     citations: [],
     status: 'withheld',
-    checks: emptyChecks(),
   };
 }
 
@@ -193,7 +148,6 @@ export function answerAfterStream(input: {
         text: input.failure.message,
         citations: [],
         status: 'incomplete',
-        checks: emptyChecks(),
       };
     }
     const shown = showModelAnswer(input.text, input.sources, input.files, 'cancel');
@@ -202,19 +156,12 @@ export function answerAfterStream(input: {
       text: shown.text,
       citations: shown.citations,
       status: 'incomplete',
-      checks: locateMarks(shown.text, input.sources),
     };
   }
   if (input.failure || !input.sawProtocolDone) {
     const message = input.failure?.message || '模型连接中断';
     if (!input.text) {
-      return {
-        role: 'error',
-        text: message,
-        citations: [],
-        status: 'incomplete',
-        checks: emptyChecks(),
-      };
+      return { role: 'error', text: message, citations: [], status: 'incomplete' };
     }
     const shown = showModelAnswer(input.text, input.sources, input.files, 'error');
     return {
@@ -223,17 +170,10 @@ export function answerAfterStream(input: {
       citations: shown.citations,
       status: 'incomplete',
       error: message,
-      checks: locateMarks(shown.text, input.sources),
     };
   }
   const shown = showModelAnswer(input.text, input.sources, input.files, 'complete');
-  return {
-    role: 'assistant',
-    text: shown.text,
-    citations: shown.citations,
-    status: 'complete',
-    checks: locateMarks(shown.text, input.sources),
-  };
+  return { role: 'assistant', text: shown.text, citations: shown.citations, status: 'complete' };
 }
 
 export function citationsFromAnswer(
