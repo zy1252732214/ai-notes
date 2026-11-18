@@ -1,6 +1,8 @@
 import { Button, ChatMessage, Textarea } from '@ai-notes/ui';
 import { useEffect, useRef, useState } from 'react';
 import {
+  answerAfterStream,
+  answerLabels,
   answerParts,
   buildAskMessages,
   citationsFromAnswer,
@@ -22,7 +24,8 @@ interface Turn {
   role: 'user' | 'assistant' | 'error';
   content: string;
   citations: CitationSource[];
-  pending?: boolean;
+  status?: 'streaming' | 'complete' | 'incomplete';
+  error?: string;
 }
 
 export function AskPane() {
@@ -75,7 +78,7 @@ export function AskPane() {
       }
     }
     const messages = buildAskMessages(question, note, retrieved);
-    const sources = note ? [note, ...retrieved] : retrieved;
+    const supplied = note ? [note, ...retrieved] : retrieved;
     const epochAtSend = epochRef.current;
     const userId = crypto.randomUUID();
     const assistantId = crypto.randomUUID();
@@ -84,16 +87,19 @@ export function AskPane() {
     setTurns((current) => [
       ...current,
       { id: userId, role: 'user', content: question, citations: [] },
-      { id: assistantId, role: 'assistant', content: '', citations: [], pending: true },
+      { id: assistantId, role: 'assistant', content: '', citations: [], status: 'streaming' },
     ]);
     const controller = new AbortController();
     abortRef.current?.abort();
     abortRef.current = controller;
     let text = '';
+    let sawProtocolDone = false;
+    let failure: { abort: boolean; message: string } | null = null;
     try {
       for await (const event of streamAnswer(settings, messages, undefined, controller.signal)) {
         if (epochRef.current !== epochAtSend) return;
-        text += event.delta;
+        if (event.delta) text += event.delta;
+        if (event.done) sawProtocolDone = true;
         const next = text;
         setTurns((current) =>
           current.map((turn) =>
@@ -101,48 +107,42 @@ export function AskPane() {
               ? {
                   ...turn,
                   content: next,
-                  citations: citationsFromAnswer(next, sources, files, false),
+                  status: 'streaming',
+                  citations: citationsFromAnswer(next, supplied, files, false),
                 }
               : turn,
           ),
         );
       }
-      const finalText = text;
-      setTurns((current) =>
-        current.map((turn) =>
-          turn.id === assistantId
-            ? {
-                ...turn,
-                pending: false,
-                content: finalText,
-                citations: citationsFromAnswer(finalText, sources, files, true),
-              }
-            : turn,
-        ),
-      );
     } catch (error) {
       if (epochRef.current !== epochAtSend) return;
-      const message = explainAiError(error);
-      setTurns((current) =>
-        current.map((turn) => {
-          if (turn.id !== assistantId) return turn;
-          if (isAbortError(error) && turn.content) return { ...turn, pending: false };
-          if (turn.content) {
-            return { ...turn, pending: false };
-          }
-          return { ...turn, role: 'error', pending: false, content: message };
-        }),
-      );
-      if (!isAbortError(error) && text) {
-        setTurns((current) => [
-          ...current,
-          { id: crypto.randomUUID(), role: 'error', content: message, citations: [] },
-        ]);
-      }
+      failure = { abort: isAbortError(error), message: explainAiError(error) };
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       if (epochRef.current === epochAtSend) setBusy(false);
     }
+    if (epochRef.current !== epochAtSend) return;
+    const shown = answerAfterStream({
+      text,
+      sources: supplied,
+      files,
+      sawProtocolDone,
+      failure,
+    });
+    setTurns((current) =>
+      current.map((turn) =>
+        turn.id === assistantId
+          ? {
+              ...turn,
+              role: shown.role,
+              status: shown.status,
+              content: shown.text,
+              citations: shown.citations,
+              error: shown.error,
+            }
+          : turn,
+      ),
+    );
   };
 
   return (
@@ -168,12 +168,26 @@ export function AskPane() {
               </p>
             );
           }
+          const statusLabel =
+            turn.status === 'incomplete'
+              ? answerLabels.incomplete
+              : turn.status === 'complete'
+                ? answerLabels.complete
+                : answerLabels.streaming;
           return (
             <div key={turn.id} className="ai-answer-block">
+              <p
+                className={
+                  turn.status === 'incomplete' ? 'ai-answer-status incomplete' : 'ai-answer-status'
+                }
+                role="status"
+              >
+                {statusLabel}
+              </p>
               <article className="an-chat an-chat--assistant" aria-label="回答">
                 <p className="an-chat__role">回答</p>
                 <div className="an-chat__content">
-                  {turn.pending && !turn.content ? '正在回答…' : null}
+                  {turn.status === 'streaming' && !turn.content ? '正在回答…' : null}
                   <AnswerText
                     text={turn.content}
                     onOpen={(target) => {
@@ -184,6 +198,9 @@ export function AskPane() {
                   />
                 </div>
               </article>
+              {turn.citations.length > 0 ? (
+                <p className="ai-citation-note">{answerLabels.citation}</p>
+              ) : null}
               {turn.citations.map((citation) => (
                 <div
                   key={`${turn.id}:${citation.path}:${citation.start}`}
@@ -202,11 +219,16 @@ export function AskPane() {
                     citation={{
                       title: citation.title,
                       source: citation.path,
-                      excerpt: citation.excerpt || '打开这篇笔记',
+                      excerpt: citation.excerpt,
                     }}
                   />
                 </div>
               ))}
+              {turn.error ? (
+                <p className="ai-error" role="alert">
+                  {turn.error}
+                </p>
+              ) : null}
             </div>
           );
         })}

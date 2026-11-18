@@ -78,6 +78,36 @@ describe('OpenAICompatibleProvider', () => {
     });
   });
 
+  it('treats a finish reason without the trailing DONE line as a normal end', async () => {
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: 'https://example.test/v1',
+      apiKey: 'sk-test',
+      fetch: mockFetch(async () =>
+        streamResponse(['data: {"choices":[{"delta":{"content":"好"},"finish_reason":"stop"}]}\n']),
+      ),
+    });
+    const events = await collect(provider.stream({ model: 'demo', messages }));
+    expect(events.map((event) => event.delta).join('')).toBe('好');
+    expect(events.at(-1)).toMatchObject({ done: true, finishReason: 'stop' });
+  });
+
+  it('rejects an SSE body that ends before DONE or a finish reason', async () => {
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: 'https://example.test/v1',
+      apiKey: 'sk-test',
+      fetch: mockFetch(async () =>
+        streamResponse(['data: {"choices":[{"delta":{"content":"灯塔备"}}]}\n']),
+      ),
+    });
+    const events: string[] = [];
+    await expect(async () => {
+      for await (const event of provider.stream({ model: 'demo', messages })) {
+        if (event.delta) events.push(event.delta);
+      }
+    }).rejects.toThrow('模型连接中断');
+    expect(events.join('')).toBe('灯塔备');
+  });
+
   it('estimates tokens when the provider omits usage', async () => {
     const provider = new OpenAICompatibleProvider({
       baseUrl: 'https://example.test/v1',
