@@ -114,8 +114,16 @@ function TreeNode({
   return (
     <div className="tree-node" role="treeitem" aria-expanded={directory ? open : undefined}>
       <div
-        className={selected ? 'tree-row selected' : 'tree-row'}
-        style={{ paddingLeft: 8 + depth * 14 }}
+        className={
+          directory
+            ? selected
+              ? 'tree-row is-directory selected'
+              : 'tree-row is-directory'
+            : selected
+              ? 'tree-row is-file selected'
+              : 'tree-row is-file'
+        }
+        style={{ paddingLeft: `calc(var(--an-space-2) + ${depth} * var(--an-space-4))` }}
       >
         {directory ? (
           <button

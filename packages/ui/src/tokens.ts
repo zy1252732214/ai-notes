@@ -93,10 +93,10 @@ export const space = {
 } as const;
 
 export const radius = {
-  sm: '6px',
-  md: '8px',
-  lg: '12px',
-  xl: '16px',
+  sm: '4px',
+  md: '6px',
+  lg: '8px',
+  xl: '12px',
 } as const;
 
 /** 阴影用 color-mix 跟随文字色，浅色和深色不用两套数值。 */
@@ -115,13 +115,14 @@ export const motion = {
 export const layout = {
   topbarHeight: '48px',
   statusbarHeight: '32px',
-  sidebarWidth: '260px',
+  sidebarWidth: '248px',
   sidebarMinWidth: '200px',
-  sidebarMaxWidth: '400px',
-  aiPanelWidth: '380px',
+  sidebarMaxWidth: '360px',
+  aiPanelWidth: '320px',
   aiPanelMinWidth: '300px',
-  aiPanelMaxWidth: '560px',
-  editorMaxWidth: '680px',
+  aiPanelMaxWidth: '480px',
+  editorMaxWidth: '720px',
+  dialogWidth: '480px',
   commandPaletteWidth: '640px',
   /** 命令面板距视口顶部的位置。 */
   commandPaletteTop: '12%',
@@ -212,6 +213,7 @@ export const cssVarNames = {
     aiPanelMinWidth: '--an-ai-panel-min-width',
     aiPanelMaxWidth: '--an-ai-panel-max-width',
     editorMaxWidth: '--an-editor-max-width',
+    dialogWidth: '--an-dialog-width',
     commandPaletteWidth: '--an-command-palette-width',
     commandPaletteTop: '--an-command-palette-top',
     compactBreakpoint: '--an-breakpoint-compact',

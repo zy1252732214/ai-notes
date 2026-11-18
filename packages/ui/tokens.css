@@ -1,3 +1,8 @@
+/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
+ * redesign: full · theme: warm paper (kept) · posture: restrained
+ * copy: verbatim · built: the project
+ * critique: the source column leads, the index and the ask column step back */
+
 /*
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
@@ -58,10 +63,10 @@
   --an-space-6: 24px;
   --an-space-8: 32px;
 
-  --an-radius-sm: 6px;
-  --an-radius-md: 8px;
-  --an-radius-lg: 12px;
-  --an-radius-xl: 16px;
+  --an-radius-sm: 4px;
+  --an-radius-md: 6px;
+  --an-radius-lg: 8px;
+  --an-radius-xl: 12px;
 
   --an-shadow-sm: 0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent);
   --an-shadow-md: 0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
@@ -72,13 +77,14 @@
 
   --an-topbar-height: 48px;
   --an-statusbar-height: 32px;
-  --an-sidebar-width: 260px;
+  --an-sidebar-width: 248px;
   --an-sidebar-min-width: 200px;
-  --an-sidebar-max-width: 400px;
-  --an-ai-panel-width: 380px;
+  --an-sidebar-max-width: 360px;
+  --an-ai-panel-width: 320px;
   --an-ai-panel-min-width: 300px;
-  --an-ai-panel-max-width: 560px;
-  --an-editor-max-width: 680px;
+  --an-ai-panel-max-width: 480px;
+  --an-editor-max-width: 720px;
+  --an-dialog-width: 480px;
   --an-command-palette-width: 640px;
   --an-command-palette-top: 12%;
   --an-breakpoint-compact: 900px;

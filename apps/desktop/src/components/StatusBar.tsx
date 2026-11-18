@@ -22,9 +22,13 @@ export function StatusBar() {
         {saveError ? `${label}：${saveError}` : label}
       </span>
       <span className="status-path">{activePath ?? ''}</span>
-      <span>
-        {active ? `${count} 字` : ''}
-        {active ? ` · ${cursor.line}:${cursor.column}` : ''}
+      <span className="status-meta">
+        {active ? <span>{count} 字</span> : null}
+        {active ? (
+          <span>
+            {cursor.line}:{cursor.column}
+          </span>
+        ) : null}
       </span>
     </footer>
   );

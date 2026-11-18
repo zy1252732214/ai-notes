@@ -63,7 +63,7 @@ function buildItems(
     plugin.commands.map((command) => ({
       id: `plugin:${command.pluginId}:${command.id}`,
       title: command.name,
-      hint: command.hotkey ? `插件 · ${command.hotkey}` : '插件',
+      hint: command.hotkey ? `插件 ${command.hotkey}` : '插件',
     })),
   );
   if (!hasVault) return [...commands, ...pluginCommands];

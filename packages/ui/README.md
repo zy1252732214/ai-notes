@@ -108,7 +108,7 @@ pnpm --filter @ai-notes/ui-preview dev
 
 间距按 4px 栅格：`--an-space-1` 4px、`--an-space-2` 8px、`--an-space-3` 12px、`--an-space-4` 16px、`--an-space-6` 24px、`--an-space-8` 32px。
 
-圆角：`--an-radius-sm` 6px、`--an-radius-md` 8px、`--an-radius-lg` 12px、`--an-radius-xl` 16px。
+圆角：`--an-radius-sm` 4px、`--an-radius-md` 6px、`--an-radius-lg` 8px、`--an-radius-xl` 12px。
 
 阴影：`--an-shadow-sm`、`--an-shadow-md`、`--an-shadow-lg`。颜色用 `color-mix` 从文字色派生，浅色和深色共用。
 
@@ -120,13 +120,14 @@ pnpm --filter @ai-notes/ui-preview dev
 | ---------------------------- | ----- | -------------------------- |
 | `--an-topbar-height`         | 48px  | 顶栏高度                   |
 | `--an-statusbar-height`      | 32px  | 状态栏高度                 |
-| `--an-sidebar-width`         | 260px | 左栏默认宽度               |
+| `--an-sidebar-width`         | 248px | 左栏默认宽度               |
 | `--an-sidebar-min-width`     | 200px | 左栏可拖下限               |
-| `--an-sidebar-max-width`     | 400px | 左栏可拖上限               |
-| `--an-ai-panel-width`        | 380px | 右侧面板默认宽度           |
+| `--an-sidebar-max-width`     | 360px | 左栏可拖上限               |
+| `--an-ai-panel-width`        | 320px | 右侧面板默认宽度           |
 | `--an-ai-panel-min-width`    | 300px | 右侧面板可拖下限           |
-| `--an-ai-panel-max-width`    | 560px | 右侧面板可拖上限           |
-| `--an-editor-max-width`      | 680px | 编辑区正文最大宽度         |
+| `--an-ai-panel-max-width`    | 480px | 右侧面板可拖上限           |
+| `--an-editor-max-width`      | 720px | 编辑区正文最大宽度         |
+| `--an-dialog-width`          | 480px | 设置对话框宽度             |
 | `--an-command-palette-width` | 640px | 命令面板宽度               |
 | `--an-command-palette-top`   | 12%   | 命令面板距顶部             |
 | `--an-breakpoint-compact`    | 900px | 窄于此宽度时左右栏改为抽屉 |
