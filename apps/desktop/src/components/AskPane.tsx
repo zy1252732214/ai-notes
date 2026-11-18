@@ -37,7 +37,6 @@ export function AskPane() {
   const tree = useAppStore((state) => state.tree);
   const openNote = useAppStore((state) => state.openNote);
   const openLink = useAppStore((state) => state.openLink);
-  const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
   const settingsOpen = useAppStore((state) => state.settingsOpen);
   const indexRevision = useAppStore((state) => state.indexRevision);
   const [draft, setDraft] = useState('');
@@ -163,17 +162,25 @@ export function AskPane() {
   };
 
   return (
-    <div className="ask-pane">
+    <div className={turns.length === 0 ? 'ask-pane is-empty' : 'ask-pane'}>
       <div className="ai-log" ref={logRef}>
-        <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
-          {retrievalLabel()}
-        </p>
         {turns.length === 0 ? (
-          <p className="ai-hint">
+          <p className="ask-empty">
+            <span
+              className="ask-empty-note"
+              data-settings={settingsOpen}
+              data-index={indexRevision}
+            >
+              {retrievalLabel()}
+            </span>
             向当前笔记提问。回答会附上可以点开的引用。模型提供方和 API Key
             在设置里，只存在这台设备上。
           </p>
-        ) : null}
+        ) : (
+          <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
+            {retrievalLabel()}
+          </p>
+        )}
         {turns.map((turn) => {
           if (turn.role === 'user') {
             return <ChatMessage key={turn.id} role="user" content={turn.content} />;
@@ -275,9 +282,6 @@ export function AskPane() {
           }}
         />
         <div className="ai-composer-actions">
-          <Button type="button" variant="ghost" onClick={() => setSettingsOpen(true)}>
-            设置
-          </Button>
           {busy ? (
             <Button type="button" onClick={() => abortRef.current?.abort()}>
               停止

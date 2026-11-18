@@ -1,6 +1,4 @@
 import { IFRAME_SANDBOX } from '@ai-notes/plugin-host';
-import { IconButton } from '@ai-notes/ui';
-import { Link2, MessageSquare, Settings } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
 import { useAppStore } from '../store';
@@ -33,8 +31,7 @@ export function AiPanel() {
             aria-controls="right-panel-ask"
             onClick={() => setTab('ask')}
           >
-            <MessageSquare size={16} strokeWidth={1.5} />
-            <span>问答</span>
+            问答
           </button>
           <button
             type="button"
@@ -45,8 +42,7 @@ export function AiPanel() {
             aria-controls="right-panel-links"
             onClick={() => setTab('links')}
           >
-            <Link2 size={16} strokeWidth={1.5} />
-            <span>链接</span>
+            链接
           </button>
           {panels.map((panel) => (
             <button
@@ -61,9 +57,14 @@ export function AiPanel() {
             </button>
           ))}
         </div>
-        <IconButton label="模型设置" size="sm" onClick={() => setSettingsOpen(true)}>
-          <Settings size={16} strokeWidth={1.5} />
-        </IconButton>
+        <button
+          type="button"
+          className="text-cmd"
+          aria-label="模型设置"
+          onClick={() => setSettingsOpen(true)}
+        >
+          设置
+        </button>
       </div>
       <div className="ai-panel-body" hidden={pluginPanel !== null}>
         <div

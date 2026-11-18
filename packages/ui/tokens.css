@@ -13,6 +13,7 @@
 :root {
   --an-bg-base: #fbfaf8;
   --an-bg-subtle: #f3f1ec;
+  --an-bg-recess: #d8d0c2;
   --an-bg-elevated: #fffcf9;
   --an-text-primary: #1c1917;
   --an-text-secondary: #57534e;
@@ -34,17 +35,17 @@
   --an-font-code:
     'JetBrains Mono', 'SF Mono', ui-monospace, 'Sarasa Mono SC', Menlo, Consolas, monospace;
 
-  --an-font-size-h1: 32px;
-  --an-line-h1: 40px;
+  --an-font-size-h1: 40px;
+  --an-line-h1: 48px;
   --an-font-weight-h1: 600;
-  --an-font-size-h2: 24px;
-  --an-line-h2: 32px;
+  --an-font-size-h2: 28px;
+  --an-line-h2: 36px;
   --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
   --an-line-h3: 28px;
   --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
-  --an-line-body: 28px;
+  --an-line-body: 32px;
   --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
   --an-line-ui: 22px;
@@ -77,13 +78,13 @@
 
   --an-topbar-height: 48px;
   --an-statusbar-height: 32px;
-  --an-sidebar-width: 248px;
-  --an-sidebar-min-width: 200px;
-  --an-sidebar-max-width: 360px;
-  --an-ai-panel-width: 320px;
-  --an-ai-panel-min-width: 300px;
-  --an-ai-panel-max-width: 480px;
-  --an-editor-max-width: 720px;
+  --an-sidebar-width: 200px;
+  --an-sidebar-min-width: 180px;
+  --an-sidebar-max-width: 320px;
+  --an-ai-panel-width: 276px;
+  --an-ai-panel-min-width: 240px;
+  --an-ai-panel-max-width: 420px;
+  --an-editor-max-width: 640px;
   --an-dialog-width: 480px;
   --an-command-palette-width: 640px;
   --an-command-palette-top: 12%;
@@ -95,6 +96,7 @@
 [data-theme='dark'] {
   --an-bg-base: #1c1b19;
   --an-bg-subtle: #242320;
+  --an-bg-recess: #141311;
   --an-bg-elevated: #2c2b28;
   --an-text-primary: #f4f1ea;
   --an-text-secondary: #c4bfb4;

@@ -65,7 +65,12 @@ const highlightStyle = HighlightStyle.define([
   { tag: tags.quote, color: 'var(--an-text-secondary)', fontStyle: 'italic' },
   { tag: tags.list, color: 'var(--an-text-tertiary)' },
   { tag: tags.meta, color: 'var(--an-text-tertiary)' },
-  { tag: tags.processingInstruction, color: 'var(--an-text-tertiary)' },
+  {
+    tag: tags.processingInstruction,
+    color: 'var(--an-text-tertiary)',
+    fontSize: '0.62em',
+    fontWeight: '400',
+  },
   { tag: tags.comment, color: 'var(--an-text-tertiary)' },
 ]);
 

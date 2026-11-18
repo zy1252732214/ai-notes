@@ -118,7 +118,6 @@ export function App() {
 
   return (
     <div className="app">
-      <TopBar />
       <div className={workspaceClass}>
         {narrow && (leftOpen || rightOpen) ? (
           <button
@@ -131,10 +130,13 @@ export function App() {
           />
         ) : null}
         <FileTree />
-        <EditorPane />
+        <div className="sheet">
+          <TopBar />
+          <EditorPane />
+          <StatusBar />
+        </div>
         <AiPanel />
       </div>
-      <StatusBar />
       <CommandPalette />
       <SearchPanel />
       <QuickSwitcher />
