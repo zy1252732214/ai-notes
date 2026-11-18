@@ -11,6 +11,7 @@ import {
   streamAnswer,
   type CitationSource,
 } from '../ai/ask';
+import { settleAnswer } from '../ai/ground';
 import { loadAiSettings } from '../ai/settings';
 import { getEmbedError, getNoteIndex, retrieveNotes } from '../search/client';
 import { listNoteFiles } from '../search/files';
@@ -69,13 +70,13 @@ export function AskPane() {
     if (index) {
       try {
         const hits = await retrieveNotes(question, 5);
-        retrieved = hits.map(sourceFromHit).filter((source) => source.path !== note?.path);
+        retrieved = hits.map(sourceFromHit);
       } catch {
         retrieved = [];
       }
     }
     const messages = buildAskMessages(question, note, retrieved);
-    const sources = note ? [note, ...retrieved] : retrieved;
+    const evidence = retrieved;
     const epochAtSend = epochRef.current;
     const userId = crypto.randomUUID();
     const assistantId = crypto.randomUUID();
@@ -101,21 +102,21 @@ export function AskPane() {
               ? {
                   ...turn,
                   content: next,
-                  citations: citationsFromAnswer(next, sources, files, false),
+                  citations: citationsFromAnswer(next, evidence, files, false),
                 }
               : turn,
           ),
         );
       }
-      const finalText = text;
+      const settled = settleAnswer(question, evidence, text);
       setTurns((current) =>
         current.map((turn) =>
           turn.id === assistantId
             ? {
                 ...turn,
                 pending: false,
-                content: finalText,
-                citations: citationsFromAnswer(finalText, sources, files, true),
+                content: settled.text,
+                citations: settled.citations,
               }
             : turn,
         ),

@@ -52,7 +52,7 @@ export function buildAskMessages(
   sources: readonly CitationSource[],
 ): ChatMessage[] {
   const current = active
-    ? `正在查看的笔记（不一定包含答案）：\n${noteBlock(active)}`
+    ? `正在查看的页面，不能当作问题的依据：\n${noteBlock(active)}`
     : '当前没有打开笔记。';
   const blocks =
     sources.length === 0
@@ -77,8 +77,7 @@ export function buildAskMessages(
 }
 
 function noteBlock(source: CitationSource): string {
-  const path = source.path.replaceAll('"', '').replaceAll('<', '');
-  return `<note path="${path}">\n${source.excerpt.replaceAll('</note', '< /note')}\n</note>`;
+  return JSON.stringify({ path: source.path, text: source.excerpt });
 }
 
 export function citationsFromAnswer(
@@ -92,9 +91,10 @@ export function citationsFromAnswer(
   const seen = new Set<string>();
   for (const match of answer.matchAll(WIKILINK)) {
     const path = resolveNoteLink(match[1] ?? '', files);
-    if (!path || seen.has(path)) continue;
-    seen.add(path);
-    found.push(byPath.get(path) ?? placeholder(path));
+    const source = path ? byPath.get(path) : undefined;
+    if (!source || seen.has(source.path)) continue;
+    seen.add(source.path);
+    found.push(source);
   }
   if (fallback) {
     for (const path of pathsWrittenInAnswer(
