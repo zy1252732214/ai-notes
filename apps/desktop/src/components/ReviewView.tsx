@@ -128,11 +128,9 @@ export function ReviewView() {
     <section className="review-view" aria-label="记忆卡片复习">
       <div className="review-stage">
         <header className="review-top">
-          <div>
-            <p className="review-kicker">间隔重复</p>
-            <h1>今日复习</h1>
-          </div>
+          <h1>今日复习</h1>
           <div className="review-top-actions">
+            <span className="review-kind">间隔重复</span>
             <span className="review-progress-label">
               {queue === null
                 ? '读取中'
@@ -191,7 +189,7 @@ export function ReviewView() {
         {current ? (
           <>
             <article className="review-card">
-              <p className="review-kicker">{current.kind === 'cloze' ? '挖空' : '问答'}</p>
+              <p className="review-kind">{current.kind === 'cloze' ? '挖空' : '问答'}</p>
               <h2 className="review-prompt">
                 {current.kind === 'cloze' && !revealed
                   ? maskCloze(current.prompt)
@@ -199,7 +197,7 @@ export function ReviewView() {
               </h2>
               {revealed ? (
                 <div className="review-answer">
-                  <p className="review-kicker">答案</p>
+                  <p className="review-kind">答案</p>
                   <p>{current.answer}</p>
                 </div>
               ) : (
@@ -224,10 +222,14 @@ export function ReviewView() {
                       });
                     }}
                   >
-                    跳到来源 · {current.sourcePath}
+                    <span>跳到来源</span>
+                    <span className="review-source-path">{current.sourcePath}</span>
                   </button>
                 ) : (
-                  <span>来源笔记已不在库里 · {current.sourcePath}</span>
+                  <span>
+                    来源笔记已不在库里
+                    <span className="review-source-path">{current.sourcePath}</span>
+                  </span>
                 )
               ) : (
                 <span>这张卡片没有来源笔记</span>

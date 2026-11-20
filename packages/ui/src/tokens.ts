@@ -6,6 +6,7 @@
 type ColorScale = {
   readonly bgBase: string;
   readonly bgSubtle: string;
+  readonly bgRecess: string;
   readonly bgElevated: string;
   readonly textPrimary: string;
   readonly textSecondary: string;
@@ -32,6 +33,7 @@ export const colors = {
   light: {
     bgBase: '#fbfaf8',
     bgSubtle: '#f3f1ec',
+    bgRecess: '#d8d0c2',
     bgElevated: '#fffcf9',
     textPrimary: '#1c1917',
     textSecondary: '#57534e',
@@ -50,6 +52,7 @@ export const colors = {
   dark: {
     bgBase: '#1c1b19',
     bgSubtle: '#242320',
+    bgRecess: '#141311',
     bgElevated: '#2c2b28',
     textPrimary: '#f4f1ea',
     textSecondary: '#c4bfb4',
@@ -73,10 +76,10 @@ export const fontFamily = {
 } as const;
 
 export const typeScale = {
-  h1: { fontSize: '32px', lineHeight: '40px', fontWeight: 600 },
-  h2: { fontSize: '24px', lineHeight: '32px', fontWeight: 600 },
+  h1: { fontSize: '40px', lineHeight: '48px', fontWeight: 600 },
+  h2: { fontSize: '28px', lineHeight: '36px', fontWeight: 600 },
   h3: { fontSize: '18px', lineHeight: '28px', fontWeight: 600 },
-  body: { fontSize: '16px', lineHeight: '28px', fontWeight: 400 },
+  body: { fontSize: '16px', lineHeight: '32px', fontWeight: 400 },
   ui: { fontSize: '14px', lineHeight: '22px', fontWeight: 400 },
   small: { fontSize: '12px', lineHeight: '16px', fontWeight: 400 },
   code: { fontSize: '13px', lineHeight: '22px', fontWeight: 400 },
@@ -93,10 +96,10 @@ export const space = {
 } as const;
 
 export const radius = {
-  sm: '6px',
-  md: '8px',
-  lg: '12px',
-  xl: '16px',
+  sm: '4px',
+  md: '6px',
+  lg: '8px',
+  xl: '12px',
 } as const;
 
 /** 阴影用 color-mix 跟随文字色，浅色和深色不用两套数值。 */
@@ -115,13 +118,14 @@ export const motion = {
 export const layout = {
   topbarHeight: '48px',
   statusbarHeight: '32px',
-  sidebarWidth: '260px',
-  sidebarMinWidth: '200px',
-  sidebarMaxWidth: '400px',
-  aiPanelWidth: '380px',
-  aiPanelMinWidth: '300px',
-  aiPanelMaxWidth: '560px',
-  editorMaxWidth: '680px',
+  sidebarWidth: '200px',
+  sidebarMinWidth: '180px',
+  sidebarMaxWidth: '320px',
+  aiPanelWidth: '276px',
+  aiPanelMinWidth: '240px',
+  aiPanelMaxWidth: '420px',
+  editorMaxWidth: '640px',
+  dialogWidth: '480px',
   commandPaletteWidth: '640px',
   /** 命令面板距视口顶部的位置。 */
   commandPaletteTop: '12%',
@@ -133,6 +137,7 @@ export const cssVarNames = {
   color: {
     bgBase: '--an-bg-base',
     bgSubtle: '--an-bg-subtle',
+    bgRecess: '--an-bg-recess',
     bgElevated: '--an-bg-elevated',
     textPrimary: '--an-text-primary',
     textSecondary: '--an-text-secondary',
@@ -212,6 +217,7 @@ export const cssVarNames = {
     aiPanelMinWidth: '--an-ai-panel-min-width',
     aiPanelMaxWidth: '--an-ai-panel-max-width',
     editorMaxWidth: '--an-editor-max-width',
+    dialogWidth: '--an-dialog-width',
     commandPaletteWidth: '--an-command-palette-width',
     commandPaletteTop: '--an-command-palette-top',
     compactBreakpoint: '--an-breakpoint-compact',

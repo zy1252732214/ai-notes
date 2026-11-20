@@ -94,6 +94,12 @@ describe('WCAG 2.1 contrast', () => {
         contrast(color(theme, '--an-selection'), color(theme, surface)),
       ).toBeGreaterThanOrEqual(3);
     }
+    expect(
+      contrast(color(theme, '--an-text-primary'), color(theme, '--an-bg-recess')),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(color(theme, '--an-text-secondary'), color(theme, '--an-bg-recess')),
+    ).toBeGreaterThanOrEqual(4.5);
     expect(contrast(color(theme, '--an-border-subtle'), color(theme, '--an-bg-base'))).toBeLessThan(
       contrast(color(theme, '--an-border-control'), color(theme, '--an-bg-base')),
     );

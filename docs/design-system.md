@@ -23,6 +23,7 @@ ai-notes 的界面按本地笔记工具来做：安静、留白充足、字优�
 | --------------------- | ---------------------------- | --------- | --------- |
 | `--an-bg-base`        | 编辑区背景                   | `#fbfaf8` | `#1c1b19` |
 | `--an-bg-subtle`      | 侧栏、面板、代码块底         | `#f3f1ec` | `#242320` |
+| `--an-bg-recess`      | 左右栏退后的底               | `#d8d0c2` | `#141311` |
 | `--an-bg-elevated`    | 弹窗、浮层、命令面板         | `#fffcf9` | `#2c2b28` |
 | `--an-text-primary`   | 正文、标题                   | `#1c1917` | `#f4f1ea` |
 | `--an-text-secondary` | 次要说明                     | `#57534e` | `#c4bfb4` |
@@ -70,15 +71,15 @@ ai-notes 的界面按本地笔记工具来做：安静、留白充足、字优�
 
 | 级别  | 变量后缀 | 字号 | 行高 | 字重 | 用途                     |
 | ----- | -------- | ---- | ---- | ---- | ------------------------ |
-| H1    | `h1`     | 32px | 40px | 600  | 笔记标题                 |
-| H2    | `h2`     | 24px | 32px | 600  | 二级标题                 |
+| H1    | `h1`     | 40px | 48px | 600  | 笔记标题                 |
+| H2    | `h2`     | 28px | 36px | 600  | 二级标题                 |
 | H3    | `h3`     | 18px | 28px | 600  | 三级标题、对话框标题     |
-| Body  | `body`   | 16px | 28px | 400  | 笔记正文                 |
+| Body  | `body`   | 16px | 32px | 400  | 笔记正文                 |
 | UI    | `ui`     | 14px | 22px | 400  | 侧栏、按钮、菜单         |
 | Small | `small`  | 12px | 16px | 400  | 状态栏、时间戳、引用路径 |
 | Code  | `code`   | 13px | 22px | 400  | 代码块、行内代码         |
 
-变量名是 `--an-font-size-*`、`--an-line-*`、`--an-font-weight-*`。编辑区正文限制在 `--an-editor-max-width`（680px），并自动换行。
+变量名是 `--an-font-size-*`、`--an-line-*`、`--an-font-weight-*`。编辑区正文限制在 `--an-editor-max-width`（640px），并自动换行。窗口更宽时，多出来的是正文两侧的页边，栏宽不再跟着变。
 
 ## 间距、圆角、阴影、动效
 
@@ -93,7 +94,7 @@ ai-notes 的界面按本地笔记工具来做：安静、留白充足、字优�
 | `--an-space-6` | 24px |
 | `--an-space-8` | 32px |
 
-圆角：`--an-radius-sm` 6px，`--an-radius-md` 8px，`--an-radius-lg` 12px，`--an-radius-xl` 16px。对话框和命令面板用 `xl`。
+圆角：`--an-radius-sm` 4px，`--an-radius-md` 6px，`--an-radius-lg` 8px，`--an-radius-xl` 12px。对话框和命令面板用 `xl`。边角收小，避免控件看起来像圆角卡片。
 
 阴影：
 
@@ -111,20 +112,21 @@ ai-notes 的界面按本地笔记工具来做：安静、留白充足、字优�
 
 ## 布局
 
-| 变量                         | 值    | 含义                       |
-| ---------------------------- | ----- | -------------------------- |
-| `--an-topbar-height`         | 48px  | 顶栏                       |
-| `--an-statusbar-height`      | 32px  | 状态栏                     |
-| `--an-sidebar-width`         | 260px | 左栏默认宽度               |
-| `--an-sidebar-min-width`     | 200px | 左栏下限                   |
-| `--an-sidebar-max-width`     | 400px | 左栏上限                   |
-| `--an-ai-panel-width`        | 380px | 右侧面板默认宽度           |
-| `--an-ai-panel-min-width`    | 300px | 右侧面板下限               |
-| `--an-ai-panel-max-width`    | 560px | 右侧面板上限               |
-| `--an-editor-max-width`      | 680px | 正文栏                     |
-| `--an-command-palette-width` | 640px | 命令面板和搜索             |
-| `--an-command-palette-top`   | 12%   | 面板距视口顶部             |
-| `--an-breakpoint-compact`    | 900px | 窄于此宽度时左右栏改为抽屉 |
+| 变量                         | 值    | 含义                               |
+| ---------------------------- | ----- | ---------------------------------- |
+| `--an-topbar-height`         | 48px  | 顶栏                               |
+| `--an-statusbar-height`      | 32px  | 状态栏                             |
+| `--an-sidebar-width`         | 200px | 左栏默认宽度，索引而不是第二篇正文 |
+| `--an-sidebar-min-width`     | 180px | 左栏下限                           |
+| `--an-sidebar-max-width`     | 320px | 左栏上限                           |
+| `--an-ai-panel-width`        | 276px | 右侧面板默认宽度，窄于编辑栏       |
+| `--an-ai-panel-min-width`    | 240px | 右侧面板下限                       |
+| `--an-ai-panel-max-width`    | 420px | 右侧面板上限                       |
+| `--an-editor-max-width`      | 640px | 正文栏                             |
+| `--an-dialog-width`          | 480px | 设置对话框，不跟侧栏宽度走         |
+| `--an-command-palette-width` | 640px | 命令面板和搜索                     |
+| `--an-command-palette-top`   | 12%   | 面板距视口顶部                     |
+| `--an-breakpoint-compact`    | 900px | 窄于此宽度时左右栏改为抽屉         |
 
 ## 组件
 

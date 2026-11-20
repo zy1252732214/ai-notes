@@ -1,3 +1,8 @@
+/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
+ * redesign: full · theme: warm paper (kept) · posture: restrained
+ * copy: verbatim · built: the project
+ * critique: one edge on overlays, accent only on the primary action */
+
 /*
  * 基础组件样式。只使用 tokens.css 里的 --an-* 变量。
  * 悬停用 color-mix 从已有变量派生，不引入新的颜色。
@@ -138,6 +143,15 @@
   border-color: color-mix(in srgb, var(--an-accent) 86%, var(--an-text-primary));
 }
 
+.an-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 10%, var(--an-bg-elevated));
+}
+
+.an-button--primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-accent));
+  border-color: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-accent));
+}
+
 .an-button--secondary:hover:not(:disabled),
 .an-button--ghost:hover:not(:disabled) {
   background: color-mix(in srgb, var(--an-text-primary) 8%, var(--an-bg-elevated));
@@ -159,6 +173,16 @@
   border-color: color-mix(in srgb, var(--an-danger) 86%, var(--an-text-primary));
 }
 
+.an-button--danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-danger));
+  border-color: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-danger));
+}
+
+.an-button--ghost:active:not(:disabled),
+.an-button--secondary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 12%, var(--an-bg-elevated));
+}
+
 .an-icon-button {
   display: inline-flex;
   align-items: center;
@@ -176,6 +200,11 @@
 
 .an-icon-button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--an-text-primary) 8%, var(--an-bg-base));
+  color: var(--an-text-primary);
+}
+
+.an-icon-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 14%, var(--an-bg-base));
   color: var(--an-text-primary);
 }
 
@@ -481,12 +510,12 @@
 
 .an-dialog,
 .an-palette {
-  width: min(100%, calc(var(--an-sidebar-width) + var(--an-sidebar-min-width)));
+  width: min(100%, var(--an-dialog-width));
   border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-xl);
   background: var(--an-bg-elevated);
   color: var(--an-text-primary);
-  box-shadow: var(--an-shadow-lg);
+  box-shadow: none;
 }
 
 .an-palette {
@@ -567,7 +596,7 @@
   border-radius: var(--an-radius-md);
   background: var(--an-bg-elevated);
   color: var(--an-text-primary);
-  box-shadow: var(--an-shadow-md);
+  box-shadow: none;
 }
 
 .an-toast--success {

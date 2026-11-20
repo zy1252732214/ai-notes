@@ -1,3 +1,8 @@
+/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
+ * redesign: full · theme: warm paper (kept) · posture: restrained
+ * copy: verbatim · built: the project
+ * critique: the source column leads, the index and the ask column step back */
+
 /*
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
@@ -8,6 +13,7 @@
 :root {
   --an-bg-base: #fbfaf8;
   --an-bg-subtle: #f3f1ec;
+  --an-bg-recess: #d8d0c2;
   --an-bg-elevated: #fffcf9;
   --an-text-primary: #1c1917;
   --an-text-secondary: #57534e;
@@ -29,17 +35,17 @@
   --an-font-code:
     'JetBrains Mono', 'SF Mono', ui-monospace, 'Sarasa Mono SC', Menlo, Consolas, monospace;
 
-  --an-font-size-h1: 32px;
-  --an-line-h1: 40px;
+  --an-font-size-h1: 40px;
+  --an-line-h1: 48px;
   --an-font-weight-h1: 600;
-  --an-font-size-h2: 24px;
-  --an-line-h2: 32px;
+  --an-font-size-h2: 28px;
+  --an-line-h2: 36px;
   --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
   --an-line-h3: 28px;
   --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
-  --an-line-body: 28px;
+  --an-line-body: 32px;
   --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
   --an-line-ui: 22px;
@@ -58,10 +64,10 @@
   --an-space-6: 24px;
   --an-space-8: 32px;
 
-  --an-radius-sm: 6px;
-  --an-radius-md: 8px;
-  --an-radius-lg: 12px;
-  --an-radius-xl: 16px;
+  --an-radius-sm: 4px;
+  --an-radius-md: 6px;
+  --an-radius-lg: 8px;
+  --an-radius-xl: 12px;
 
   --an-shadow-sm: 0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent);
   --an-shadow-md: 0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
@@ -72,13 +78,14 @@
 
   --an-topbar-height: 48px;
   --an-statusbar-height: 32px;
-  --an-sidebar-width: 260px;
-  --an-sidebar-min-width: 200px;
-  --an-sidebar-max-width: 400px;
-  --an-ai-panel-width: 380px;
-  --an-ai-panel-min-width: 300px;
-  --an-ai-panel-max-width: 560px;
-  --an-editor-max-width: 680px;
+  --an-sidebar-width: 200px;
+  --an-sidebar-min-width: 180px;
+  --an-sidebar-max-width: 320px;
+  --an-ai-panel-width: 276px;
+  --an-ai-panel-min-width: 240px;
+  --an-ai-panel-max-width: 420px;
+  --an-editor-max-width: 640px;
+  --an-dialog-width: 480px;
   --an-command-palette-width: 640px;
   --an-command-palette-top: 12%;
   --an-breakpoint-compact: 900px;
@@ -89,6 +96,7 @@
 [data-theme='dark'] {
   --an-bg-base: #1c1b19;
   --an-bg-subtle: #242320;
+  --an-bg-recess: #141311;
   --an-bg-elevated: #2c2b28;
   --an-text-primary: #f4f1ea;
   --an-text-secondary: #c4bfb4;
