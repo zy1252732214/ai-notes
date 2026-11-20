@@ -1580,29 +1580,33 @@ button:disabled {
 
 .ask-pane.is-empty {
   flex: 1;
-  justify-content: flex-start;
 }
 
 .ask-pane.is-empty .ai-log {
-  display: none;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
 }
 
 .ask-pane.is-empty .ai-composer {
-  flex: 1;
+  flex: 0 0 auto;
   margin-top: 0;
-  border-top: 0;
 }
 
-.ask-pane.is-empty .an-field {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
+.ask-pane.is-empty .an-field,
+.ask-pane.is-empty .an-textarea,
+.ask-pane.is-empty textarea {
+  flex: none;
+  height: auto;
+  min-height: 72px;
+  max-height: 120px;
 }
 
-.ask-pane.is-empty .an-textarea {
-  flex: 1;
-  min-height: 280px;
+.ask-well {
+  margin: 0;
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-ui);
 }
 
 .ai-tab.is-current:not(:focus-visible) {
@@ -1639,7 +1643,10 @@ button:disabled {
   border-bottom: 1px solid var(--an-border-control);
   border-radius: 0;
   background: var(--an-bg-base);
-  min-height: 96px;
+  min-height: 72px;
+  max-height: 120px;
+  height: auto;
+  flex: none;
 }
 
 .ai-panel .ai-hint,

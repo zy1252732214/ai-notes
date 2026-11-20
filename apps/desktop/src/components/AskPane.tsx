@@ -164,7 +164,11 @@ export function AskPane() {
   return (
     <div className={turns.length === 0 ? 'ask-pane is-empty' : 'ask-pane'}>
       <div className="ai-log" ref={logRef}>
-        {turns.length === 0 ? null : (
+        {turns.length === 0 ? (
+          <p className="ask-well" data-settings={settingsOpen} data-index={indexRevision}>
+            回答和来源会显示在这里。
+          </p>
+        ) : (
           <p className="ai-hint" data-settings={settingsOpen} data-index={indexRevision}>
             {retrievalLabel()}
           </p>
