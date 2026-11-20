@@ -1,5 +1,5 @@
 import { Button, Dialog, Input, Select, SettingsRow } from '@ai-notes/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   defaultAiSettings,
   loadAiSettings,
@@ -12,6 +12,7 @@ import {
 } from '../ai/settings';
 import { getNoteIndex } from '../search/client';
 import { useAppStore, type ThemeMode } from '../store';
+import { applyTheme } from '../theme';
 
 export function SettingsDialog() {
   const open = useAppStore((state) => state.settingsOpen);
@@ -19,13 +20,24 @@ export function SettingsDialog() {
   const themeMode = useAppStore((state) => state.themeMode);
   const setThemeMode = useAppStore((state) => state.setThemeMode);
   const [draft, setDraft] = useState<AiSettings>(defaultAiSettings);
+  const [themeDraft, setThemeDraft] = useState<ThemeMode>(themeMode);
   const [error, setError] = useState<string | null>(null);
+  const themeWhenOpened = useRef<ThemeMode>(themeMode);
 
   useEffect(() => {
     if (!open) return;
+    const current = useAppStore.getState().themeMode;
+    themeWhenOpened.current = current;
+    setThemeDraft(current);
     setDraft(loadAiSettings());
     setError(null);
   }, [open]);
+
+  const dismiss = () => {
+    applyTheme(themeWhenOpened.current);
+    setThemeDraft(themeWhenOpened.current);
+    setSettingsOpen(false);
+  };
 
   const active = draft.provider === 'ollama' ? draft.ollama : draft.openai;
   const secure = secretsInKeychain();
@@ -41,7 +53,7 @@ export function SettingsDialog() {
   return (
     <Dialog
       open={open}
-      onClose={() => setSettingsOpen(false)}
+      onClose={dismiss}
       title="设置"
       description={
         secure
@@ -50,13 +62,15 @@ export function SettingsDialog() {
       }
       footer={
         <>
-          <Button onClick={() => setSettingsOpen(false)}>取消</Button>
+          <Button onClick={dismiss}>取消</Button>
           <Button
             variant="primary"
             onClick={() => {
               void (async () => {
                 try {
                   await saveAiSettings(normalizeAiSettings(draft));
+                  themeWhenOpened.current = themeDraft;
+                  setThemeMode(themeDraft);
                   void getNoteIndex()?.syncEmbeddings();
                   setSettingsOpen(false);
                 } catch (caught) {
@@ -82,13 +96,17 @@ export function SettingsDialog() {
               id="theme-mode"
               label="主题"
               labelHidden
-              value={themeMode}
+              value={themeDraft}
               options={[
                 { value: 'system', label: '跟随系统' },
                 { value: 'light', label: '浅色' },
                 { value: 'dark', label: '深色' },
               ]}
-              onChange={(value) => setThemeMode(value as ThemeMode)}
+              onChange={(value) => {
+                const next = value as ThemeMode;
+                setThemeDraft(next);
+                applyTheme(next);
+              }}
             />
           </SettingsRow>
         </section>
