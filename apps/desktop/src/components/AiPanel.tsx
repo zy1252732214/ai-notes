@@ -61,7 +61,7 @@ export function AiPanel() {
         <button
           type="button"
           className="text-cmd"
-          aria-label="模型设置"
+          aria-label="设置"
           onClick={() => setSettingsOpen(true)}
         >
           设置

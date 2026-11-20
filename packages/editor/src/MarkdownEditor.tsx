@@ -63,7 +63,6 @@ const highlightStyle = HighlightStyle.define([
     borderRadius: '4px',
   },
   { tag: tags.quote, color: 'var(--an-text-secondary)', fontStyle: 'italic' },
-  { tag: tags.list, color: 'var(--an-text-tertiary)' },
   { tag: tags.meta, color: 'var(--an-text-tertiary)' },
   {
     tag: tags.processingInstruction,

@@ -1663,3 +1663,46 @@ button:disabled {
   background: transparent;
   color: var(--an-text-primary);
 }
+
+.an-dialog:focus,
+.an-dialog:focus-visible {
+  outline: none;
+}
+
+.an-dialog:has(.ai-settings) {
+  width: min(100%, 640px);
+}
+
+.settings-section + .settings-section {
+  margin-top: var(--an-space-6);
+}
+
+.settings-section h3 {
+  margin: 0;
+  font-size: var(--an-font-size-ui);
+  line-height: var(--an-line-ui);
+  font-weight: var(--an-font-weight-h3);
+  color: var(--an-text-primary);
+}
+
+.settings-section-note {
+  margin: var(--an-space-1) 0 0;
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-ui);
+}
+
+.ai-settings .an-settings {
+  border-bottom: 0;
+  padding: var(--an-space-3) 0 0;
+  gap: var(--an-space-2);
+}
+
+.ai-settings .an-settings__label {
+  font-weight: var(--an-font-weight-ui);
+  color: var(--an-text-primary);
+}
+
+.ai-settings .an-settings__description {
+  color: var(--an-text-secondary);
+}

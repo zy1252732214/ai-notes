@@ -53,7 +53,7 @@ function buildItems(
     { id: 'sample', title: '打开示例库', hint: '内存' },
     { id: 'search', title: '全文搜索', hint: 'Ctrl Shift F', keywords: 'search' },
     { id: 'switcher', title: '快速切换', hint: 'Ctrl O', keywords: 'open file' },
-    { id: 'settings', title: '模型设置', hint: 'API Key' },
+    { id: 'settings', title: '设置', hint: '外观和模型' },
     { id: 'plugins', title: '插件设置' },
     { id: 'theme-system', title: '主题：跟随系统' },
     { id: 'theme-light', title: '主题：浅色' },
