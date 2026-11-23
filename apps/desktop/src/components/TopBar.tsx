@@ -85,7 +85,11 @@ export function TopBar() {
             </span>
           </button>
         ) : null}
-        <button className="text-cmd" title="Ctrl K" onClick={() => setCommandOpen(true)}>
+        <button
+          className="text-cmd command-trigger"
+          title="Ctrl K"
+          onClick={() => setCommandOpen(true)}
+        >
           <Search size={14} strokeWidth={1.75} aria-hidden="true" />
           搜索
         </button>

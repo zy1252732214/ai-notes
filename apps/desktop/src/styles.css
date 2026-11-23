@@ -50,19 +50,14 @@ button:disabled {
   background-color: var(--an-bg-base);
   background-image:
     radial-gradient(
-      ellipse 78% 58% at -6% -12%,
-      color-mix(in srgb, #8b6cff 78%, transparent),
-      transparent 58%
+      ellipse 42% 36% at 100% -8%,
+      color-mix(in srgb, #8b6cff 55%, transparent),
+      transparent 70%
     ),
     radial-gradient(
-      ellipse 62% 52% at 108% -8%,
-      color-mix(in srgb, #3ef0e0 64%, transparent),
-      transparent 54%
-    ),
-    radial-gradient(
-      ellipse 54% 48% at 72% 118%,
-      color-mix(in srgb, #5b7cff 62%, transparent),
-      transparent 56%
+      ellipse 36% 32% at 92% 108%,
+      color-mix(in srgb, #3ef0e0 42%, transparent),
+      transparent 68%
     );
 }
 
@@ -110,9 +105,12 @@ button:disabled {
   background: var(--an-bg-elevated);
 }
 
-.sidebar,
+.sidebar {
+  background: transparent;
+}
+
 .ai-panel {
-  background: var(--an-bg-elevated);
+  background: var(--an-bg-subtle);
 }
 
 .topbar {
@@ -144,8 +142,9 @@ button:disabled {
 }
 
 .vault-name {
+  font-size: 16px;
   font-weight: 600;
-  max-width: 160px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -210,6 +209,7 @@ button:disabled {
   gap: var(--an-space-2);
   min-width: 0;
   padding: 0 var(--an-space-2);
+  font-size: 15px;
 }
 
 .tab-label span,
@@ -325,11 +325,13 @@ button:disabled {
 .workspace {
   position: relative;
   display: grid;
-  grid-template-columns: var(--an-sidebar-width) minmax(0, 1fr) var(--an-ai-panel-width);
-  gap: var(--an-space-3);
+  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: var(--an-space-4);
+  row-gap: 0;
   height: 100%;
   min-height: 0;
-  padding: var(--an-space-3);
+  padding: var(--an-space-4) var(--an-space-4) var(--an-space-4) var(--an-space-3);
   background: transparent;
 }
 
@@ -340,24 +342,37 @@ button:disabled {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--an-accent) 32%, var(--an-border-subtle));
-  border-radius: 16px;
+  grid-column: 2;
+  grid-row: 1;
+  border: 1px solid var(--an-border-subtle);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
   background: var(--an-bg-elevated);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--an-accent) 16%, transparent),
-    0 18px 40px color-mix(in srgb, #02040a 22%, transparent);
+  box-shadow: 0 20px 50px color-mix(in srgb, #02040a 28%, transparent);
 }
 
 .workspace.left-closed {
-  grid-template-columns: 0 minmax(0, 1fr) var(--an-ai-panel-width);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace.left-closed .sheet,
+.workspace.left-closed .ai-panel {
+  grid-column: 1;
 }
 
 .workspace.right-closed {
-  grid-template-columns: var(--an-sidebar-width) minmax(0, 1fr) 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.workspace.right-closed .sheet {
+  grid-row: 1;
+  border-bottom: 1px solid var(--an-border-subtle);
+  border-radius: 22px;
 }
 
 .workspace.left-closed.right-closed {
-  grid-template-columns: 0 minmax(0, 1fr) 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .workspace.left-closed .sidebar,
@@ -375,28 +390,38 @@ button:disabled {
 .sidebar {
   position: relative;
   display: flex;
+  grid-column: 1;
+  grid-row: 1 / span 2;
   flex-direction: column;
-  gap: var(--an-space-2);
-  padding: var(--an-space-4) var(--an-space-3) var(--an-space-4) var(--an-space-4);
+  gap: var(--an-space-3);
+  padding: var(--an-space-2) var(--an-space-2) var(--an-space-4) 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--an-accent) 38%, var(--an-border-subtle));
-  border-radius: 16px;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--an-accent) 18%, transparent),
-    0 18px 40px color-mix(in srgb, #02040a 28%, transparent);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .ai-panel {
   position: relative;
   display: flex;
+  grid-column: 2;
+  grid-row: 2;
   flex-direction: column;
+  min-height: 0;
+  max-height: 46vh;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--an-accent) 38%, var(--an-border-subtle));
-  border-radius: 16px;
-  background: var(--an-bg-elevated);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--an-accent) 18%, transparent),
-    0 18px 40px color-mix(in srgb, #02040a 28%, transparent);
+  border: 1px solid var(--an-border-subtle);
+  border-top: 1px solid color-mix(in srgb, var(--an-accent) 28%, var(--an-border-subtle));
+  border-radius: 0 0 22px 22px;
+  box-shadow: none;
+}
+
+.ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) {
+  max-height: 232px;
+}
+
+.ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-log {
+  display: none;
 }
 
 .sidebar-head,
@@ -767,8 +792,17 @@ button:disabled {
   background: color-mix(in srgb, var(--an-text-primary) 6%, transparent);
 }
 
+.tree-row.is-file {
+  min-height: 40px;
+}
+
+.tree-row.is-file .tree-label {
+  font-size: 15px;
+  line-height: 22px;
+}
+
 .tree-row.is-file.selected:hover {
-  background: transparent;
+  background: color-mix(in srgb, var(--an-accent) 22%, transparent);
 }
 
 .tree-row.is-directory.selected:hover {
@@ -1286,24 +1320,46 @@ button:disabled {
   .workspace.right-closed,
   .workspace.left-closed.right-closed {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .sheet,
+  .workspace.left-closed .sheet,
+  .workspace.right-closed .sheet {
+    grid-column: 1;
+    grid-row: 1;
+    border-bottom: 1px solid var(--an-border-subtle);
+    border-radius: 18px;
   }
 
   .sidebar,
   .ai-panel {
     position: absolute;
     z-index: 20;
-    top: 0;
-    bottom: 0;
-    width: min(var(--an-sidebar-width), 86vw);
+    top: var(--an-space-3);
+    bottom: var(--an-space-3);
+    max-height: none;
+    border-radius: 18px;
+    background: var(--an-bg-elevated);
+    border: 1px solid var(--an-border-subtle);
+  }
+
+  .ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) {
+    max-height: none;
+  }
+
+  .ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-log {
+    display: flex;
   }
 
   .sidebar {
-    left: 0;
+    left: var(--an-space-3);
+    width: min(280px, 86vw);
   }
 
   .ai-panel {
-    right: 0;
-    width: min(var(--an-ai-panel-width), 92vw);
+    right: var(--an-space-3);
+    width: min(360px, 92vw);
   }
 
   .workspace.left-closed .sidebar,
@@ -1601,25 +1657,6 @@ button:disabled {
   }
 }
 
-.sidebar::after,
-.sheet::after,
-.ai-panel::after {
-  content: '';
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 22px;
-  right: 22px;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--an-accent) 85%, #fff),
-    transparent
-  );
-}
-
 .text-cmd,
 .ai-tab,
 .tab {
@@ -1647,6 +1684,15 @@ button:disabled {
   font-size: var(--an-font-size-ui);
   line-height: var(--an-line-ui);
   white-space: nowrap;
+}
+
+.command-trigger {
+  min-width: 128px;
+  justify-content: flex-start;
+  padding: 0 12px;
+  border: 1px solid var(--an-border-subtle);
+  background: color-mix(in srgb, var(--an-text-primary) 5%, var(--an-bg-elevated));
+  color: var(--an-text-secondary);
 }
 
 .text-cmd svg {

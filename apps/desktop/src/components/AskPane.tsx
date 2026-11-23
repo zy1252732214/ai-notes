@@ -56,7 +56,9 @@ export function AskPane() {
   useEffect(() => {
     const node = logRef.current;
     if (!node) return;
-    node.scrollTop = node.scrollHeight;
+    const block = node.querySelector('.ai-answer-block:last-of-type');
+    if (block instanceof HTMLElement) block.scrollIntoView({ block: 'nearest' });
+    else node.scrollTop = node.scrollHeight;
   }, [turns]);
 
   useEffect(() => () => abortRef.current?.abort(), []);

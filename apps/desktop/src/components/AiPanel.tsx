@@ -32,7 +32,7 @@ export function AiPanel() {
             aria-controls="right-panel-ask"
             onClick={() => setTab('ask')}
           >
-            {active === 'ask' ? <span className="sr-only">问答</span> : '提问'}
+            问答
           </button>
           <button
             type="button"
