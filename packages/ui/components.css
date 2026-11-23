@@ -111,7 +111,8 @@
     background-color var(--an-motion-fast),
     color var(--an-motion-fast),
     border-color var(--an-motion-fast),
-    box-shadow var(--an-motion-fast);
+    box-shadow var(--an-motion-fast),
+    transform 80ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .an-button {
@@ -141,10 +142,12 @@
 .an-button--primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--an-accent) 86%, var(--an-text-primary));
   border-color: color-mix(in srgb, var(--an-accent) 86%, var(--an-text-primary));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--an-accent) 42%, var(--an-bg-elevated) 0%);
 }
 
 .an-button:active:not(:disabled) {
   background: color-mix(in srgb, var(--an-text-primary) 10%, var(--an-bg-elevated));
+  transform: translateY(1px);
 }
 
 .an-button--primary:active:not(:disabled) {
@@ -532,6 +535,7 @@
 
 .an-palette {
   width: min(100%, var(--an-command-palette-width));
+  border-color: color-mix(in srgb, var(--an-accent) 42%, var(--an-border-subtle));
 }
 
 .an-dialog {
@@ -868,5 +872,6 @@
   .an-palette {
     transition: none;
     animation: none;
+    transform: none;
   }
 }

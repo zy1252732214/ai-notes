@@ -13,6 +13,7 @@ import {
 import { getNoteIndex } from '../search/client';
 import { useAppStore, type ThemeMode } from '../store';
 import { applyTheme } from '../theme';
+import { commitDialogSave } from './settingsSave';
 
 export function SettingsDialog() {
   const open = useAppStore((state) => state.settingsOpen);
@@ -61,27 +62,38 @@ export function SettingsDialog() {
           : '密钥和其余设置只在这台设备上，不会写进笔记库。'
       }
       footer={
-        <>
-          <Button onClick={dismiss}>取消</Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              void (async () => {
-                try {
-                  await saveAiSettings(normalizeAiSettings(draft));
-                  themeWhenOpened.current = themeDraft;
-                  setThemeMode(themeDraft);
+        <div className="settings-footer">
+          {error ? (
+            <p className="ai-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="settings-footer-actions">
+            <Button onClick={dismiss}>取消</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                void (async () => {
+                  const result = await commitDialogSave({
+                    draft,
+                    theme: themeDraft,
+                    rememberTheme: (theme) => {
+                      themeWhenOpened.current = theme;
+                      setThemeMode(theme);
+                    },
+                    saveAi: (next) => saveAiSettings(normalizeAiSettings(next)),
+                  });
+                  if (result.error) setError(result.error);
+                  if (!result.closed) return;
                   void getNoteIndex()?.syncEmbeddings();
                   setSettingsOpen(false);
-                } catch (caught) {
-                  setError(caught instanceof Error ? caught.message : '无法保存');
-                }
-              })();
-            }}
-          >
-            保存
-          </Button>
-        </>
+                })();
+              }}
+            >
+              保存
+            </Button>
+          </div>
+        </div>
       }
     >
       <div className="ai-settings">
@@ -194,11 +206,6 @@ export function SettingsDialog() {
               onChange={(event) => updateActive({ apiKey: event.target.value })}
             />
           </SettingsRow>
-          {error ? (
-            <p className="ai-error" role="alert">
-              {error}
-            </p>
-          ) : null}
         </section>
       </div>
     </Dialog>
