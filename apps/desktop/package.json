@@ -36,15 +36,15 @@
     "@ai-notes/plugin-host": "workspace:*",
     "@ai-notes/plugin-sdk": "workspace:*",
     "@ai-notes/ui": "workspace:*",
-    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/api": "^2.12.5",
     "@tauri-apps/plugin-dialog": "^2.4.0",
-    "lucide-react": "^1.70.0",
+    "lucide-react": "^1.77.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zustand": "^5.1.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.9.0",
+    "@tauri-apps/cli": "^2.12.6",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^6.3.0",
