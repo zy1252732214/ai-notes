@@ -515,7 +515,19 @@
   border-radius: var(--an-radius-xl);
   background: var(--an-bg-elevated);
   color: var(--an-text-primary);
-  box-shadow: none;
+  box-shadow: var(--an-shadow-lg);
+  animation: an-rise var(--an-motion-base);
+}
+
+@keyframes an-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .an-palette {
@@ -659,7 +671,8 @@
 .an-palette__item:hover:not(:disabled),
 .an-result:hover,
 .an-result--active {
-  background: color-mix(in srgb, var(--an-accent) 12%, var(--an-bg-elevated));
+  background: color-mix(in srgb, var(--an-accent) 14%, var(--an-bg-elevated));
+  box-shadow: inset 2px 0 0 var(--an-accent);
 }
 
 .an-palette__empty {
@@ -854,5 +867,6 @@
   .an-dialog,
   .an-palette {
     transition: none;
+    animation: none;
   }
 }

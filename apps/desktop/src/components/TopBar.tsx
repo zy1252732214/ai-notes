@@ -1,3 +1,4 @@
+import { MessagesSquare, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { noteTitle, useAppStore } from '../store';
 import { resolveTheme } from '../theme';
@@ -66,6 +67,7 @@ export function TopBar() {
             aria-label="新建笔记"
             onClick={() => openDialog({ kind: 'create-note' })}
           >
+            <Plus size={14} strokeWidth={1.75} aria-hidden="true" />
             新建
           </button>
         ) : null}
@@ -84,6 +86,7 @@ export function TopBar() {
           </button>
         ) : null}
         <button className="text-cmd" title="Ctrl K" onClick={() => setCommandOpen(true)}>
+          <Search size={14} strokeWidth={1.75} aria-hidden="true" />
           搜索
         </button>
         <div className={moreOpen ? 'more-menu is-open' : 'more-menu'}>
@@ -143,6 +146,7 @@ export function TopBar() {
           aria-pressed={rightOpen}
           onClick={toggleRight}
         >
+          <MessagesSquare size={14} strokeWidth={1.75} aria-hidden="true" />
           问答
         </button>
       </div>

@@ -1,33 +1,28 @@
-/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
- * redesign: full · theme: warm paper (kept) · posture: restrained
- * copy: verbatim · built: the project
- * critique: the source column leads, the index and the ask column step back */
-
 /*
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
  * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
- * 强调色只有一种克制的墨绿色。问答和引用复用它，不另做一套亮色。
+ * 冷钢机架托住一张更亮的文稿。强调色只有一种钴蓝，问答和引用复用它。
  */
 
 :root {
-  --an-bg-base: #fbfaf8;
-  --an-bg-subtle: #f3f1ec;
-  --an-bg-recess: #d8d0c2;
-  --an-bg-elevated: #fffcf9;
-  --an-text-primary: #1c1917;
-  --an-text-secondary: #57534e;
-  --an-text-tertiary: #736d61;
-  --an-border-subtle: #e6e1d8;
-  --an-border-control: #948a7f;
-  --an-accent: #3c6e62;
-  --an-ai: #3c6e62;
-  --an-ai-subtle: #eef3f1;
-  --an-success: #2c7c4a;
-  --an-warning: #9c6005;
-  --an-selection: #6e9389;
+  --an-bg-base: #e7edf4;
+  --an-bg-subtle: #f5f8fb;
+  --an-bg-recess: #d5dee9;
+  --an-bg-elevated: #ffffff;
+  --an-text-primary: #121821;
+  --an-text-secondary: #3c4b60;
+  --an-text-tertiary: #52627a;
+  --an-border-subtle: #c5d0de;
+  --an-border-control: #5d6d84;
+  --an-accent: #1d4ed8;
+  --an-ai: #1d4ed8;
+  --an-ai-subtle: #e7eefe;
+  --an-success: #0f7a45;
+  --an-warning: #8a5a00;
+  --an-selection: #6a86ad;
   --an-danger: #b42318;
-  --an-on-accent: #fbfaf8;
+  --an-on-accent: #f8fafc;
 
   --an-font-ui:
     -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC',
@@ -94,22 +89,22 @@
 }
 
 [data-theme='dark'] {
-  --an-bg-base: #1c1b19;
-  --an-bg-subtle: #242320;
-  --an-bg-recess: #141311;
-  --an-bg-elevated: #2c2b28;
-  --an-text-primary: #f4f1ea;
-  --an-text-secondary: #c4bfb4;
-  --an-text-tertiary: #9b917f;
-  --an-border-subtle: #3a3834;
-  --an-border-control: #7d7368;
-  --an-accent: #9dc7b8;
-  --an-ai: #9dc7b8;
-  --an-ai-subtle: #24302c;
+  --an-bg-base: #10161f;
+  --an-bg-subtle: #17202c;
+  --an-bg-recess: #0b1017;
+  --an-bg-elevated: #1b2636;
+  --an-text-primary: #eef3fa;
+  --an-text-secondary: #c5d2e2;
+  --an-text-tertiary: #9aadc4;
+  --an-border-subtle: #2c3a4c;
+  --an-border-control: #8ea3bb;
+  --an-accent: #9ec0ff;
+  --an-ai: #9ec0ff;
+  --an-ai-subtle: #1a2c4a;
   --an-success: #7dcea0;
   --an-warning: #e0b15a;
   --an-danger: #f0a097;
-  --an-on-accent: #14201c;
-  --an-selection: #5c7168;
+  --an-on-accent: #0c1422;
+  --an-selection: #4a709c;
   color-scheme: dark;
 }

@@ -217,7 +217,7 @@ const selectionTheme = EditorView.baseTheme({
 const editorTheme = EditorView.theme({
   '&': {
     height: '100%',
-    backgroundColor: 'var(--an-bg-base)',
+    backgroundColor: 'var(--an-bg-elevated)',
     color: 'var(--an-text-primary)',
   },
   '&.cm-focused': { outline: 'none' },

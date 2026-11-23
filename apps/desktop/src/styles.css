@@ -1,9 +1,4 @@
-/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
- * redesign: full · theme: warm paper (kept) · posture: restrained
- * copy: verbatim · nav: workbench bar · footer: status bar
- * critique: the source column leads, the index and the ask column step back
- * built: the project
- * finish-review: subagent · fix · 4 findings · 3 resolved 1 partial · gap: link kind stays on the path row */
+/* 冷钢机架托住文稿和问答卡。目录退后，正文和来源卡更亮。 */
 
 * {
   box-sizing: border-box;
@@ -50,7 +45,7 @@ button:disabled {
 
 .app {
   height: 100%;
-  background: var(--an-bg-base);
+  background: var(--an-bg-recess);
 }
 
 .topbar,
@@ -60,7 +55,7 @@ button:disabled {
 
 .sidebar,
 .ai-panel {
-  background: var(--an-bg-recess);
+  background: transparent;
 }
 
 .topbar {
@@ -140,8 +135,9 @@ button:disabled {
 
 .tab.active {
   color: var(--an-text-primary);
-  background: transparent;
-  border-bottom-color: var(--an-text-primary);
+  background: color-mix(in srgb, var(--an-accent) 10%, var(--an-bg-elevated));
+  border-bottom-color: var(--an-accent);
+  border-radius: var(--an-radius-md) var(--an-radius-md) 0 0;
 }
 
 .tab-label,
@@ -273,8 +269,11 @@ button:disabled {
   position: relative;
   display: grid;
   grid-template-columns: var(--an-sidebar-width) minmax(0, 1fr) var(--an-ai-panel-width);
+  gap: var(--an-space-2);
   height: 100%;
   min-height: 0;
+  padding: var(--an-space-2);
+  background: var(--an-bg-recess);
 }
 
 .sheet {
@@ -282,7 +281,11 @@ button:disabled {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--an-bg-base);
+  overflow: hidden;
+  border: 1px solid var(--an-border-subtle);
+  border-radius: 14px;
+  background: var(--an-bg-elevated);
+  box-shadow: var(--an-shadow-md);
 }
 
 .workspace.left-closed {
@@ -321,8 +324,11 @@ button:disabled {
 .ai-panel {
   display: flex;
   flex-direction: column;
-  border-left: 0;
   overflow: hidden;
+  border: 1px solid var(--an-border-subtle);
+  border-radius: 14px;
+  background: var(--an-bg-elevated);
+  box-shadow: var(--an-shadow-sm);
 }
 
 .sidebar-head,
@@ -518,9 +524,15 @@ button:disabled {
 }
 
 .ai-citation {
+  border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-lg);
+  background: var(--an-bg-subtle);
+  box-shadow: var(--an-shadow-sm);
   cursor: pointer;
   text-align: left;
+  transition:
+    border-color var(--an-motion-fast),
+    transform var(--an-motion-fast);
 }
 
 .ai-citation:hover .an-chat--citation,
@@ -645,8 +657,9 @@ button:disabled {
 }
 
 .tree-row.is-file.selected {
-  background: transparent;
-  box-shadow: inset 2px 0 0 var(--an-text-primary);
+  background: color-mix(in srgb, var(--an-accent) 16%, transparent);
+  border-radius: var(--an-radius-md);
+  box-shadow: inset 2px 0 0 var(--an-accent);
   color: var(--an-text-primary);
 }
 
@@ -870,6 +883,8 @@ button:disabled {
 }
 
 .statusbar {
+  border-top: 1px solid var(--an-border-subtle);
+  background: color-mix(in srgb, var(--an-bg-subtle) 65%, var(--an-bg-elevated));
   display: grid;
   grid-template-columns: minmax(120px, auto) minmax(0, 1fr) auto;
   align-items: center;
@@ -1045,9 +1060,9 @@ button:disabled {
 }
 
 .ai-tab.active {
-  color: var(--an-text-primary);
+  color: var(--an-accent);
   background: transparent;
-  border-bottom-color: var(--an-text-primary);
+  border-bottom-color: var(--an-accent);
   box-shadow: none;
 }
 
@@ -1140,8 +1155,13 @@ button:disabled {
   .button,
   .palette-item,
   .chevron,
-  .chevron svg {
+  .chevron svg,
+  .ai-citation,
+  .text-cmd,
+  .sheet,
+  .ai-panel {
     transition: none;
+    animation: none;
   }
 }
 
@@ -1549,9 +1569,14 @@ button:disabled {
   justify-content: flex-start;
 }
 
-.text-cmd.is-on,
+.text-cmd.is-on {
+  border-radius: var(--an-radius-md);
+  background: color-mix(in srgb, var(--an-accent) 12%, transparent);
+  color: var(--an-accent);
+}
+
 .ai-tab.active {
-  color: var(--an-text-primary);
+  color: var(--an-accent);
 }
 
 .sidebar-tools {
@@ -1679,6 +1704,8 @@ button:disabled {
 
 .settings-section h3 {
   margin: 0;
+  padding-left: var(--an-space-2);
+  border-left: 2px solid var(--an-accent);
   font-size: var(--an-font-size-ui);
   line-height: var(--an-line-ui);
   font-weight: var(--an-font-weight-h3);
