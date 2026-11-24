@@ -47,17 +47,47 @@ button:disabled {
   position: relative;
   height: 100%;
   overflow: hidden;
-  background-color: var(--an-bg-base);
+  background-color: #e7f2fb;
   background-image:
     radial-gradient(
-      ellipse 42% 36% at 100% -8%,
-      color-mix(in srgb, #8b6cff 55%, transparent),
-      transparent 70%
+      ellipse 70% 55% at 8% 0%,
+      color-mix(in srgb, #7dd3fc 70%, transparent),
+      transparent 62%
     ),
     radial-gradient(
-      ellipse 36% 32% at 92% 108%,
-      color-mix(in srgb, #3ef0e0 42%, transparent),
-      transparent 68%
+      ellipse 60% 50% at 100% 8%,
+      color-mix(in srgb, #c4b5fd 62%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 55% 45% at 70% 100%,
+      color-mix(in srgb, #67e8f9 48%, transparent),
+      transparent 60%
+    );
+}
+
+[data-theme='dark'] .app {
+  background-color: #070b14;
+  background-image:
+    radial-gradient(
+      ellipse 72% 58% at -8% -10%,
+      color-mix(in srgb, #6d28d9 78%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 64% 52% at 108% 0%,
+      color-mix(in srgb, #22d3ee 62%, transparent),
+      transparent 56%
+    ),
+    radial-gradient(
+      ellipse 58% 48% at 80% 110%,
+      color-mix(in srgb, #818cf8 70%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 40% 32% at 20% 80%,
+      color-mix(in srgb, #4c1d95 55%, transparent),
+      transparent 64%
     );
 }
 
@@ -106,7 +136,7 @@ button:disabled {
 }
 
 .sidebar {
-  background: transparent;
+  background: color-mix(in srgb, var(--an-bg-base) 78%, transparent);
 }
 
 .ai-panel {
@@ -396,6 +426,50 @@ button:disabled {
   border: 0;
   border-radius: 0;
   box-shadow: none;
+}
+
+.editor-pane:has(.empty-state) {
+  background-color: transparent;
+  background-image:
+    radial-gradient(
+      ellipse 80% 60% at 50% 42%,
+      color-mix(in srgb, #c4b5fd 55%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 18% 80%,
+      color-mix(in srgb, #7dd3fc 40%, transparent),
+      transparent 70%
+    );
+}
+
+[data-theme='dark'] .editor-pane:has(.empty-state) {
+  background-image:
+    radial-gradient(
+      ellipse 78% 62% at 50% 38%,
+      color-mix(in srgb, #7c3aed 62%, transparent),
+      transparent 66%
+    ),
+    radial-gradient(
+      ellipse 48% 40% at 78% 72%,
+      color-mix(in srgb, #22d3ee 38%, transparent),
+      transparent 68%
+    );
+}
+
+.ai-panel {
+  animation: an-rail-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes an-rail-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .ai-panel {
@@ -1147,15 +1221,15 @@ button:disabled {
 }
 
 .button.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 48%, var(--an-accent)),
-    0 8px 18px color-mix(in srgb, var(--an-accent) 28%, transparent);
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, var(--an-accent)),
+    0 10px 28px color-mix(in srgb, #a78bfa 55%, transparent);
 }
 
 .button.primary:hover:not(:disabled)::after {
-  transform: translateX(130%);
-  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateX(140%);
+  transition: transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .button.primary:active:not(:disabled) {
@@ -1925,8 +1999,11 @@ button:disabled {
 
 .text-cmd.is-on {
   border-radius: var(--an-radius-md);
-  background: color-mix(in srgb, var(--an-accent) 12%, transparent);
+  background: color-mix(in srgb, var(--an-accent) 18%, transparent);
   color: var(--an-accent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--an-accent) 36%, transparent),
+    0 0 16px color-mix(in srgb, #a78bfa 35%, transparent);
 }
 
 .ai-tab.active {
