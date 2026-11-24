@@ -323,12 +323,12 @@ button:disabled {
 }
 
 .workspace {
+  --stage-rail: 360px;
   position: relative;
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
   column-gap: var(--an-space-4);
-  row-gap: 0;
   height: 100%;
   min-height: 0;
   padding: var(--an-space-4) var(--an-space-4) var(--an-space-4) var(--an-space-3);
@@ -345,10 +345,9 @@ button:disabled {
   grid-column: 2;
   grid-row: 1;
   border: 1px solid var(--an-border-subtle);
-  border-bottom: 0;
-  border-radius: 22px 22px 0 0;
+  border-radius: 22px;
   background: var(--an-bg-elevated);
-  box-shadow: 0 20px 50px color-mix(in srgb, #02040a 28%, transparent);
+  box-shadow: 0 24px 60px color-mix(in srgb, #02040a 32%, transparent);
 }
 
 .workspace.left-closed {
@@ -366,8 +365,6 @@ button:disabled {
 
 .workspace.right-closed .sheet {
   grid-row: 1;
-  border-bottom: 1px solid var(--an-border-subtle);
-  border-radius: 22px;
 }
 
 .workspace.left-closed.right-closed {
@@ -391,7 +388,7 @@ button:disabled {
   position: relative;
   display: flex;
   grid-column: 1;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   flex-direction: column;
   gap: var(--an-space-3);
   padding: var(--an-space-2) var(--an-space-2) var(--an-space-4) 0;
@@ -402,25 +399,49 @@ button:disabled {
 }
 
 .ai-panel {
-  position: relative;
+  position: absolute;
+  z-index: 4;
+  top: calc(var(--an-space-4) + 84px);
+  right: var(--an-space-4);
+  bottom: calc(var(--an-space-4) + var(--an-statusbar-height));
   display: flex;
-  grid-column: 2;
-  grid-row: 2;
   flex-direction: column;
+  width: var(--stage-rail);
   min-height: 0;
-  max-height: 46vh;
   overflow: hidden;
-  border: 1px solid var(--an-border-subtle);
-  border-top: 1px solid color-mix(in srgb, var(--an-accent) 28%, var(--an-border-subtle));
-  border-radius: 0 0 22px 22px;
-  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--an-accent) 34%, var(--an-border-subtle));
+  border-radius: 0 20px 20px 0;
+  background: color-mix(in srgb, var(--an-bg-elevated) 92%, var(--an-bg-base));
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--an-accent) 42%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent),
+    0 18px 40px color-mix(in srgb, #02040a 22%, transparent);
 }
 
-.ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) {
-  max-height: 232px;
+@supports (backdrop-filter: blur(8px)) {
+  .ai-panel {
+    background: color-mix(in srgb, var(--an-bg-elevated) 74%, transparent);
+    backdrop-filter: blur(16px);
+  }
 }
 
-.ai-panel:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-log {
+.workspace.right-open .editor-pane {
+  padding-right: var(--stage-rail);
+}
+
+.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-panel {
+  top: auto;
+  width: min(420px, 46vw);
+  height: auto;
+  max-height: 220px;
+  border-radius: 18px;
+}
+
+.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .editor-pane {
+  padding-right: 0;
+}
+
+.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-log {
   display: none;
 }
 
@@ -513,7 +534,8 @@ button:disabled {
 
 .ai-composer textarea {
   resize: none;
-  min-height: 72px;
+  min-height: 52px;
+  max-height: 88px;
 }
 
 .search-field input:focus-visible,
@@ -633,23 +655,77 @@ button:disabled {
 }
 
 .ai-citation {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--an-space-1);
+  padding: var(--an-space-2);
   border: 1px solid var(--an-border-subtle);
-  border-radius: var(--an-radius-lg);
-  background: var(--an-bg-subtle);
-  box-shadow: none;
-  cursor: pointer;
+  border-radius: var(--an-radius-md);
+  background: color-mix(in srgb, var(--an-bg-elevated) 78%, var(--an-bg-base));
   text-align: left;
-  transition: border-color var(--an-motion-fast);
 }
 
-.ai-citation:hover .an-chat--citation,
-.ai-citation:focus-visible .an-chat--citation {
-  background: color-mix(in srgb, var(--an-ai) 18%, var(--an-ai-subtle));
+.ai-citation-jump {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.ai-citation:hover .an-chat__source,
-.ai-citation:focus-visible .an-chat__source {
+.ai-citation-title {
+  color: var(--an-text-primary);
+  font-size: var(--an-font-size-ui);
+  font-weight: var(--an-font-weight-h3);
+  line-height: var(--an-line-ui);
+}
+
+.ai-citation-path {
   color: var(--an-text-secondary);
+  font-family: var(--an-font-code);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+}
+
+.ai-citation-excerpt {
+  color: var(--an-text-secondary);
+  font-size: var(--an-font-size-small);
+  line-height: var(--an-line-small);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ai-citation.is-open .ai-citation-excerpt {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.ai-citation-jump:hover .ai-citation-title,
+.ai-citation-jump:focus-visible .ai-citation-title {
+  color: var(--an-accent);
+}
+
+.ai-citation-jump:focus-visible,
+.ai-citation-more:focus-visible {
+  outline: 2px solid var(--an-accent);
+  outline-offset: 2px;
+}
+
+.ai-citation-more {
+  align-self: flex-start;
+  height: auto;
+  min-height: 28px;
 }
 
 .wiki-jump {
@@ -1360,6 +1436,13 @@ button:disabled {
   .ai-panel {
     right: var(--an-space-3);
     width: min(360px, 92vw);
+    background: var(--an-bg-elevated);
+    backdrop-filter: none;
+  }
+
+  .workspace.right-open .editor-pane,
+  .workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .editor-pane {
+    padding-right: 0;
   }
 
   .workspace.left-closed .sidebar,
@@ -1687,12 +1770,13 @@ button:disabled {
 }
 
 .command-trigger {
-  min-width: 128px;
+  min-width: 132px;
   justify-content: flex-start;
   padding: 0 12px;
-  border: 1px solid var(--an-border-subtle);
-  background: color-mix(in srgb, var(--an-text-primary) 5%, var(--an-bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--an-accent) 28%, var(--an-border-subtle));
+  background: color-mix(in srgb, var(--an-bg-base) 55%, var(--an-bg-elevated));
   color: var(--an-text-secondary);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
 }
 
 .text-cmd svg {
@@ -1803,8 +1887,8 @@ button:disabled {
 .ask-pane.is-empty textarea {
   flex: none;
   height: auto;
-  min-height: 72px;
-  max-height: 120px;
+  min-height: 52px;
+  max-height: 88px;
 }
 
 .ask-well {
@@ -1814,18 +1898,6 @@ button:disabled {
   color: var(--an-text-secondary);
   font-size: var(--an-font-size-ui);
   line-height: var(--an-line-ui);
-}
-
-.ai-tab.is-current:not(:focus-visible) {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .ask-empty-note {

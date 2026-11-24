@@ -222,27 +222,10 @@ export function AskPane() {
                 <p className="ai-citation-note">{answerLabels.citation}</p>
               ) : null}
               {turn.citations.map((citation) => (
-                <div
+                <CitationCard
                   key={`${turn.id}:${citation.path}:${citation.start}`}
-                  className="ai-citation"
-                  role="link"
-                  tabIndex={0}
-                  onClick={() => void openCitation(citation)}
-                  onKeyDown={(event) => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    void openCitation(citation);
-                  }}
-                >
-                  <ChatMessage
-                    role="citation"
-                    citation={{
-                      title: citation.title,
-                      source: citation.path,
-                      excerpt: citation.excerpt,
-                    }}
-                  />
-                </div>
+                  citation={citation}
+                />
               ))}
               {turn.error ? (
                 <p className="ai-error" role="alert">
@@ -263,7 +246,7 @@ export function AskPane() {
         <Textarea
           label="向这篇笔记提问"
           labelHidden
-          rows={3}
+          rows={2}
           value={draft}
           placeholder="向这篇笔记提问"
           disabled={busy}
@@ -289,6 +272,50 @@ export function AskPane() {
       </form>
     </div>
   );
+}
+
+function CitationCard({ citation }: { citation: CitationSource }) {
+  const [open, setOpen] = useState(false);
+  const preview = compactExcerpt(citation.excerpt);
+  const canExpand = citation.excerpt.trim() !== preview;
+  return (
+    <div className={open ? 'ai-citation is-open' : 'ai-citation'}>
+      <button
+        type="button"
+        className="ai-citation-jump"
+        onClick={() => void openCitation(citation)}
+      >
+        <span className="ai-citation-title">{citation.title}</span>
+        <span className="ai-citation-path">{citation.path}</span>
+        <span className="ai-citation-excerpt">{open ? citation.excerpt : preview}</span>
+      </button>
+      {canExpand ? (
+        <button
+          type="button"
+          className="text-cmd ai-citation-more"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? '收起' : '展开摘录'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function compactExcerpt(text: string): string {
+  const line = text
+    .replace(/```[\s\S]*?```/g, '\n')
+    .split('\n')
+    .map((item) =>
+      item
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/^[-*]\s+/, '')
+        .trim(),
+    )
+    .find((item) => item.length > 8);
+  const plain = (line ?? '').replace(/\s+/g, ' ').trim();
+  if (plain.length <= 72) return plain;
+  return `${plain.slice(0, 72).trim()}…`;
 }
 
 function openCitation(citation: CitationSource): Promise<void> {

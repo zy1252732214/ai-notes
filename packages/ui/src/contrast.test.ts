@@ -123,7 +123,7 @@ describe('WCAG 2.1 contrast', () => {
       /\.an-chat--user \.an-chat__role\s*\{[^}]*color:\s*var\(--an-text-secondary\)/,
     );
     expect(desktopCss).toMatch(
-      /\.ai-citation:hover \.an-chat__source,\s*\.ai-citation:focus-visible \.an-chat__source\s*\{[^}]*color:\s*var\(--an-text-secondary\)/,
+      /\.ai-citation-path\s*\{[^}]*color:\s*var\(--an-text-secondary\)/,
     );
     expect(desktopCss).toContain('outline: 2px solid var(--an-accent)');
     expect(desktopCss).not.toMatch(/color-mix\(in srgb, var\(--an-accent\) 40%/);

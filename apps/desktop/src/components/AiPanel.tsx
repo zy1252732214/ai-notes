@@ -24,7 +24,7 @@ export function AiPanel() {
         <div className="ai-tabs" role="tablist" aria-label="右侧面板">
           <button
             type="button"
-            className={active === 'ask' ? 'ai-tab active is-current' : 'ai-tab'}
+            className={active === 'ask' ? 'ai-tab active' : 'ai-tab'}
             role="tab"
             id="right-tab-ask"
             aria-label="问答"
