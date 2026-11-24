@@ -153,6 +153,8 @@ button:disabled {
   padding: var(--an-space-3) var(--an-space-6) 0;
   border-bottom: 0;
   overflow-x: auto;
+  background: color-mix(in srgb, var(--an-bg-elevated) 82%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, #c4b5fd 45%, var(--an-border-subtle));
 }
 
 .topbar-side,
@@ -221,9 +223,12 @@ button:disabled {
 
 .tab.active {
   color: var(--an-text-primary);
-  background: color-mix(in srgb, var(--an-accent) 10%, var(--an-bg-elevated));
+  background: color-mix(in srgb, var(--an-accent) 16%, var(--an-bg-elevated));
   border-bottom-color: var(--an-accent);
-  border-radius: var(--an-radius-md) var(--an-radius-md) 0 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent),
+    0 0 18px color-mix(in srgb, #a78bfa 28%, transparent);
 }
 
 .tab-label,
@@ -778,16 +783,40 @@ button:disabled {
   background: transparent;
 }
 
+.ai-log .an-chat--user,
+.ai-log .an-chat--assistant {
+  border: 0;
+  box-shadow: none;
+}
+
+.ai-log .an-chat--user {
+  background: color-mix(in srgb, var(--an-accent) 14%, var(--an-bg-elevated));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+}
+
+.ai-log .an-chat--assistant {
+  background: transparent;
+  padding-left: var(--an-space-3);
+}
+
 .ai-citation {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--an-space-1);
-  padding: var(--an-space-2);
-  border: 1px solid var(--an-border-subtle);
-  border-radius: var(--an-radius-md);
-  background: color-mix(in srgb, var(--an-bg-elevated) 78%, var(--an-bg-base));
+  padding: var(--an-space-2) var(--an-space-2) var(--an-space-2) var(--an-space-3);
+  border: 0;
+  border-left: 2px solid color-mix(in srgb, var(--an-accent) 55%, var(--an-border-subtle));
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--an-accent) 8%, transparent);
   text-align: left;
+  transition:
+    background-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-citation:hover {
+  background: color-mix(in srgb, var(--an-accent) 16%, transparent);
 }
 
 .ai-citation-jump {
@@ -970,9 +999,11 @@ button:disabled {
 }
 
 .tree-row.is-file.selected {
-  background: color-mix(in srgb, var(--an-accent) 16%, transparent);
-  border-radius: var(--an-radius-md);
-  box-shadow: inset 2px 0 0 var(--an-accent);
+  background: color-mix(in srgb, var(--an-accent) 18%, transparent);
+  border-radius: 10px;
+  box-shadow:
+    inset 2px 0 0 var(--an-accent),
+    0 0 16px color-mix(in srgb, #a78bfa 24%, transparent);
   color: var(--an-text-primary);
 }
 
@@ -1934,13 +1965,54 @@ button:disabled {
 }
 
 .command-trigger {
-  min-width: 132px;
+  min-width: 148px;
   justify-content: flex-start;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--an-accent) 28%, var(--an-border-subtle));
-  background: color-mix(in srgb, var(--an-bg-base) 55%, var(--an-bg-elevated));
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, #c4b5fd 42%, var(--an-border-subtle));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--an-bg-base) 42%, var(--an-bg-elevated));
   color: var(--an-text-secondary);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 28%, transparent),
+    0 0 16px color-mix(in srgb, #22d3ee 18%, transparent);
+}
+
+.an-button--primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.an-button--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 18%,
+    color-mix(in srgb, #fff 48%, transparent) 50%,
+    transparent 82%
+  );
+  transform: translateX(-140%);
+  pointer-events: none;
+}
+
+.an-button--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.an-button--primary:hover:not(:disabled)::after {
+  transform: translateX(140%);
+  transition: transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.an-button--primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ai-composer textarea {
+  background: color-mix(in srgb, var(--an-bg-base) 40%, var(--an-bg-elevated));
+  border-color: color-mix(in srgb, #c4b5fd 36%, var(--an-border-control));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent);
 }
 
 .text-cmd svg {
@@ -2085,12 +2157,12 @@ button:disabled {
 
 .ai-composer .an-textarea,
 .ai-composer textarea {
-  border: 0;
-  border-bottom: 1px solid var(--an-border-control);
-  border-radius: 0;
-  background: var(--an-bg-base);
-  min-height: 72px;
-  max-height: 120px;
+  border: 1px solid color-mix(in srgb, #c4b5fd 36%, var(--an-border-control));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--an-bg-base) 35%, var(--an-bg-elevated));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent);
+  min-height: 52px;
+  max-height: 88px;
   height: auto;
   flex: none;
 }
@@ -2172,6 +2244,9 @@ button:disabled {
   .button,
   .button.primary,
   .button.primary::after,
+  .an-button--primary,
+  .an-button--primary::after,
+  .ai-citation,
   .sidebar,
   .sheet,
   .ai-panel {
