@@ -314,7 +314,7 @@ function dropSavers(paths: readonly string[]) {
 export const useAppStore = create<AppState>((set, get) => ({
   themeMode: loadTheme(),
   leftOpen: true,
-  rightOpen: true,
+  rightOpen: false,
   commandOpen: false,
   searchOpen: false,
   switcherOpen: false,

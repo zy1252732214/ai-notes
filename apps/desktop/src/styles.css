@@ -426,23 +426,73 @@ button:disabled {
 }
 
 .workspace.right-open .editor-pane {
-  padding-right: var(--stage-rail);
+  padding-right: calc(var(--stage-rail) + 12px);
 }
 
-.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-panel {
-  top: auto;
-  width: min(420px, 46vw);
-  height: auto;
-  max-height: 220px;
-  border-radius: 18px;
-}
-
-.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .editor-pane {
+.workspace.no-vault .ai-panel,
+.workspace.no-vault .editor-pane {
   padding-right: 0;
 }
 
-.workspace:has(#right-panel-ask:not([hidden]) .ask-pane.is-empty) .ai-log {
-  display: none;
+.cm-scroller,
+.tree,
+.ai-log,
+.links-pane,
+.ai-panel,
+.an-dialog__body,
+.an-palette__list,
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--an-text-tertiary) 50%, transparent) transparent;
+}
+
+.cm-scroller::-webkit-scrollbar,
+.tree::-webkit-scrollbar,
+.ai-log::-webkit-scrollbar,
+.links-pane::-webkit-scrollbar,
+.ai-panel::-webkit-scrollbar,
+.an-dialog__body::-webkit-scrollbar,
+.an-palette__list::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cm-scroller::-webkit-scrollbar-track,
+.tree::-webkit-scrollbar-track,
+.ai-log::-webkit-scrollbar-track,
+.links-pane::-webkit-scrollbar-track,
+.ai-panel::-webkit-scrollbar-track,
+.an-dialog__body::-webkit-scrollbar-track,
+.an-palette__list::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb,
+.tree::-webkit-scrollbar-thumb,
+.ai-log::-webkit-scrollbar-thumb,
+.links-pane::-webkit-scrollbar-thumb,
+.ai-panel::-webkit-scrollbar-thumb,
+.an-dialog__body::-webkit-scrollbar-thumb,
+.an-palette__list::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--an-text-tertiary) 42%, transparent);
+  background-clip: padding-box;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb:hover,
+.tree::-webkit-scrollbar-thumb:hover,
+.ai-log::-webkit-scrollbar-thumb:hover,
+.links-pane::-webkit-scrollbar-thumb:hover,
+.ai-panel::-webkit-scrollbar-thumb:hover,
+.an-dialog__body::-webkit-scrollbar-thumb:hover,
+.an-palette__list::-webkit-scrollbar-thumb:hover,
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--an-text-secondary) 70%, transparent);
+  background-clip: padding-box;
 }
 
 .sidebar-head,
@@ -972,10 +1022,16 @@ button:disabled {
 }
 
 .empty-state {
-  max-width: 28rem;
+  max-width: 36rem;
   margin: auto;
-  padding: var(--an-space-8) var(--an-space-6);
+  padding: 48px 40px;
   text-align: center;
+  border: 1px solid color-mix(in srgb, var(--an-accent) 28%, var(--an-border-subtle));
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--an-bg-elevated) 86%, var(--an-bg-base));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 32%, transparent),
+    0 28px 70px color-mix(in srgb, #02040a 18%, transparent);
 }
 
 .empty-state h1 {
@@ -1064,12 +1120,46 @@ button:disabled {
 }
 
 .button.primary {
+  position: relative;
+  overflow: hidden;
   background: var(--an-accent);
   border-color: transparent;
   color: var(--an-on-accent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 36%, var(--an-accent));
+  transition:
+    transform 80ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow var(--an-motion-fast),
+    background-color var(--an-motion-fast);
+}
+
+.button.primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    color-mix(in srgb, #fff 42%, transparent) 50%,
+    transparent 80%
+  );
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+.button.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 48%, var(--an-accent)),
+    0 8px 18px color-mix(in srgb, var(--an-accent) 28%, transparent);
+}
+
+.button.primary:hover:not(:disabled)::after {
+  transform: translateX(130%);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .button.primary:active:not(:disabled) {
+  transform: translateY(1px);
   background: color-mix(in srgb, var(--an-text-primary) 16%, var(--an-accent));
   color: var(--an-on-accent);
 }
@@ -2002,6 +2092,9 @@ button:disabled {
   .text-cmd,
   .ai-tab,
   .tab,
+  .button,
+  .button.primary,
+  .button.primary::after,
   .sidebar,
   .sheet,
   .ai-panel {
