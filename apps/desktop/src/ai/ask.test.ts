@@ -69,6 +69,46 @@ const vault: CitationSource[] = [
   { path: '天气.md', title: '天气', excerpt: '明天有雨。', start: 0 },
 ];
 
+describe('DeepSeek-shaped chat without embeddings (contract stub, not a live API)', () => {
+  it('posts only to chat/completions and names the chat model', async () => {
+    const urls: string[] = [];
+    let model = '';
+    const fetchImpl: FetchLike = async (input, init) => {
+      urls.push(String(input));
+      model = JSON.parse(String(init?.body)).model;
+      const body = [
+        'data: {"choices":[{"delta":{"content":"这是契约桩，不是 DeepSeek。"}}]}\n\n',
+        'data: [DONE]\n\n',
+      ].join('');
+      return new Response(body, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      });
+    };
+    const deepseek: AiSettings = {
+      ...defaultAiSettings,
+      embedModel: '',
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: 'stub-not-a-real-key',
+      },
+    };
+    const parts: string[] = [];
+    for await (const event of streamAnswer(
+      deepseek,
+      [{ role: 'user', content: '这周做了什么' }],
+      fetchImpl,
+    )) {
+      if (event.delta) parts.push(event.delta);
+    }
+    expect(urls).toEqual(['https://api.deepseek.com/v1/chat/completions']);
+    expect(urls.some((url) => url.includes('embeddings'))).toBe(false);
+    expect(model).toBe('deepseek-flash');
+    expect(parts.join('')).toContain('契约桩');
+  });
+});
+
 describe('ask', () => {
   it('puts the open note and retrieved paths into the prompt', () => {
     const active = sourceFromNote('欢迎.md', '# 欢迎\n\n相关笔记');

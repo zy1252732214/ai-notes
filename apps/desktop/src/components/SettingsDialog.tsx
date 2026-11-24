@@ -168,7 +168,7 @@ export function SettingsDialog() {
           <SettingsRow
             label="嵌入模型"
             htmlFor="ai-embed-model"
-            description="留空则只用全文检索。嵌入使用上面的接口地址和 API Key。"
+            description="留空则只用全文检索，不会请求嵌入接口。DeepSeek 这类只提供对话的服务保持留空。"
           >
             <Input
               id="ai-embed-model"
@@ -176,9 +176,7 @@ export function SettingsDialog() {
               labelHidden
               value={draft.embedModel}
               spellCheck={false}
-              placeholder={
-                draft.provider === 'ollama' ? 'nomic-embed-text' : 'text-embedding-3-small'
-              }
+              placeholder={draft.provider === 'ollama' ? 'nomic-embed-text' : '留空，只用全文'}
               onChange={(event) => {
                 setDraft((current) => ({ ...current, embedModel: event.target.value }));
                 setError(null);
