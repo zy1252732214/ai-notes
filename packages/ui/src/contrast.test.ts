@@ -106,16 +106,16 @@ describe('WCAG 2.1 contrast', () => {
   });
 
   it('keeps the reviewed text, status, and border values', () => {
-    expect(color(light, '--an-text-tertiary')).toBe('#52657f');
-    expect(color(dark, '--an-text-tertiary')).toBe('#9aadc6');
-    expect(color(light, '--an-success')).toBe('#0f7a45');
+    expect(color(light, '--an-text-tertiary')).toBe('#4e4e55');
+    expect(color(dark, '--an-text-tertiary')).toBe('#a3a3a8');
+    expect(color(light, '--an-success')).toBe('#0c6b3c');
     expect(color(light, '--an-warning')).toBe('#8a5a00');
-    expect(color(light, '--an-border-control')).toBe('#5c6e88');
-    expect(color(dark, '--an-border-control')).toBe('#8ea3c0');
-    expect(color(light, '--an-border-subtle')).toBe('#c5d4e6');
-    expect(color(dark, '--an-border-subtle')).toBe('#243044');
-    expect(color(light, '--an-selection')).toBe('#6d86ad');
-    expect(color(dark, '--an-selection')).toBe('#4d6ea3');
+    expect(color(light, '--an-border-control')).toBe('#5e5e66');
+    expect(color(dark, '--an-border-control')).toBe('#9a9aa0');
+    expect(color(light, '--an-border-subtle')).toBe('#d9d9de');
+    expect(color(dark, '--an-border-subtle')).toBe('#3a3a3d');
+    expect(color(light, '--an-selection')).toBe('#868686');
+    expect(color(dark, '--an-selection')).toBe('#6e6e73');
   });
 
   it('does not put tertiary text on the heavier question and citation surfaces', () => {

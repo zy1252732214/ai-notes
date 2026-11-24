@@ -2,27 +2,27 @@
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
  * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
- * 深空底托住一张干净文稿。强调色是同一抹极光，问答和引用复用它。
+ * 中性浅底，低对比分割，主按钮用近黑或近白。正文仍是 16px。
  */
 
 :root {
-  --an-bg-base: #e6eef8;
-  --an-bg-subtle: #f4f8fc;
-  --an-bg-recess: #d5e3f2;
-  --an-bg-elevated: #fbfeff;
-  --an-text-primary: #101828;
-  --an-text-secondary: #3a4b66;
-  --an-text-tertiary: #52657f;
-  --an-border-subtle: #c5d4e6;
-  --an-border-control: #5c6e88;
-  --an-accent: #3d35c4;
-  --an-ai: #3d35c4;
-  --an-ai-subtle: #eceaff;
-  --an-success: #0f7a45;
+  --an-bg-base: #f6f6f7;
+  --an-bg-subtle: #f1f1f3;
+  --an-bg-recess: #e6e6e9;
+  --an-bg-elevated: #ffffff;
+  --an-text-primary: #1a1a1a;
+  --an-text-secondary: #3c3c43;
+  --an-text-tertiary: #4e4e55;
+  --an-border-subtle: #d9d9de;
+  --an-border-control: #5e5e66;
+  --an-accent: #1a1a1a;
+  --an-ai: #1a1a1a;
+  --an-ai-subtle: #f3f3f4;
+  --an-success: #0c6b3c;
   --an-warning: #8a5a00;
-  --an-selection: #6d86ad;
+  --an-selection: #868686;
   --an-danger: #b42318;
-  --an-on-accent: #f8f7ff;
+  --an-on-accent: #ffffff;
 
   --an-font-ui:
     -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC',
@@ -65,8 +65,8 @@
   --an-radius-xl: 12px;
 
   --an-shadow-sm: 0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent);
-  --an-shadow-md: 0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
-  --an-shadow-lg: 0 24px 48px color-mix(in srgb, var(--an-text-primary) 14%, transparent);
+  --an-shadow-md: 0 8px 20px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
+  --an-shadow-lg: 0 16px 40px color-mix(in srgb, var(--an-text-primary) 12%, transparent);
 
   --an-motion-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --an-motion-base: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -89,22 +89,22 @@
 }
 
 [data-theme='dark'] {
-  --an-bg-base: #070b14;
-  --an-bg-subtle: #121a2c;
-  --an-bg-recess: #0a1020;
-  --an-bg-elevated: #141c2e;
-  --an-text-primary: #f3f6fb;
-  --an-text-secondary: #c9d4e6;
-  --an-text-tertiary: #9aadc6;
-  --an-border-subtle: #243044;
-  --an-border-control: #8ea3c0;
-  --an-accent: #b9a6ff;
-  --an-ai: #b9a6ff;
-  --an-ai-subtle: #241c44;
-  --an-success: #7dcea0;
-  --an-warning: #e0b15a;
-  --an-danger: #f0a097;
-  --an-on-accent: #140e28;
-  --an-selection: #4d6ea3;
+  --an-bg-base: #1c1c1e;
+  --an-bg-subtle: #232325;
+  --an-bg-recess: #121214;
+  --an-bg-elevated: #2e2e30;
+  --an-text-primary: #f5f5f7;
+  --an-text-secondary: #c8c8ce;
+  --an-text-tertiary: #a3a3a8;
+  --an-border-subtle: #3a3a3d;
+  --an-border-control: #9a9aa0;
+  --an-accent: #f5f5f7;
+  --an-ai: #f5f5f7;
+  --an-ai-subtle: #343436;
+  --an-success: #8fd4ae;
+  --an-warning: #e6c07a;
+  --an-danger: #f3b2aa;
+  --an-on-accent: #1c1c1e;
+  --an-selection: #6e6e73;
   color-scheme: dark;
 }
