@@ -1,6 +1,6 @@
 import { CARD_SYSTEM_PROMPT, parseGeneratedCards, type CardDraft } from '@ai-notes/ai';
 import { createModelRouter, explainAiError } from '../ai/ask';
-import { loadAiSettings, normalizeAiSettings } from '../ai/settings';
+import { chatBlockedReason, loadAiSettings, normalizeAiSettings } from '../ai/settings';
 
 export class CardModelError extends Error {
   readonly code: 'unconfigured' | 'failed';
@@ -24,6 +24,8 @@ export async function generateCardDrafts(text: string): Promise<CardDraft[]> {
   } catch {
     throw new CardModelError(UNCONFIGURED, 'unconfigured');
   }
+  const blocked = chatBlockedReason(settings);
+  if (blocked) throw new CardModelError(blocked, 'unconfigured');
   try {
     const router = createModelRouter(settings);
     const result = await router.chat({

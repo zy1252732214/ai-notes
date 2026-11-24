@@ -161,7 +161,6 @@ export function normalizeAiSettings(input: AiSettings): AiSettings {
   const active = provider === 'ollama' ? ollama : openai;
   if (!active.baseUrl) throw new Error('请填写接口地址');
   if (!active.model) throw new Error('请填写模型名称');
-  if (provider === 'openai' && !active.apiKey) throw new Error('请填写 API Key');
   assertBaseUrl(active.baseUrl);
   if (openai.baseUrl) assertBaseUrl(openai.baseUrl);
   if (ollama.baseUrl) assertBaseUrl(ollama.baseUrl);
@@ -175,6 +174,34 @@ export function normalizeAiSettings(input: AiSettings): AiSettings {
 
 export function activeProvider(settings: AiSettings): ProviderSettings {
   return settings.provider === 'ollama' ? settings.ollama : settings.openai;
+}
+
+/** 缺密钥时给界面的提示。这次不会去请求模型。 */
+export const MISSING_API_KEY_MESSAGE =
+  '请先在设置中填写 API Key。当前没有已保存的密钥，本次不会请求模型。';
+
+/**
+ * 对话发出之前的配置检查。
+ * OpenAI 兼容接口允许把密钥存成空，但空密钥不能发出请求，也不能退回用上一把密钥。
+ */
+export function chatBlockedReason(settings: AiSettings): string | null {
+  let ready: AiSettings;
+  try {
+    ready = normalizeAiSettings(settings);
+  } catch (error) {
+    return error instanceof Error && error.message ? error.message : '请检查模型设置';
+  }
+  if (ready.provider === 'openai' && !activeProvider(ready).apiKey) return MISSING_API_KEY_MESSAGE;
+  return null;
+}
+
+/** 只清掉当前提供方草稿里的密钥，不改地址、模型，也不写存储。 */
+export function withoutActiveApiKey(settings: AiSettings): AiSettings {
+  const provider = settings.provider === 'ollama' ? 'ollama' : 'openai';
+  return {
+    ...settings,
+    [provider]: { ...settings[provider], apiKey: '' },
+  };
 }
 
 async function adoptKeychain(store: SecretStore, kv: KeyValueStore): Promise<void> {

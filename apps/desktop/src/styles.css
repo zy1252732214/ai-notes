@@ -2232,6 +2232,22 @@ button:disabled {
   gap: var(--an-space-2);
 }
 
+.settings-key-line {
+  display: flex;
+  align-items: center;
+  gap: var(--an-space-2);
+  width: 100%;
+}
+
+.settings-key-line .an-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings-key-line .an-button {
+  flex: 0 0 auto;
+}
+
 .ai-settings .an-settings__label {
   font-weight: var(--an-font-weight-ui);
   color: var(--an-text-primary);

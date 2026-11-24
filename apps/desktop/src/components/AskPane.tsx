@@ -15,7 +15,7 @@ import {
   streamAnswer,
   type CitationSource,
 } from '../ai/ask';
-import { loadAiSettings } from '../ai/settings';
+import { chatBlockedReason, loadAiSettings } from '../ai/settings';
 import { getEmbedError, getNoteIndex, retrieveNotes } from '../search/client';
 import { listNoteFiles } from '../search/files';
 import { resolveNoteLink } from '../search/links';
@@ -98,6 +98,15 @@ export function AskPane() {
           citations: [],
           status: 'withheld',
         },
+      ]);
+      return;
+    }
+    const blocked = chatBlockedReason(settings);
+    if (blocked) {
+      setTurns((current) => [
+        ...current,
+        { id: userId, role: 'user', content: question, citations: [] },
+        { id: assistantId, role: 'error', content: blocked, citations: [] },
       ]);
       return;
     }

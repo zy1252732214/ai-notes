@@ -12,7 +12,12 @@ import type { SearchHit } from '@ai-notes/indexer';
 import type { NoteName } from '../search/fuzzy.js';
 import { resolveNoteLink } from '../search/links.js';
 import { stripSnippet } from '../search/snippet.js';
-import { activeProvider, normalizeAiSettings, type AiSettings } from './settings.js';
+import {
+  activeProvider,
+  chatBlockedReason,
+  normalizeAiSettings,
+  type AiSettings,
+} from './settings.js';
 
 export interface CitationSource {
   path: string;
@@ -245,6 +250,8 @@ export function answerParts(answer: string): Array<{ kind: 'text' | 'link'; text
 }
 
 export function createModelRouter(settings: AiSettings, fetchImpl?: FetchLike): ModelRouter {
+  const blocked = chatBlockedReason(settings);
+  if (blocked) throw new Error(blocked);
   const ready = normalizeAiSettings(settings);
   const active = activeProvider(ready);
   if (ready.provider === 'ollama') {
@@ -263,7 +270,7 @@ export function createModelRouter(settings: AiSettings, fetchImpl?: FetchLike): 
     providers: [
       new OpenAICompatibleProvider({
         baseUrl: active.baseUrl,
-        apiKey: active.apiKey,
+        ...(active.apiKey ? { apiKey: active.apiKey } : {}),
         defaultModel: active.model,
         fetch: fetchImpl,
       }),

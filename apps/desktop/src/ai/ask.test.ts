@@ -1,6 +1,14 @@
 import type { FetchLike } from '@ai-notes/ai';
 import { describe, expect, it } from 'vitest';
-import { defaultAiSettings, type AiSettings } from './settings.js';
+import {
+  defaultAiSettings,
+  loadAiSettings,
+  MISSING_API_KEY_MESSAGE,
+  saveAiSettings,
+  withoutActiveApiKey,
+  type AiSettings,
+  type KeyValueStore,
+} from './settings.js';
 import {
   answerAfterStream,
   answerLabels,
@@ -106,6 +114,47 @@ describe('DeepSeek-shaped chat without embeddings (contract stub, not a live API
     expect(urls.some((url) => url.includes('embeddings'))).toBe(false);
     expect(model).toBe('deepseek-flash');
     expect(parts.join('')).toContain('契约桩');
+  });
+
+  it('does not call the network after the saved key is cleared (stub, not a live API)', async () => {
+    const store: KeyValueStore & { raw: string | null } = {
+      raw: null,
+      getItem: () => store.raw,
+      setItem: (_key, value) => {
+        store.raw = value;
+      },
+    };
+    const saved: AiSettings = {
+      ...defaultAiSettings,
+      embedModel: '',
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: 'sk-test',
+      },
+    };
+    await saveAiSettings(saved, store);
+    await saveAiSettings(withoutActiveApiKey(loadAiSettings(store)), store);
+    const reloaded = loadAiSettings(store);
+    expect(reloaded.openai.apiKey).toBe('');
+    expect(reloaded.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(store.raw).not.toContain('sk-test');
+
+    let called = false;
+    const fetchImpl: FetchLike = async () => {
+      called = true;
+      throw new Error('empty key must not reach the network');
+    };
+    await expect(async () => {
+      for await (const event of streamAnswer(
+        reloaded,
+        [{ role: 'user', content: '这周做了什么' }],
+        fetchImpl,
+      )) {
+        void event;
+      }
+    }).rejects.toThrow(MISSING_API_KEY_MESSAGE);
+    expect(called).toBe(false);
   });
 });
 

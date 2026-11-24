@@ -6,6 +6,7 @@ import {
   normalizeAiSettings,
   saveAiSettings,
   secretsInKeychain,
+  withoutActiveApiKey,
   type AiProviderId,
   type AiSettings,
   type ProviderSettings,
@@ -188,21 +189,35 @@ export function SettingsDialog() {
             htmlFor="ai-api-key"
             description={
               draft.provider === 'ollama'
-                ? '本机 Ollama 通常不需要。'
+                ? '本机 Ollama 通常不需要。留空并保存会清除已填写的密钥。'
                 : secure
-                  ? '存在系统钥匙串里。'
-                  : '只存在本地。'
+                  ? '存在系统钥匙串里。留空并保存会从钥匙串删掉，接口地址和模型保留。取消不会清除。'
+                  : '只存在本地。留空并保存会清除已保存的密钥，接口地址和模型保留。取消不会清除。'
             }
           >
-            <Input
-              id="ai-api-key"
-              label="API Key"
-              labelHidden
-              type="password"
-              autoComplete="off"
-              value={active.apiKey}
-              onChange={(event) => updateActive({ apiKey: event.target.value })}
-            />
+            <div className="settings-key-line">
+              <Input
+                id="ai-api-key"
+                label="API Key"
+                labelHidden
+                type="password"
+                autoComplete="off"
+                value={active.apiKey}
+                onChange={(event) => updateActive({ apiKey: event.target.value })}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={!active.apiKey}
+                onClick={() => {
+                  setDraft((current) => withoutActiveApiKey(current));
+                  setError(null);
+                }}
+              >
+                清除密钥
+              </Button>
+            </div>
           </SettingsRow>
         </section>
       </div>

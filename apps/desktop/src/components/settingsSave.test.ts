@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defaultAiSettings } from '../ai/settings';
+import { defaultAiSettings, withoutActiveApiKey } from '../ai/settings';
 import { commitDialogSave } from './settingsSave';
 
 describe('commitDialogSave', () => {
@@ -34,5 +34,32 @@ describe('commitDialogSave', () => {
     expect(rememberTheme).toHaveBeenCalledWith('light');
     expect(saveAi).toHaveBeenCalledWith(defaultAiSettings);
     expect(result.closed).toBe(true);
+  });
+
+  it('stores a cleared key and still remembers the theme', async () => {
+    const rememberTheme = vi.fn();
+    const saveAi = vi.fn(async () => undefined);
+    const draft = withoutActiveApiKey({
+      ...defaultAiSettings,
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: 'sk-test',
+      },
+    });
+
+    const result = await commitDialogSave({
+      draft,
+      theme: 'dark',
+      rememberTheme,
+      saveAi,
+    });
+
+    expect(draft.openai.apiKey).toBe('');
+    expect(draft.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(draft.openai.model).toBe('deepseek-flash');
+    expect(rememberTheme).toHaveBeenCalledWith('dark');
+    expect(saveAi).toHaveBeenCalledWith(draft);
+    expect(result).toEqual({ closed: true, error: null });
   });
 });
