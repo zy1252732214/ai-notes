@@ -37,7 +37,7 @@ export function FileTree() {
             openDialog({ kind: 'create-note' });
           }}
         >
-          <Plus size={14} strokeWidth={1.5} />
+          <Plus size={16} strokeWidth={1.75} />
           新建
         </button>
         <button
@@ -49,7 +49,7 @@ export function FileTree() {
             openDialog({ kind: 'create-folder' });
           }}
         >
-          <FolderPlus size={14} strokeWidth={1.5} />
+          <FolderPlus size={16} strokeWidth={1.75} />
           文件夹
         </button>
         <button
@@ -58,7 +58,7 @@ export function FileTree() {
           disabled={!vault}
           onClick={() => void refreshTree()}
         >
-          <RefreshCw size={14} strokeWidth={1.5} />
+          <RefreshCw size={16} strokeWidth={1.75} />
           刷新
         </button>
       </div>
@@ -135,7 +135,7 @@ function TreeNode({
             aria-label={open ? `折叠${node.name}` : `展开${node.name}`}
             onClick={() => toggleExpanded(node.path)}
           >
-            <ChevronRight size={14} strokeWidth={1.5} />
+            <ChevronRight size={16} strokeWidth={1.75} />
           </button>
         ) : (
           <span className="chevron spacer" />
@@ -163,7 +163,7 @@ function TreeNode({
                 openDialog({ kind: 'create-note' });
               }}
             >
-              <Plus size={14} strokeWidth={1.5} />
+              <Plus size={16} strokeWidth={1.75} />
             </button>
           ) : null}
           <button
@@ -171,14 +171,14 @@ function TreeNode({
             aria-label={`重命名${node.name}`}
             onClick={() => openDialog({ kind: 'rename', path: node.path, entryKind: node.kind })}
           >
-            <Pencil size={14} strokeWidth={1.5} />
+            <Pencil size={16} strokeWidth={1.75} />
           </button>
           <button
             className="icon-button danger"
             aria-label={`删除${node.name}`}
             onClick={() => openDialog({ kind: 'delete', path: node.path, entryKind: node.kind })}
           >
-            <Trash2 size={14} strokeWidth={1.5} />
+            <Trash2 size={16} strokeWidth={1.75} />
           </button>
         </div>
       </div>

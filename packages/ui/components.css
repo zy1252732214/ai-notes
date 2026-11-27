@@ -382,6 +382,14 @@
   border-radius: var(--an-radius-lg);
 }
 
+.an-switch__control:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 6%, var(--an-bg-subtle));
+}
+
+.an-switch__control:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 10%, var(--an-bg-subtle));
+}
+
 .an-switch__track {
   display: flex;
   align-items: center;

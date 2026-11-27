@@ -23,6 +23,7 @@ export function SettingsDialog() {
   const setThemeMode = useAppStore((state) => state.setThemeMode);
   const [draft, setDraft] = useState<AiSettings>(defaultAiSettings);
   const [themeDraft, setThemeDraft] = useState<ThemeMode>(themeMode);
+  const [section, setSection] = useState<'appearance' | 'model'>('appearance');
   const [error, setError] = useState<string | null>(null);
   const themeWhenOpened = useRef<ThemeMode>(themeMode);
 
@@ -32,6 +33,7 @@ export function SettingsDialog() {
     themeWhenOpened.current = current;
     setThemeDraft(current);
     setDraft(loadAiSettings());
+    setSection('appearance');
     setError(null);
   }, [open]);
 
@@ -84,7 +86,10 @@ export function SettingsDialog() {
                     },
                     saveAi: (next) => saveAiSettings(normalizeAiSettings(next)),
                   });
-                  if (result.error) setError(result.error);
+                  if (result.error) {
+                    setError(result.error);
+                    if (/接口|模型|密钥|API/.test(result.error)) setSection('model');
+                  }
                   if (!result.closed) return;
                   void getNoteIndex()?.syncEmbeddings();
                   setSettingsOpen(false);
@@ -98,128 +103,157 @@ export function SettingsDialog() {
       }
     >
       <div className="ai-settings">
-        <section className="settings-section" aria-labelledby="settings-appearance">
-          <h3 id="settings-appearance">外观</h3>
-          <SettingsRow
-            label="主题"
-            htmlFor="theme-mode"
-            description="跟随系统，或固定为浅色、深色。"
+        <div className="settings-shell">
+          <nav
+            className="settings-nav"
+            aria-label="设置分段"
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+              event.preventDefault();
+              setSection((current) => (current === 'appearance' ? 'model' : 'appearance'));
+            }}
           >
-            <Select
-              id="theme-mode"
-              label="主题"
-              labelHidden
-              value={themeDraft}
-              options={[
-                { value: 'system', label: '跟随系统' },
-                { value: 'light', label: '浅色' },
-                { value: 'dark', label: '深色' },
-              ]}
-              onChange={(value) => {
-                const next = value as ThemeMode;
-                setThemeDraft(next);
-                applyTheme(next);
-              }}
-            />
-          </SettingsRow>
-        </section>
-        <section className="settings-section" aria-labelledby="settings-model">
-          <h3 id="settings-model">模型</h3>
-          <p className="settings-section-note">对话和嵌入用的接口。密钥不写入笔记。</p>
-          <SettingsRow
-            label="提供方"
-            htmlFor="ai-provider"
-            description="OpenAI 兼容接口，或本机 Ollama。"
-          >
-            <Select
-              id="ai-provider"
-              label="提供方"
-              labelHidden
-              value={draft.provider}
-              options={[
-                { value: 'openai', label: 'OpenAI 兼容' },
-                { value: 'ollama', label: 'Ollama' },
-              ]}
-              onChange={(value) => {
-                setDraft((current) => ({ ...current, provider: value as AiProviderId }));
-                setError(null);
-              }}
-            />
-          </SettingsRow>
-          <SettingsRow label="接口地址" htmlFor="ai-base-url">
-            <Input
-              id="ai-base-url"
-              label="接口地址"
-              labelHidden
-              value={active.baseUrl}
-              spellCheck={false}
-              onChange={(event) => updateActive({ baseUrl: event.target.value })}
-            />
-          </SettingsRow>
-          <SettingsRow label="模型" htmlFor="ai-model">
-            <Input
-              id="ai-model"
-              label="模型"
-              labelHidden
-              value={active.model}
-              spellCheck={false}
-              onChange={(event) => updateActive({ model: event.target.value })}
-            />
-          </SettingsRow>
-          <SettingsRow
-            label="嵌入模型"
-            htmlFor="ai-embed-model"
-            description="留空则只用全文检索，不会请求嵌入接口。DeepSeek 这类只提供对话的服务保持留空。"
-          >
-            <Input
-              id="ai-embed-model"
-              label="嵌入模型"
-              labelHidden
-              value={draft.embedModel}
-              spellCheck={false}
-              placeholder={draft.provider === 'ollama' ? 'nomic-embed-text' : '留空，只用全文'}
-              onChange={(event) => {
-                setDraft((current) => ({ ...current, embedModel: event.target.value }));
-                setError(null);
-              }}
-            />
-          </SettingsRow>
-          <SettingsRow
-            label="API Key"
-            htmlFor="ai-api-key"
-            description={
-              draft.provider === 'ollama'
-                ? '本机 Ollama 通常不需要。留空并保存会清除已填写的密钥。'
-                : secure
-                  ? '存在系统钥匙串里。留空并保存会从钥匙串删掉，接口地址和模型保留。取消不会清除。'
-                  : '只存在本地。留空并保存会清除已保存的密钥，接口地址和模型保留。取消不会清除。'
-            }
-          >
-            <div className="settings-key-line">
-              <Input
-                id="ai-api-key"
-                label="API Key"
-                labelHidden
-                type="password"
-                autoComplete="off"
-                value={active.apiKey}
-                onChange={(event) => updateActive({ apiKey: event.target.value })}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={!active.apiKey}
-                onClick={() => {
-                  setDraft((current) => withoutActiveApiKey(current));
-                  setError(null);
-                }}
+            <button
+              type="button"
+              id="settings-nav-appearance"
+              aria-current={section === 'appearance' ? 'true' : undefined}
+              onClick={() => setSection('appearance')}
+            >
+              外观
+            </button>
+            <button
+              type="button"
+              id="settings-nav-model"
+              aria-current={section === 'model' ? 'true' : undefined}
+              onClick={() => setSection('model')}
+            >
+              模型
+            </button>
+          </nav>
+          {section === 'appearance' ? (
+            <section className="settings-card" aria-labelledby="settings-nav-appearance">
+              <SettingsRow
+                label="主题"
+                htmlFor="theme-mode"
+                description="跟随系统，或固定为浅色、深色。"
               >
-                清除密钥
-              </Button>
-            </div>
-          </SettingsRow>
-        </section>
+                <Select
+                  id="theme-mode"
+                  label="主题"
+                  labelHidden
+                  value={themeDraft}
+                  options={[
+                    { value: 'system', label: '跟随系统' },
+                    { value: 'light', label: '浅色' },
+                    { value: 'dark', label: '深色' },
+                  ]}
+                  onChange={(value) => {
+                    const next = value as ThemeMode;
+                    setThemeDraft(next);
+                    applyTheme(next);
+                  }}
+                />
+              </SettingsRow>
+            </section>
+          ) : (
+            <section className="settings-card" aria-labelledby="settings-nav-model">
+              <p className="settings-section-note">对话和嵌入用的接口。密钥不写入笔记。</p>
+              <SettingsRow
+                label="提供方"
+                htmlFor="ai-provider"
+                description="OpenAI 兼容接口，或本机 Ollama。"
+              >
+                <Select
+                  id="ai-provider"
+                  label="提供方"
+                  labelHidden
+                  value={draft.provider}
+                  options={[
+                    { value: 'openai', label: 'OpenAI 兼容' },
+                    { value: 'ollama', label: 'Ollama' },
+                  ]}
+                  onChange={(value) => {
+                    setDraft((current) => ({ ...current, provider: value as AiProviderId }));
+                    setError(null);
+                  }}
+                />
+              </SettingsRow>
+              <SettingsRow label="接口地址" htmlFor="ai-base-url">
+                <Input
+                  id="ai-base-url"
+                  label="接口地址"
+                  labelHidden
+                  value={active.baseUrl}
+                  spellCheck={false}
+                  onChange={(event) => updateActive({ baseUrl: event.target.value })}
+                />
+              </SettingsRow>
+              <SettingsRow label="模型" htmlFor="ai-model">
+                <Input
+                  id="ai-model"
+                  label="模型"
+                  labelHidden
+                  value={active.model}
+                  spellCheck={false}
+                  onChange={(event) => updateActive({ model: event.target.value })}
+                />
+              </SettingsRow>
+              <SettingsRow
+                label="嵌入模型"
+                htmlFor="ai-embed-model"
+                description="留空则只用全文检索，不会请求嵌入接口。DeepSeek 这类只提供对话的服务保持留空。"
+              >
+                <Input
+                  id="ai-embed-model"
+                  label="嵌入模型"
+                  labelHidden
+                  value={draft.embedModel}
+                  spellCheck={false}
+                  placeholder={draft.provider === 'ollama' ? 'nomic-embed-text' : '留空，只用全文'}
+                  onChange={(event) => {
+                    setDraft((current) => ({ ...current, embedModel: event.target.value }));
+                    setError(null);
+                  }}
+                />
+              </SettingsRow>
+              <SettingsRow
+                label="API Key"
+                htmlFor="ai-api-key"
+                description={
+                  draft.provider === 'ollama'
+                    ? '本机 Ollama 通常不需要。留空并保存会清除已填写的密钥。'
+                    : secure
+                      ? '存在系统钥匙串里。留空并保存会从钥匙串删掉，接口地址和模型保留。取消不会清除。'
+                      : '只存在本地。留空并保存会清除已保存的密钥，接口地址和模型保留。取消不会清除。'
+                }
+              >
+                <div className="settings-key-line">
+                  <Input
+                    id="ai-api-key"
+                    label="API Key"
+                    labelHidden
+                    type="password"
+                    autoComplete="off"
+                    value={active.apiKey}
+                    onChange={(event) => updateActive({ apiKey: event.target.value })}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={!active.apiKey}
+                    onClick={() => {
+                      setDraft((current) => withoutActiveApiKey(current));
+                      setError(null);
+                    }}
+                  >
+                    清除密钥
+                  </Button>
+                </div>
+              </SettingsRow>
+            </section>
+          )}
+        </div>
       </div>
     </Dialog>
   );
