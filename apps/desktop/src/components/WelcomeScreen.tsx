@@ -36,9 +36,11 @@ export function WelcomeScreen({
 
   return (
     <div className="empty-state welcome">
-      <p className="welcome-kicker">第一次使用</p>
       <h1>先打开示例库</h1>
-      <p>不用注册，也不需要 API Key。示例库在内存里，可以马上试编辑、搜索和问答，不会写入磁盘。</p>
+      <p>
+        <span className="welcome-when">第一次使用。</span>
+        不用注册，也不需要 API Key。示例库在内存里，可以马上试编辑、搜索和问答，不会写入磁盘。
+      </p>
       <div className="welcome-actions">
         <div className="welcome-primary-row">
           <button className="button primary welcome-primary" type="button" onClick={onOpenSample}>

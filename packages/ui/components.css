@@ -1,3 +1,8 @@
+/* Hallmark · v2.0.0 · genre: modern-minimal (inferred) · shape: app screen
+ * redesign: full · theme: warm paper (kept) · posture: restrained
+ * copy: verbatim · built: the project
+ * critique: one edge on overlays, accent only on the primary action */
+
 /*
  * 基础组件样式。只使用 tokens.css 里的 --an-* 变量。
  * 悬停用 color-mix 从已有变量派生，不引入新的颜色。
@@ -134,8 +139,17 @@
 }
 
 .an-button--primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--an-accent) 86%, var(--an-text-primary));
-  border-color: color-mix(in srgb, var(--an-accent) 86%, var(--an-text-primary));
+  background: color-mix(in srgb, var(--an-accent) 86%, var(--an-bg-elevated));
+  border-color: color-mix(in srgb, var(--an-accent) 86%, var(--an-bg-elevated));
+}
+
+.an-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 8%, var(--an-bg-elevated));
+}
+
+.an-button--primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-accent));
+  border-color: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-accent));
 }
 
 .an-button--secondary:hover:not(:disabled),
@@ -144,7 +158,7 @@
 }
 
 .an-button--ghost {
-  border-color: var(--an-bg-base);
+  border-color: var(--an-bg-elevated);
   background: none;
 }
 
@@ -157,6 +171,16 @@
 .an-button--danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--an-danger) 86%, var(--an-text-primary));
   border-color: color-mix(in srgb, var(--an-danger) 86%, var(--an-text-primary));
+}
+
+.an-button--danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-danger));
+  border-color: color-mix(in srgb, var(--an-text-primary) 18%, var(--an-danger));
+}
+
+.an-button--ghost:active:not(:disabled),
+.an-button--secondary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 12%, var(--an-bg-elevated));
 }
 
 .an-icon-button {
@@ -176,6 +200,11 @@
 
 .an-icon-button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--an-text-primary) 8%, var(--an-bg-base));
+  color: var(--an-text-primary);
+}
+
+.an-icon-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 14%, var(--an-bg-base));
   color: var(--an-text-primary);
 }
 
@@ -353,6 +382,14 @@
   border-radius: var(--an-radius-lg);
 }
 
+.an-switch__control:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 6%, var(--an-bg-subtle));
+}
+
+.an-switch__control:active:not(:disabled) {
+  background: color-mix(in srgb, var(--an-text-primary) 10%, var(--an-bg-subtle));
+}
+
 .an-switch__track {
   display: flex;
   align-items: center;
@@ -481,16 +518,27 @@
 
 .an-dialog,
 .an-palette {
-  width: min(100%, calc(var(--an-sidebar-width) + var(--an-sidebar-min-width)));
+  width: min(100%, var(--an-dialog-width));
   border: 1px solid var(--an-border-subtle);
   border-radius: var(--an-radius-xl);
   background: var(--an-bg-elevated);
   color: var(--an-text-primary);
   box-shadow: var(--an-shadow-lg);
+  animation: an-rise var(--an-motion-base);
+}
+
+@keyframes an-rise {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .an-palette {
   width: min(100%, var(--an-command-palette-width));
+  border-color: var(--an-border-subtle);
 }
 
 .an-dialog {
@@ -567,7 +615,7 @@
   border-radius: var(--an-radius-md);
   background: var(--an-bg-elevated);
   color: var(--an-text-primary);
-  box-shadow: var(--an-shadow-md);
+  box-shadow: none;
 }
 
 .an-toast--success {
@@ -630,7 +678,8 @@
 .an-palette__item:hover:not(:disabled),
 .an-result:hover,
 .an-result--active {
-  background: color-mix(in srgb, var(--an-accent) 12%, var(--an-bg-elevated));
+  background: color-mix(in srgb, var(--an-accent) 14%, var(--an-bg-elevated));
+  box-shadow: inset 2px 0 0 var(--an-accent);
 }
 
 .an-palette__empty {
@@ -825,5 +874,7 @@
   .an-dialog,
   .an-palette {
     transition: none;
+    animation: none;
+    transform: none;
   }
 }

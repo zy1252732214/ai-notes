@@ -2,15 +2,18 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   AI_SETTINGS_KEY,
   API_KEY_ACCOUNTS,
+  chatBlockedReason,
   defaultAiSettings,
   enableKeychain,
   hasSavedAiSettings,
   loadAiSettings,
+  MISSING_API_KEY_MESSAGE,
   normalizeAiSettings,
   prefillAiSettings,
   resetAiSecretStore,
   saveAiSettings,
   secretsInKeychain,
+  withoutActiveApiKey,
   type AiSettings,
   type KeyValueStore,
   type SecretStore,
@@ -91,14 +94,77 @@ describe('AI settings', () => {
     expect(AI_SETTINGS_KEY).toBe('ai-notes.ai');
   });
 
-  it('requires an API key for the OpenAI-compatible provider', () => {
-    expect(() => normalizeAiSettings(defaultAiSettings)).toThrow(/API Key/);
+  it('stores an empty OpenAI-compatible key and still rejects a bad address', () => {
+    const cleared = normalizeAiSettings({
+      ...defaultAiSettings,
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: '',
+      },
+    });
+    expect(cleared.openai.apiKey).toBe('');
+    expect(cleared.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(cleared.openai.model).toBe('deepseek-flash');
+    expect(chatBlockedReason(cleared)).toBe(MISSING_API_KEY_MESSAGE);
     expect(() =>
       normalizeAiSettings({
         ...defaultAiSettings,
         openai: { ...defaultAiSettings.openai, apiKey: 'sk-test', baseUrl: 'ftp://example.test' },
       }),
     ).toThrow(/http/);
+  });
+
+  it('saves a key, then clears it on the same provider and reloads without it', async () => {
+    const store = memoryStore();
+    const saved: AiSettings = {
+      ...defaultAiSettings,
+      provider: 'openai',
+      embedModel: '',
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: 'sk-test',
+      },
+    };
+    await saveAiSettings(saved, store);
+    expect(loadAiSettings(store).openai.apiKey).toBe('sk-test');
+
+    const draft = withoutActiveApiKey(loadAiSettings(store));
+    expect(draft.provider).toBe('openai');
+    expect(draft.openai.apiKey).toBe('');
+    expect(draft.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(draft.openai.model).toBe('deepseek-flash');
+    expect(loadAiSettings(store).openai.apiKey).toBe('sk-test');
+
+    await saveAiSettings(draft, store);
+    const reloaded = loadAiSettings(store);
+    expect(reloaded.provider).toBe('openai');
+    expect(reloaded.openai.apiKey).toBe('');
+    expect(reloaded.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(reloaded.openai.model).toBe('deepseek-flash');
+    expect(reloaded.embedModel).toBe('');
+    expect(store.raw()).not.toContain('sk-test');
+    expect(JSON.parse(store.raw() ?? '{}').openai.apiKey).toBe('');
+  });
+
+  it('keeps the stored key when a cleared draft is discarded', async () => {
+    const store = memoryStore();
+    const saved: AiSettings = {
+      ...defaultAiSettings,
+      openai: {
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-flash',
+        apiKey: 'sk-test',
+      },
+    };
+    await saveAiSettings(saved, store);
+    const draft = withoutActiveApiKey(loadAiSettings(store));
+    expect(draft.openai.apiKey).toBe('');
+    const kept = loadAiSettings(store);
+    expect(kept.openai.apiKey).toBe('sk-test');
+    expect(kept.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(kept.openai.model).toBe('deepseek-flash');
   });
 });
 
@@ -189,6 +255,30 @@ describe('keychain migration', () => {
     expect(store.raw()).not.toContain('sk-rotated');
     expect(store.raw()).not.toContain('ollama-token');
     expect(loadAiSettings(store).openai.apiKey).toBe('sk-rotated');
+  });
+
+  it('deletes the current provider key without switching away or keeping the old secret', async () => {
+    const store = memoryStore();
+    const vault = secretVault();
+    saveAiSettings(saved, store);
+    await enableKeychain(vault, store);
+
+    const draft = withoutActiveApiKey(loadAiSettings(store));
+    expect(draft.provider).toBe('openai');
+    expect(loadAiSettings(store).openai.apiKey).toBe('sk-live-secret');
+
+    await saveAiSettings(draft, store);
+    const reloaded = loadAiSettings(store);
+    expect(reloaded.provider).toBe('openai');
+    expect(reloaded.openai.apiKey).toBe('');
+    expect(reloaded.openai.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(reloaded.openai.model).toBe('deepseek-chat');
+    expect(reloaded.embedModel).toBe('text-embedding-3-small');
+    expect(reloaded.ollama.apiKey).toBe('ollama-token');
+    expect(vault.values.has(API_KEY_ACCOUNTS.openai)).toBe(false);
+    expect(vault.values.get(API_KEY_ACCOUNTS.ollama)).toBe('ollama-token');
+    expect(store.raw()).not.toContain('sk-live-secret');
+    expect(store.raw()).not.toContain('ollama-token');
   });
 
   it('deletes a cleared key without dropping the other provider', async () => {

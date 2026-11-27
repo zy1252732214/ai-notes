@@ -20,6 +20,7 @@ export function App() {
   const themeMode = useAppStore((state) => state.themeMode);
   const leftOpen = useAppStore((state) => state.leftOpen);
   const rightOpen = useAppStore((state) => state.rightOpen);
+  const vault = useAppStore((state) => state.vault);
   const setLeftOpen = useAppStore((state) => state.setLeftOpen);
   const setRightOpen = useAppStore((state) => state.setRightOpen);
   const narrow = useNarrowScreen();
@@ -113,12 +114,12 @@ export function App() {
   const workspaceClass = [
     'workspace',
     leftOpen ? 'left-open' : 'left-closed',
-    rightOpen ? 'right-open' : 'right-closed',
+    rightOpen && vault ? 'right-open' : 'right-closed',
+    vault ? 'has-vault' : 'no-vault',
   ].join(' ');
 
   return (
     <div className="app">
-      <TopBar />
       <div className={workspaceClass}>
         {narrow && (leftOpen || rightOpen) ? (
           <button
@@ -131,10 +132,13 @@ export function App() {
           />
         ) : null}
         <FileTree />
-        <EditorPane />
+        <div className="sheet">
+          <TopBar />
+          <EditorPane />
+          <StatusBar />
+        </div>
         <AiPanel />
       </div>
-      <StatusBar />
       <CommandPalette />
       <SearchPanel />
       <QuickSwitcher />

@@ -68,7 +68,8 @@ export function LinksPane() {
               <SearchResultItem
                 key={`${link.path}:${link.kind}:${link.dstPath}`}
                 title={link.title || link.path}
-                path={`${link.path} · ${kindLabel[link.kind]}`}
+                path={link.path}
+                snippet={kindLabel[link.kind]}
                 onSelect={() => void openNote(link.path)}
               />
             ))}
@@ -84,9 +85,8 @@ export function LinksPane() {
               <SearchResultItem
                 key={`${link.kind}:${link.dstPath}:${index}`}
                 title={link.label}
-                path={
-                  link.resolved ? `${link.resolved} · ${kindLabel[link.kind]}` : '找不到这篇笔记'
-                }
+                path={link.resolved ?? '找不到这篇笔记'}
+                snippet={link.resolved ? kindLabel[link.kind] : undefined}
                 onSelect={() => void openLink(link.dstPath)}
               />
             ))}

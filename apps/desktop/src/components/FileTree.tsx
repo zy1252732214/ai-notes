@@ -1,19 +1,10 @@
 import { filterVaultTree, type VaultNode } from '@ai-notes/core';
-import {
-  ChevronRight,
-  FileText,
-  Folder,
-  FolderOpen,
-  FolderPlus,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react';
+import { ChevronRight, FolderPlus, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useAppStore } from '../store';
 
 export function FileTree() {
   const leftOpen = useAppStore((state) => state.leftOpen);
+  const toggleLeft = useAppStore((state) => state.toggleLeft);
   const vault = useAppStore((state) => state.vault);
   const tree = useAppStore((state) => state.tree);
   const filter = useAppStore((state) => state.filter);
@@ -26,45 +17,56 @@ export function FileTree() {
   return (
     <aside className="sidebar" aria-label="文件树" inert={!leftOpen}>
       <div className="sidebar-head">
-        <span>文件</span>
-        <div className="row-actions">
-          <button
-            className="icon-button"
-            aria-label="新建笔记"
-            disabled={!vault}
-            onClick={() => {
-              selectDirectory('');
-              openDialog({ kind: 'create-note' });
-            }}
-          >
-            <Plus size={16} strokeWidth={1.5} />
-          </button>
-          <button
-            className="icon-button"
-            aria-label="新建文件夹"
-            disabled={!vault}
-            onClick={() => {
-              selectDirectory('');
-              openDialog({ kind: 'create-folder' });
-            }}
-          >
-            <FolderPlus size={16} strokeWidth={1.5} />
-          </button>
-          <button
-            className="icon-button"
-            aria-label="刷新文件树"
-            disabled={!vault}
-            onClick={() => void refreshTree()}
-          >
-            <RefreshCw size={16} strokeWidth={1.5} />
-          </button>
-        </div>
+        <span className="vault-name">{vault?.name ?? '笔记'}</span>
+        <button
+          className="text-cmd"
+          aria-label={leftOpen ? '收起文件树' : '显示文件树'}
+          aria-pressed={leftOpen}
+          onClick={toggleLeft}
+        >
+          收起
+        </button>
+      </div>
+      <div className="sidebar-tools">
+        <button
+          className="text-cmd"
+          aria-label="新建笔记"
+          disabled={!vault}
+          onClick={() => {
+            selectDirectory('');
+            openDialog({ kind: 'create-note' });
+          }}
+        >
+          <Plus size={16} strokeWidth={1.75} />
+          新建
+        </button>
+        <button
+          className="text-cmd"
+          aria-label="新建文件夹"
+          disabled={!vault}
+          onClick={() => {
+            selectDirectory('');
+            openDialog({ kind: 'create-folder' });
+          }}
+        >
+          <FolderPlus size={16} strokeWidth={1.75} />
+          文件夹
+        </button>
+        <button
+          className="text-cmd"
+          aria-label="刷新文件树"
+          disabled={!vault}
+          onClick={() => void refreshTree()}
+        >
+          <RefreshCw size={16} strokeWidth={1.75} />
+          刷新
+        </button>
       </div>
       <label className="search-field">
         <span className="sr-only">筛选笔记</span>
         <input
           value={filter}
-          placeholder="筛选笔记"
+          placeholder="筛选"
           onChange={(event) => setFilter(event.target.value)}
           disabled={!vault}
         />
@@ -109,13 +111,23 @@ function TreeNode({
   const openDialog = useAppStore((state) => state.openDialog);
   const open = forceOpen || expanded;
   const directory = node.kind === 'directory';
+  const inventory = !directory && /^h[0-9a-f]{8,}\.md$/i.test(node.name);
   const selected = directory ? selectedDirectory === node.path : activePath === node.path;
 
   return (
     <div className="tree-node" role="treeitem" aria-expanded={directory ? open : undefined}>
       <div
-        className={selected ? 'tree-row selected' : 'tree-row'}
-        style={{ paddingLeft: 8 + depth * 14 }}
+        className={[
+          'tree-row',
+          directory ? 'is-directory' : 'is-file',
+          inventory ? 'is-inventory' : '',
+          selected ? 'selected' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={{
+          paddingLeft: `calc(var(--an-space-2) + ${depth} * var(--an-space-4)${inventory ? ' + var(--an-space-4)' : ''})`,
+        }}
       >
         {directory ? (
           <button
@@ -123,7 +135,7 @@ function TreeNode({
             aria-label={open ? `折叠${node.name}` : `展开${node.name}`}
             onClick={() => toggleExpanded(node.path)}
           >
-            <ChevronRight size={14} strokeWidth={1.5} />
+            <ChevronRight size={16} strokeWidth={1.75} />
           </button>
         ) : (
           <span className="chevron spacer" />
@@ -139,16 +151,7 @@ function TreeNode({
             void openNote(node.path);
           }}
         >
-          {directory ? (
-            open ? (
-              <FolderOpen size={16} strokeWidth={1.5} />
-            ) : (
-              <Folder size={16} strokeWidth={1.5} />
-            )
-          ) : (
-            <FileText size={16} strokeWidth={1.5} />
-          )}
-          <span>{node.name}</span>
+          <span title={node.name}>{node.name}</span>
         </button>
         <div className="row-actions tree-actions">
           {directory ? (
@@ -160,7 +163,7 @@ function TreeNode({
                 openDialog({ kind: 'create-note' });
               }}
             >
-              <Plus size={14} strokeWidth={1.5} />
+              <Plus size={16} strokeWidth={1.75} />
             </button>
           ) : null}
           <button
@@ -168,14 +171,14 @@ function TreeNode({
             aria-label={`重命名${node.name}`}
             onClick={() => openDialog({ kind: 'rename', path: node.path, entryKind: node.kind })}
           >
-            <Pencil size={14} strokeWidth={1.5} />
+            <Pencil size={16} strokeWidth={1.75} />
           </button>
           <button
             className="icon-button danger"
             aria-label={`删除${node.name}`}
             onClick={() => openDialog({ kind: 'delete', path: node.path, entryKind: node.kind })}
           >
-            <Trash2 size={14} strokeWidth={1.5} />
+            <Trash2 size={16} strokeWidth={1.75} />
           </button>
         </div>
       </div>

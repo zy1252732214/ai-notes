@@ -1,15 +1,5 @@
-import {
-  Blocks,
-  BookOpenCheck,
-  FileSearch,
-  Moon,
-  PanelLeft,
-  PanelRight,
-  Search,
-  Sun,
-  TextSearch,
-  X,
-} from 'lucide-react';
+import { MessagesSquare, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
 import { noteTitle, useAppStore } from '../store';
 import { resolveTheme } from '../theme';
 
@@ -33,21 +23,21 @@ export function TopBar() {
   const closeTab = useAppStore((state) => state.closeTab);
   const openDialog = useAppStore((state) => state.openDialog);
   const resolved = resolveTheme(themeMode);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <header className="topbar">
-      <div className="topbar-side">
-        <button
-          className="icon-button"
-          aria-label={leftOpen ? '收起文件树' : '显示文件树'}
-          aria-pressed={leftOpen}
-          onClick={toggleLeft}
-        >
-          <PanelLeft size={16} strokeWidth={1.5} />
-        </button>
-        <span className="vault-name">{vault?.name ?? 'ai-notes'}</span>
-      </div>
       <div className="tabs" role="tablist" aria-label="已打开的笔记">
+        {!leftOpen ? (
+          <button
+            className="text-cmd"
+            aria-label="显示文件树"
+            aria-pressed={false}
+            onClick={toggleLeft}
+          >
+            目录
+          </button>
+        ) : null}
         {tabs.map((tab) => {
           const active = tab.path === activePath;
           return (
@@ -62,71 +52,106 @@ export function TopBar() {
                 {noteTitle(tab.path)}
               </button>
               <button
-                className="tab-close"
+                className="text-cmd tab-close"
                 aria-label={`关闭${noteTitle(tab.path)}`}
                 onClick={() => void closeTab(tab.path)}
               >
-                <X size={14} strokeWidth={1.5} />
+                ×
               </button>
             </div>
           );
         })}
         {vault ? (
           <button
-            className="tab-add"
+            className="text-cmd"
             aria-label="新建笔记"
             onClick={() => openDialog({ kind: 'create-note' })}
           >
-            +
+            <Plus size={14} strokeWidth={1.75} aria-hidden="true" />
+            新建
           </button>
         ) : null}
       </div>
       <div className="topbar-side topbar-end">
         {vault ? (
           <button
-            className="review-launch"
+            className="text-cmd"
             aria-label={`开始复习，今日 ${dueCount} 张`}
             onClick={() => setReviewOpen(true)}
           >
-            <BookOpenCheck size={16} strokeWidth={1.5} />
-            <span>复习</span>
+            复习
             <span className={dueCount > 0 ? 'review-count' : 'review-count is-idle'}>
               {dueCount}
             </span>
           </button>
         ) : null}
-        <button className="icon-button" aria-label="插件" onClick={() => setPluginsOpen(true)}>
-          <Blocks size={16} strokeWidth={1.5} />
-        </button>
-        <button className="command-button" onClick={() => setCommandOpen(true)}>
-          <Search size={16} strokeWidth={1.5} />
-          <span>搜索或跳转</span>
-          <kbd>Ctrl K</kbd>
-        </button>
-        <button className="icon-button" aria-label="全文搜索" onClick={() => setSearchOpen(true)}>
-          <TextSearch size={16} strokeWidth={1.5} />
-        </button>
-        <button className="icon-button" aria-label="快速切换" onClick={() => setSwitcherOpen(true)}>
-          <FileSearch size={16} strokeWidth={1.5} />
-        </button>
         <button
-          className="icon-button"
-          aria-label="切换主题"
-          onClick={() => setThemeMode(resolved === 'dark' ? 'light' : 'dark')}
+          className="text-cmd command-trigger"
+          title="Ctrl K"
+          onClick={() => setCommandOpen(true)}
         >
-          {resolved === 'dark' ? (
-            <Sun size={16} strokeWidth={1.5} />
-          ) : (
-            <Moon size={16} strokeWidth={1.5} />
-          )}
+          <Search size={14} strokeWidth={1.75} aria-hidden="true" />
+          搜索
         </button>
+        <div className={moreOpen ? 'more-menu is-open' : 'more-menu'}>
+          <button
+            className="text-cmd"
+            aria-expanded={moreOpen}
+            aria-controls="sheet-more"
+            onClick={() => setMoreOpen((open) => !open)}
+          >
+            更多
+          </button>
+          <div id="sheet-more" className="more-menu-panel" hidden={!moreOpen}>
+            <button
+              className="text-cmd"
+              title="Ctrl Shift F"
+              aria-label="全文搜索"
+              onClick={() => {
+                setMoreOpen(false);
+                setSearchOpen(true);
+              }}
+            >
+              全文
+            </button>
+            <button
+              className="text-cmd"
+              title="Ctrl O"
+              aria-label="快速切换"
+              onClick={() => {
+                setMoreOpen(false);
+                setSwitcherOpen(true);
+              }}
+            >
+              跳转
+            </button>
+            <button
+              className="text-cmd"
+              aria-label="插件"
+              onClick={() => {
+                setMoreOpen(false);
+                setPluginsOpen(true);
+              }}
+            >
+              插件
+            </button>
+            <button
+              className="text-cmd"
+              aria-label="切换主题"
+              onClick={() => setThemeMode(resolved === 'dark' ? 'light' : 'dark')}
+            >
+              {resolved === 'dark' ? '浅色' : '深色'}
+            </button>
+          </div>
+        </div>
         <button
-          className="icon-button"
+          className={rightOpen ? 'text-cmd is-on' : 'text-cmd'}
           aria-label={rightOpen ? '收起 AI 面板' : '显示 AI 面板'}
           aria-pressed={rightOpen}
           onClick={toggleRight}
         >
-          <PanelRight size={16} strokeWidth={1.5} />
+          <MessagesSquare size={14} strokeWidth={1.75} aria-hidden="true" />
+          问答
         </button>
       </div>
     </header>

@@ -1,10 +1,8 @@
 import { IFRAME_SANDBOX } from '@ai-notes/plugin-host';
-import { IconButton } from '@ai-notes/ui';
-import { Link2, MessageSquare, Settings } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import { pluginController } from '../plugins/controller';
 import { useAppStore } from '../store';
-import { AskPane } from './AskPane';
+import { AskPane, retrievalLabel } from './AskPane';
 import { LinksPane } from './LinksPane';
 
 export function AiPanel() {
@@ -29,12 +27,12 @@ export function AiPanel() {
             className={active === 'ask' ? 'ai-tab active' : 'ai-tab'}
             role="tab"
             id="right-tab-ask"
+            aria-label="问答"
             aria-selected={active === 'ask'}
             aria-controls="right-panel-ask"
             onClick={() => setTab('ask')}
           >
-            <MessageSquare size={16} strokeWidth={1.5} />
-            <span>问答</span>
+            问答
           </button>
           <button
             type="button"
@@ -45,8 +43,7 @@ export function AiPanel() {
             aria-controls="right-panel-links"
             onClick={() => setTab('links')}
           >
-            <Link2 size={16} strokeWidth={1.5} />
-            <span>链接</span>
+            链接
           </button>
           {panels.map((panel) => (
             <button
@@ -61,9 +58,15 @@ export function AiPanel() {
             </button>
           ))}
         </div>
-        <IconButton label="模型设置" size="sm" onClick={() => setSettingsOpen(true)}>
-          <Settings size={16} strokeWidth={1.5} />
-        </IconButton>
+        <button
+          type="button"
+          className="text-cmd"
+          aria-label="设置"
+          onClick={() => setSettingsOpen(true)}
+        >
+          设置
+        </button>
+        {active === 'ask' ? <p className="ai-status-line">{retrievalLabel()}</p> : null}
       </div>
       <div className="ai-panel-body" hidden={pluginPanel !== null}>
         <div

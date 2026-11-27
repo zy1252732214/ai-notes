@@ -2,26 +2,27 @@
  * ai-notes 设计令牌。这一份是唯一来源，数值与 src/tokens.ts 保持一致。
  * 插件和业务样式只能使用 --an-* 变量，不要写死颜色、字号或间距。
  * 浅色在 :root，深色用 [data-theme='dark'] 覆盖。
- * 强调色只有一种克制的墨绿色。问答和引用复用它，不另做一套亮色。
+ * 中性浅底，低对比分割，主按钮用近黑或近白。正文仍是 16px。
  */
 
 :root {
-  --an-bg-base: #fbfaf8;
-  --an-bg-subtle: #f3f1ec;
-  --an-bg-elevated: #fffcf9;
-  --an-text-primary: #1c1917;
-  --an-text-secondary: #57534e;
-  --an-text-tertiary: #736d61;
-  --an-border-subtle: #e6e1d8;
-  --an-border-control: #948a7f;
-  --an-accent: #3c6e62;
-  --an-ai: #3c6e62;
-  --an-ai-subtle: #eef3f1;
-  --an-success: #2c7c4a;
-  --an-warning: #9c6005;
-  --an-selection: #6e9389;
+  --an-bg-base: #f6f6f7;
+  --an-bg-subtle: #f1f1f3;
+  --an-bg-recess: #e6e6e9;
+  --an-bg-elevated: #ffffff;
+  --an-text-primary: #1a1a1a;
+  --an-text-secondary: #3c3c43;
+  --an-text-tertiary: #4e4e55;
+  --an-border-subtle: #d9d9de;
+  --an-border-control: #5e5e66;
+  --an-accent: #1a1a1a;
+  --an-ai: #1a1a1a;
+  --an-ai-subtle: #f3f3f4;
+  --an-success: #0c6b3c;
+  --an-warning: #8a5a00;
+  --an-selection: #868686;
   --an-danger: #b42318;
-  --an-on-accent: #fbfaf8;
+  --an-on-accent: #ffffff;
 
   --an-font-ui:
     -apple-system, BlinkMacSystemFont, 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC',
@@ -29,17 +30,17 @@
   --an-font-code:
     'JetBrains Mono', 'SF Mono', ui-monospace, 'Sarasa Mono SC', Menlo, Consolas, monospace;
 
-  --an-font-size-h1: 32px;
-  --an-line-h1: 40px;
+  --an-font-size-h1: 40px;
+  --an-line-h1: 48px;
   --an-font-weight-h1: 600;
-  --an-font-size-h2: 24px;
-  --an-line-h2: 32px;
+  --an-font-size-h2: 28px;
+  --an-line-h2: 36px;
   --an-font-weight-h2: 600;
   --an-font-size-h3: 18px;
   --an-line-h3: 28px;
   --an-font-weight-h3: 600;
   --an-font-size-body: 16px;
-  --an-line-body: 28px;
+  --an-line-body: 32px;
   --an-font-weight-body: 400;
   --an-font-size-ui: 14px;
   --an-line-ui: 22px;
@@ -58,27 +59,28 @@
   --an-space-6: 24px;
   --an-space-8: 32px;
 
-  --an-radius-sm: 6px;
-  --an-radius-md: 8px;
-  --an-radius-lg: 12px;
-  --an-radius-xl: 16px;
+  --an-radius-sm: 4px;
+  --an-radius-md: 6px;
+  --an-radius-lg: 8px;
+  --an-radius-xl: 12px;
 
   --an-shadow-sm: 0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent);
-  --an-shadow-md: 0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
-  --an-shadow-lg: 0 24px 48px color-mix(in srgb, var(--an-text-primary) 14%, transparent);
+  --an-shadow-md: 0 8px 20px color-mix(in srgb, var(--an-text-primary) 8%, transparent);
+  --an-shadow-lg: 0 16px 40px color-mix(in srgb, var(--an-text-primary) 12%, transparent);
 
-  --an-motion-fast: 120ms ease;
-  --an-motion-base: 180ms ease;
+  --an-motion-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --an-motion-base: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --an-topbar-height: 48px;
   --an-statusbar-height: 32px;
-  --an-sidebar-width: 260px;
-  --an-sidebar-min-width: 200px;
-  --an-sidebar-max-width: 400px;
-  --an-ai-panel-width: 380px;
-  --an-ai-panel-min-width: 300px;
-  --an-ai-panel-max-width: 560px;
-  --an-editor-max-width: 680px;
+  --an-sidebar-width: 200px;
+  --an-sidebar-min-width: 180px;
+  --an-sidebar-max-width: 320px;
+  --an-ai-panel-width: 276px;
+  --an-ai-panel-min-width: 240px;
+  --an-ai-panel-max-width: 420px;
+  --an-editor-max-width: 640px;
+  --an-dialog-width: 480px;
   --an-command-palette-width: 640px;
   --an-command-palette-top: 12%;
   --an-breakpoint-compact: 900px;
@@ -87,21 +89,22 @@
 }
 
 [data-theme='dark'] {
-  --an-bg-base: #1c1b19;
-  --an-bg-subtle: #242320;
-  --an-bg-elevated: #2c2b28;
-  --an-text-primary: #f4f1ea;
-  --an-text-secondary: #c4bfb4;
-  --an-text-tertiary: #9b917f;
-  --an-border-subtle: #3a3834;
-  --an-border-control: #7d7368;
-  --an-accent: #9dc7b8;
-  --an-ai: #9dc7b8;
-  --an-ai-subtle: #24302c;
-  --an-success: #7dcea0;
-  --an-warning: #e0b15a;
-  --an-danger: #f0a097;
-  --an-on-accent: #14201c;
-  --an-selection: #5c7168;
+  --an-bg-base: #1c1c1e;
+  --an-bg-subtle: #232325;
+  --an-bg-recess: #121214;
+  --an-bg-elevated: #2e2e30;
+  --an-text-primary: #f5f5f7;
+  --an-text-secondary: #c8c8ce;
+  --an-text-tertiary: #a3a3a8;
+  --an-border-subtle: #3a3a3d;
+  --an-border-control: #9a9aa0;
+  --an-accent: #f5f5f7;
+  --an-ai: #f5f5f7;
+  --an-ai-subtle: #343436;
+  --an-success: #8fd4ae;
+  --an-warning: #e6c07a;
+  --an-danger: #f3b2aa;
+  --an-on-accent: #1c1c1e;
+  --an-selection: #6e6e73;
   color-scheme: dark;
 }

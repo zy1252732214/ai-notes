@@ -94,31 +94,35 @@ describe('WCAG 2.1 contrast', () => {
         contrast(color(theme, '--an-selection'), color(theme, surface)),
       ).toBeGreaterThanOrEqual(3);
     }
+    expect(
+      contrast(color(theme, '--an-text-primary'), color(theme, '--an-bg-recess')),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(color(theme, '--an-text-secondary'), color(theme, '--an-bg-recess')),
+    ).toBeGreaterThanOrEqual(4.5);
     expect(contrast(color(theme, '--an-border-subtle'), color(theme, '--an-bg-base'))).toBeLessThan(
       contrast(color(theme, '--an-border-control'), color(theme, '--an-bg-base')),
     );
   });
 
   it('keeps the reviewed text, status, and border values', () => {
-    expect(color(light, '--an-text-tertiary')).toBe('#736d61');
-    expect(color(dark, '--an-text-tertiary')).toBe('#9b917f');
-    expect(color(light, '--an-success')).toBe('#2c7c4a');
-    expect(color(light, '--an-warning')).toBe('#9c6005');
-    expect(color(light, '--an-border-control')).toBe('#948a7f');
-    expect(color(dark, '--an-border-control')).toBe('#7d7368');
-    expect(color(light, '--an-border-subtle')).toBe('#e6e1d8');
-    expect(color(dark, '--an-border-subtle')).toBe('#3a3834');
-    expect(color(light, '--an-selection')).toBe('#6e9389');
-    expect(color(dark, '--an-selection')).toBe('#5c7168');
+    expect(color(light, '--an-text-tertiary')).toBe('#4e4e55');
+    expect(color(dark, '--an-text-tertiary')).toBe('#a3a3a8');
+    expect(color(light, '--an-success')).toBe('#0c6b3c');
+    expect(color(light, '--an-warning')).toBe('#8a5a00');
+    expect(color(light, '--an-border-control')).toBe('#5e5e66');
+    expect(color(dark, '--an-border-control')).toBe('#9a9aa0');
+    expect(color(light, '--an-border-subtle')).toBe('#d9d9de');
+    expect(color(dark, '--an-border-subtle')).toBe('#3a3a3d');
+    expect(color(light, '--an-selection')).toBe('#868686');
+    expect(color(dark, '--an-selection')).toBe('#6e6e73');
   });
 
   it('does not put tertiary text on the heavier question and citation surfaces', () => {
     expect(componentsCss).toMatch(
       /\.an-chat--user \.an-chat__role\s*\{[^}]*color:\s*var\(--an-text-secondary\)/,
     );
-    expect(desktopCss).toMatch(
-      /\.ai-citation:hover \.an-chat__source,\s*\.ai-citation:focus-visible \.an-chat__source\s*\{[^}]*color:\s*var\(--an-text-secondary\)/,
-    );
+    expect(desktopCss).toMatch(/\.ai-citation-path\s*\{[^}]*color:\s*var\(--an-text-secondary\)/);
     expect(desktopCss).toContain('outline: 2px solid var(--an-accent)');
     expect(desktopCss).not.toMatch(/color-mix\(in srgb, var\(--an-accent\) 40%/);
     expect(desktopCss).toMatch(/\.welcome-badge\s*\{[^}]*background:\s*var\(--an-bg-subtle\)/);

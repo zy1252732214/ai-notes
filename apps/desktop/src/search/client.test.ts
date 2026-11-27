@@ -4,6 +4,18 @@ import { describe, expect, it } from 'vitest';
 import { createDesktopIndex, setEmbedderProvider } from './client';
 
 describe('browser note index', () => {
+  it('searches by keywords when no embedder is configured', async () => {
+    setEmbedderProvider(() => null);
+    try {
+      const index = createDesktopIndex(createSampleVault());
+      await index.reindex();
+      await index.syncEmbeddings();
+      expect((await index.search('三栏布局', 5)).map((hit) => hit.path)).toEqual(['日常/周报.md']);
+    } finally {
+      setEmbedderProvider(null);
+    }
+  });
+
   it('reindexes a vault and updates backlinks incrementally', async () => {
     const vault = createSampleVault();
     const index = createDesktopIndex(vault);

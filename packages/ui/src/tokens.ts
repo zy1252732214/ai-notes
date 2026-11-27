@@ -6,6 +6,7 @@
 type ColorScale = {
   readonly bgBase: string;
   readonly bgSubtle: string;
+  readonly bgRecess: string;
   readonly bgElevated: string;
   readonly textPrimary: string;
   readonly textSecondary: string;
@@ -30,40 +31,42 @@ type TypeStyle = {
 
 export const colors = {
   light: {
-    bgBase: '#fbfaf8',
-    bgSubtle: '#f3f1ec',
-    bgElevated: '#fffcf9',
-    textPrimary: '#1c1917',
-    textSecondary: '#57534e',
-    textTertiary: '#736d61',
-    borderSubtle: '#e6e1d8',
-    borderControl: '#948a7f',
-    accent: '#3c6e62',
-    ai: '#3c6e62',
-    aiSubtle: '#eef3f1',
-    success: '#2c7c4a',
-    warning: '#9c6005',
+    bgBase: '#f6f6f7',
+    bgSubtle: '#f1f1f3',
+    bgRecess: '#e6e6e9',
+    bgElevated: '#ffffff',
+    textPrimary: '#1a1a1a',
+    textSecondary: '#3c3c43',
+    textTertiary: '#4e4e55',
+    borderSubtle: '#d9d9de',
+    borderControl: '#5e5e66',
+    accent: '#1a1a1a',
+    ai: '#1a1a1a',
+    aiSubtle: '#f3f3f4',
+    success: '#0c6b3c',
+    warning: '#8a5a00',
     danger: '#b42318',
-    onAccent: '#fbfaf8',
-    selection: '#6e9389',
+    onAccent: '#ffffff',
+    selection: '#868686',
   },
   dark: {
-    bgBase: '#1c1b19',
-    bgSubtle: '#242320',
-    bgElevated: '#2c2b28',
-    textPrimary: '#f4f1ea',
-    textSecondary: '#c4bfb4',
-    textTertiary: '#9b917f',
-    borderSubtle: '#3a3834',
-    borderControl: '#7d7368',
-    accent: '#9dc7b8',
-    ai: '#9dc7b8',
-    aiSubtle: '#24302c',
-    success: '#7dcea0',
-    warning: '#e0b15a',
-    danger: '#f0a097',
-    onAccent: '#14201c',
-    selection: '#5c7168',
+    bgBase: '#1c1c1e',
+    bgSubtle: '#232325',
+    bgRecess: '#121214',
+    bgElevated: '#2e2e30',
+    textPrimary: '#f5f5f7',
+    textSecondary: '#c8c8ce',
+    textTertiary: '#a3a3a8',
+    borderSubtle: '#3a3a3d',
+    borderControl: '#9a9aa0',
+    accent: '#f5f5f7',
+    ai: '#f5f5f7',
+    aiSubtle: '#343436',
+    success: '#8fd4ae',
+    warning: '#e6c07a',
+    danger: '#f3b2aa',
+    onAccent: '#1c1c1e',
+    selection: '#6e6e73',
   },
 } as const satisfies Record<'light' | 'dark', ColorScale>;
 
@@ -73,10 +76,10 @@ export const fontFamily = {
 } as const;
 
 export const typeScale = {
-  h1: { fontSize: '32px', lineHeight: '40px', fontWeight: 600 },
-  h2: { fontSize: '24px', lineHeight: '32px', fontWeight: 600 },
+  h1: { fontSize: '40px', lineHeight: '48px', fontWeight: 600 },
+  h2: { fontSize: '28px', lineHeight: '36px', fontWeight: 600 },
   h3: { fontSize: '18px', lineHeight: '28px', fontWeight: 600 },
-  body: { fontSize: '16px', lineHeight: '28px', fontWeight: 400 },
+  body: { fontSize: '16px', lineHeight: '32px', fontWeight: 400 },
   ui: { fontSize: '14px', lineHeight: '22px', fontWeight: 400 },
   small: { fontSize: '12px', lineHeight: '16px', fontWeight: 400 },
   code: { fontSize: '13px', lineHeight: '22px', fontWeight: 400 },
@@ -93,35 +96,36 @@ export const space = {
 } as const;
 
 export const radius = {
-  sm: '6px',
-  md: '8px',
-  lg: '12px',
-  xl: '16px',
+  sm: '4px',
+  md: '6px',
+  lg: '8px',
+  xl: '12px',
 } as const;
 
 /** 阴影用 color-mix 跟随文字色，浅色和深色不用两套数值。 */
 export const shadow = {
   sm: '0 1px 2px color-mix(in srgb, var(--an-text-primary) 6%, transparent)',
-  md: '0 8px 24px color-mix(in srgb, var(--an-text-primary) 8%, transparent)',
-  lg: '0 24px 48px color-mix(in srgb, var(--an-text-primary) 14%, transparent)',
+  md: '0 8px 20px color-mix(in srgb, var(--an-text-primary) 8%, transparent)',
+  lg: '0 16px 40px color-mix(in srgb, var(--an-text-primary) 12%, transparent)',
 } as const;
 
 /** 只用于颜色、背景和边框。位移和弹性动画不使用。 */
 export const motion = {
-  fast: '120ms ease',
-  base: '180ms ease',
+  fast: '120ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+  base: '180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
 } as const;
 
 export const layout = {
   topbarHeight: '48px',
   statusbarHeight: '32px',
-  sidebarWidth: '260px',
-  sidebarMinWidth: '200px',
-  sidebarMaxWidth: '400px',
-  aiPanelWidth: '380px',
-  aiPanelMinWidth: '300px',
-  aiPanelMaxWidth: '560px',
-  editorMaxWidth: '680px',
+  sidebarWidth: '200px',
+  sidebarMinWidth: '180px',
+  sidebarMaxWidth: '320px',
+  aiPanelWidth: '276px',
+  aiPanelMinWidth: '240px',
+  aiPanelMaxWidth: '420px',
+  editorMaxWidth: '640px',
+  dialogWidth: '480px',
   commandPaletteWidth: '640px',
   /** 命令面板距视口顶部的位置。 */
   commandPaletteTop: '12%',
@@ -133,6 +137,7 @@ export const cssVarNames = {
   color: {
     bgBase: '--an-bg-base',
     bgSubtle: '--an-bg-subtle',
+    bgRecess: '--an-bg-recess',
     bgElevated: '--an-bg-elevated',
     textPrimary: '--an-text-primary',
     textSecondary: '--an-text-secondary',
@@ -212,6 +217,7 @@ export const cssVarNames = {
     aiPanelMinWidth: '--an-ai-panel-min-width',
     aiPanelMaxWidth: '--an-ai-panel-max-width',
     editorMaxWidth: '--an-editor-max-width',
+    dialogWidth: '--an-dialog-width',
     commandPaletteWidth: '--an-command-palette-width',
     commandPaletteTop: '--an-command-palette-top',
     compactBreakpoint: '--an-breakpoint-compact',

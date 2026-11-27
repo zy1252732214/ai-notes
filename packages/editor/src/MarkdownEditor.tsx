@@ -47,27 +47,9 @@ export interface MarkdownEditorProps {
 }
 
 const highlightStyle = HighlightStyle.define([
-  {
-    tag: tags.heading1,
-    fontWeight: 'var(--an-font-weight-h1)',
-    fontSize: 'var(--an-font-size-h1)',
-    lineHeight: 'var(--an-line-h1)',
-    color: 'var(--an-text-primary)',
-  },
-  {
-    tag: tags.heading2,
-    fontWeight: 'var(--an-font-weight-h2)',
-    fontSize: 'var(--an-font-size-h2)',
-    lineHeight: 'var(--an-line-h2)',
-    color: 'var(--an-text-primary)',
-  },
-  {
-    tag: tags.heading3,
-    fontWeight: 'var(--an-font-weight-h3)',
-    fontSize: 'var(--an-font-size-h3)',
-    lineHeight: 'var(--an-line-h3)',
-    color: 'var(--an-text-primary)',
-  },
+  { tag: tags.heading1, color: 'var(--an-text-primary)' },
+  { tag: tags.heading2, color: 'var(--an-text-primary)' },
+  { tag: tags.heading3, color: 'var(--an-text-primary)' },
   { tag: tags.heading4, fontWeight: '600', color: 'var(--an-text-secondary)' },
   { tag: tags.link, color: 'var(--an-accent)' },
   { tag: tags.url, color: 'var(--an-accent)' },
@@ -81,9 +63,13 @@ const highlightStyle = HighlightStyle.define([
     borderRadius: '4px',
   },
   { tag: tags.quote, color: 'var(--an-text-secondary)', fontStyle: 'italic' },
-  { tag: tags.list, color: 'var(--an-text-tertiary)' },
   { tag: tags.meta, color: 'var(--an-text-tertiary)' },
-  { tag: tags.processingInstruction, color: 'var(--an-text-tertiary)' },
+  {
+    tag: tags.processingInstruction,
+    color: 'var(--an-text-tertiary)',
+    fontSize: '0.62em',
+    fontWeight: '400',
+  },
   { tag: tags.comment, color: 'var(--an-text-tertiary)' },
 ]);
 
@@ -122,6 +108,53 @@ function codeBlockDecorations(view: EditorView): DecorationSet {
     });
   }
   return Decoration.set(marks, true);
+}
+
+const headingLinesByLevel = [
+  Decoration.line({ class: 'cm-heading cm-heading-1' }),
+  Decoration.line({ class: 'cm-heading cm-heading-2' }),
+  Decoration.line({ class: 'cm-heading cm-heading-3' }),
+  Decoration.line({ class: 'cm-heading cm-heading-4' }),
+  Decoration.line({ class: 'cm-heading cm-heading-5' }),
+  Decoration.line({ class: 'cm-heading cm-heading-6' }),
+];
+
+const headingLines = ViewPlugin.fromClass(
+  class HeadingLines {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = headingDecorations(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = headingDecorations(update.view);
+      }
+    }
+  },
+  { decorations: (plugin) => plugin.decorations },
+);
+
+function headingDecorations(view: EditorView): DecorationSet {
+  const marks: Array<ReturnType<(typeof headingLinesByLevel)[number]['range']>> = [];
+  const seen = new Set<number>();
+  for (const { from, to } of view.visibleRanges) {
+    syntaxTree(view.state).iterate({
+      from,
+      to,
+      enter(node) {
+        const match = /^(?:ATX|Setext)Heading([1-6])$/.exec(node.name);
+        if (!match) return;
+        const level = Number(match[1]);
+        const line = view.state.doc.lineAt(node.from);
+        if (seen.has(line.from)) return false;
+        seen.add(line.from);
+        const decoration = headingLinesByLevel[level - 1];
+        if (decoration) marks.push(decoration.range(line.from));
+        return false;
+      },
+    });
+  }
+  return marks.length === 0 ? Decoration.none : Decoration.set(marks, true);
 }
 
 const selectionTextMark = Decoration.mark({ class: 'cm-selection-text' });
@@ -184,31 +217,54 @@ const selectionTheme = EditorView.baseTheme({
 const editorTheme = EditorView.theme({
   '&': {
     height: '100%',
-    backgroundColor: 'var(--an-bg-base)',
+    backgroundColor: 'var(--an-bg-elevated)',
     color: 'var(--an-text-primary)',
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-scroller': {
     fontFamily: 'var(--an-font-ui)',
-    lineHeight: 'var(--an-line-body)',
+    paddingLeft: 'max(var(--an-space-6), calc((100% - var(--an-editor-max-width)) / 2))',
+    paddingRight: 'max(var(--an-space-6), calc((100% - var(--an-editor-max-width)) / 2))',
   },
   '.cm-content': {
-    maxWidth: 'var(--an-editor-max-width)',
-    margin: '0 auto',
-    padding: 'calc(var(--an-space-8) + var(--an-space-4)) var(--an-space-8) 40vh',
+    maxWidth: 'none',
+    width: '100%',
+    margin: '0',
+    padding: 'var(--an-space-8) 0 40vh',
     caretColor: 'var(--an-accent)',
     fontSize: 'var(--an-font-size-body)',
     fontFamily: 'var(--an-font-ui)',
   },
   '.cm-line': {
-    padding: '0 var(--an-space-1)',
+    padding: '0',
+    fontSize: 'var(--an-font-size-body)',
+    lineHeight: 'var(--an-line-body)',
+  },
+  '.cm-line.cm-heading-1': {
+    paddingTop: 'var(--an-space-3)',
+    fontSize: 'var(--an-font-size-h1)',
+    lineHeight: 'var(--an-line-h1)',
+    fontWeight: 'var(--an-font-weight-h1)',
+  },
+  '.cm-line.cm-heading-2': {
+    paddingTop: 'var(--an-space-4)',
+    fontSize: 'var(--an-font-size-h2)',
+    lineHeight: 'var(--an-line-h2)',
+    fontWeight: 'var(--an-font-weight-h2)',
+  },
+  '.cm-line.cm-heading-3, .cm-line.cm-heading-4, .cm-line.cm-heading-5, .cm-line.cm-heading-6': {
+    paddingTop: 'var(--an-space-3)',
+    fontSize: 'var(--an-font-size-h3)',
+    lineHeight: 'var(--an-line-h3)',
+    fontWeight: 'var(--an-font-weight-h3)',
   },
   '.cm-line.cm-code-line': {
     backgroundColor: 'var(--an-bg-subtle)',
-    borderRadius: 'var(--an-radius-sm)',
+    borderRadius: '0',
     fontFamily: 'var(--an-font-code)',
     fontSize: 'var(--an-font-size-code)',
     lineHeight: 'var(--an-line-code)',
+    fontWeight: 'var(--an-font-weight-code)',
   },
   '.cm-cursor, .cm-dropCursor': {
     borderLeftColor: 'var(--an-accent)',
@@ -316,6 +372,7 @@ export function MarkdownEditor({
           selectionTextColor,
           wikiLinks,
           codeBlockLines,
+          headingLines,
           EditorView.lineWrapping,
           editorTheme,
           EditorView.domEventHandlers({

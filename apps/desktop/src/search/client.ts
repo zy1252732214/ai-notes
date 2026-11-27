@@ -61,6 +61,7 @@ function embedderFromSettings(): NoteEmbedder | null {
   if (!embedModel) return null;
   const active = activeProvider(settings);
   if (!active.baseUrl) return null;
+  if (settings.provider === 'openai' && !active.apiKey) return null;
   const model = `${settings.provider}:${embedModel}`;
   return {
     model,
